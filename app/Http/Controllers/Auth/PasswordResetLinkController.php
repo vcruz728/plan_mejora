@@ -6,39 +6,58 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
+use App\Models\User;
 
 class PasswordResetLinkController extends Controller
 {
-    /**
-     * Display the password reset link request view.
-     */
-    public function create(): View
+    /** Mostrar formulario para solicitar el enlace */
+    public function create()
     {
-        return view('auth.forgot-password');
+        return view('auth.forgot-password', [
+            'status' => session('status'),
+        ]);
     }
 
-    /**
-     * Handle an incoming password reset link request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
+    /** Enviar el enlace de restablecimiento */
     public function store(Request $request): RedirectResponse
     {
+        // --- VALIDACIÓN A: solo correo ---------------
+        // $request->validate([
+        //     'email' => 'required|email',
+        // ]);
+
+        // --- VALIDACIÓN B: correo O usuario ----------
         $request->validate([
-            'email' => ['required', 'email'],
+            'email'   => 'nullable|email',
+            'usuario' => 'nullable|string',
         ]);
+        if (!$request->filled('email') && !$request->filled('usuario')) {
+            throw ValidationException::withMessages([
+                'email' => 'Captura tu correo o tu usuario.',
+            ]);
+        }
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        // Resolver email final (si envían usuario)
+        $email = $request->input('email');
+        if (!$email && $request->filled('usuario')) {
+            $user = User::where('usuario', $request->usuario)->first();
+            if (!$user || empty($user->email)) {
+                throw ValidationException::withMessages([
+                    'usuario' => 'No se encontró un usuario con email registrado.',
+                ]);
+            }
+            $email = $user->email;
+        }
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                            ->withErrors(['email' => __($status)]);
+        $status = Password::sendResetLink(['email' => $email]);
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('status', __($status));
+        }
+
+        throw ValidationException::withMessages([
+            'email' => [trans($status)],
+        ]);
     }
 }

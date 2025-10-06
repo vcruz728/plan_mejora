@@ -5,7 +5,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Planes\PlanesMejoraController;
 use App\Http\Controllers\Generales\UsuariosController;
 use App\Http\Controllers\Generales\CatalogosController;
-use App\Http\Controllers\LoginController;
+
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,11 +20,29 @@ use App\Http\Controllers\LoginController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+// Flujo "Olvidé mi contraseña" (guest)
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+	->middleware('guest')->name('password.request');
+
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+	->middleware('guest')->name('password.email');
+
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+	->middleware('guest')->name('password.reset');
+
+Route::post('/reset-password', [NewPasswordController::class, 'store'])
+	->middleware('guest')->name('password.store');
+
+// Cambio de contraseña estando logueado (perfil)
+Route::put('/password', [PasswordController::class, 'update'])
+	->middleware('auth')->name('password.update');
 
 Route::get('/', function () {
 	return redirect()->route('login');
 });
 
+Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+	->name('password.request');
 
 Route::get('/dashboard', function () {
 	return view('dashboard');
@@ -107,5 +129,5 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::get('/login2', [LoginController::class, 'index']);
+
 require __DIR__ . '/auth.php';
