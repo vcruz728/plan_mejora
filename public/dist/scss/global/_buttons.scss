@@ -1,0 +1,80 @@
+.btn {
+    &:is(:active, .show) {
+        border: none;
+    }
+}
+.btn .badge {
+    position: absolute;
+    top: -3px;
+    right: 0px;
+    display: block !important;
+    padding: 3px 5px !important;
+    font-size: 10px;
+    border-radius: 50px;
+    line-height: 1.1;
+}
+.example2 {
+    .btn .badge {
+        position: relative !important;
+        top: -1px;
+        right: 0px;
+        display: inline-block !important;
+        padding: 3px 5px !important;
+        font-size: 10px;
+        border-radius: 50px;
+        line-height: 1.1;
+    }
+}
+.position-relative.btn .badge {
+    right: -27px !important;
+}
+.btn-group .btn {
+    margin-bottom: 3px;
+}
+.toast-header .btn-close {
+    display: inline-block;
+    font-size: 0.85rem !important;
+    font: normal normal normal 14px/1 FontAwesome;
+
+    &::before {
+        content: "\f00d";
+    }
+}
+.file-image-1 .icons .btn {
+    font-size: 12px !important;
+    line-height: 26px !important;
+    text-align: center !important;
+    height: 25px !important;
+    width: 25px !important;
+    margin: 4px 1px !important;
+    padding: 0 !important;
+    border-radius: 50px !important;
+    display: block !important;
+    position: relative !important;
+    transition: all 0.3s ease-in-out !important;
+    color: #fff !important;
+    min-width: inherit !important;
+}
+.file-image-lg .icons .btn {
+    font-size: 15px !important;
+    line-height: 35px !important;
+    height: 35px !important;
+    width: 35px !important;
+}
+@media (max-width: 400px) {
+    .text-wrap .example .btn-group>.btn {
+        font-size: .675rem;
+    }
+}
+.btn-group.steps.basicsteps {
+    .btn {
+        &.active {
+            border: 1px solid $border;
+        }
+    }
+}
+@media (max-width: 400px) {
+    .btn-lg, .btn-group-lg>.btn {
+        font-size: 0.75rem !important;
+    }
+}

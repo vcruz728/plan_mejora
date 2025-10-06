@@ -1,0 +1,70 @@
+@media (max-width: 480px) {
+    .apexpie-chart {
+        >div {
+            display: inline-flex;
+            justify-content: center;
+            width: 100% !important;
+            margin: 0 auto;
+        }
+    }
+}
+.appchart {
+    height: 400px !important;
+}
+.apexcharts-toolbar {
+    z-index: 2 !important;
+}
+@media (max-width: 480px) {
+    .polar-Chart,
+    .polar-monochrome {
+        display: flex;
+        justify-content: center;
+    }
+    .polar-monochrome {
+        .apexcharts-legend {
+            width: 80%;
+            margin: 0 auto;
+        }
+    }
+}
+@media (max-width: 480px) {
+    #chart {
+        margin: 0 auto;
+        text-align: center;
+        justify-content: center;
+        display: block;
+
+        .apexcharts-legend {
+            width: 80%;
+            margin: 0 auto;
+        }
+    }
+    .chart-container.Chart canvas {
+        height: 100% !important;
+        width: 100% !important;
+    }
+}
+.Custom-angle .apexcharts-legend {
+    position: inherit !important;
+}
+.map, .chart {
+    padding-top: 0 !important;
+}
+.apexcharts-tooltip {
+    z-index: 8 !important;
+}
+.donutchart {
+    .actions {
+        button {
+            margin-block-end: 5px;
+        }
+    }
+}
+.chart-container.Chart canvas {
+    height: 300px !important;
+    width: 300px !important;
+    margin: 0 auto;
+}
+#chart {
+    width: 100%;
+}

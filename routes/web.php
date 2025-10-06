@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Planes\PlanesMejoraController;
 use App\Http\Controllers\Generales\UsuariosController;
 use App\Http\Controllers\Generales\CatalogosController;
-
+use App\Http\Controllers\LoginController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,31 +16,32 @@ use App\Http\Controllers\Generales\CatalogosController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
 Route::get('/', function () {
-    return redirect()->route('login');
+	return redirect()->route('login');
 });
 
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+	return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+	Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+	Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+	Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
 
 
-    Route::get('/get/planes-mejora', [PlanesMejoraController::class, 'getPlanes']);
+	Route::get('/get/planes-mejora', [PlanesMejoraController::class, 'getPlanes']);
 	Route::get('/get/acciones/plan/{id}', [PlanesMejoraController::class, 'getAcciones']);
 	Route::get('/get/info/programa-educativo/{id}', [PlanesMejoraController::class, 'getinfoPrograma']);
 	Route::delete('/admin/elimina-meta/{id}', [PlanesMejoraController::class, 'delMejora']);
 
 
 	// Admin
-    Route::get('/admin/edita/plan-mejora/{id}', [PlanesMejoraController::class, 'adminEdita']);
-    Route::post('/admin/guarda/actualizacion/plan-mejora', [PlanesMejoraController::class, 'editPlan']);
+	Route::get('/admin/edita/plan-mejora/{id}', [PlanesMejoraController::class, 'adminEdita']);
+	Route::post('/admin/guarda/actualizacion/plan-mejora', [PlanesMejoraController::class, 'editPlan']);
 	Route::get('/admin/ver/plan-mejora/{id}', [PlanesMejoraController::class, 'adminVer']);
 	Route::get('/admin/agregar/nuvea', [PlanesMejoraController::class, 'viewAlta']);
 	Route::post('/admin/guarda/nuevo/plan/mejora', [PlanesMejoraController::class, 'addNuevo']);
@@ -103,7 +104,8 @@ Route::middleware('auth')->group(function () {
 	Route::post('/guarda/complemento/plan', [PlanesMejoraController::class, 'saveComplemento']);
 	Route::post('/guarda/indicador-clave/plan', [PlanesMejoraController::class, 'saveIndicador']);
 	Route::delete('/elimina/archivo/acciones/{id}', [PlanesMejoraController::class, 'delArcivo']);
-
 });
 
-require __DIR__.'/auth.php';
+
+Route::get('/login2', [LoginController::class, 'index']);
+require __DIR__ . '/auth.php';

@@ -1,0 +1,31 @@
+.MuiDropzoneArea-root {
+    min-height: 200px !important;
+    border: 2px dashed #d8e0ef !important;
+}
+
+.MuiDropzoneArea-icon {
+    color: $primary-1  !important;
+}
+
+.MuiDropzoneArea-textContainer .MuiTypography-h5 {
+    font-size: 1rem;
+}
+.MuiDropzoneArea-root {
+    border: 1px solid $border;
+}
+.dropzone {
+    height: 200px;
+    text-align: center;
+    padding: 17px;
+    border: 2px dashed #d8e0ef;
+    background-color: transparent;
+    color: #c3cddf;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+.dropzone-main {
+    position: absolute;
+    left: 30px;
+    right: 0;
+    bottom: 30px;
+}

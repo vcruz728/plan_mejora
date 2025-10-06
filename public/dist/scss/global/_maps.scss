@@ -1,0 +1,46 @@
+.mapleaflet {
+    position: inherit !important;
+}
+.leaflet-pane {
+    z-index: 1 !important;
+}
+#vmap2 .rsm-svg {
+    width: 100%;
+    height: 100% !important;
+}
+#vmap3 .rsm-svg {
+    width: 100%;
+    height: 100% !important;
+}
+#vmap4 .rsm-svg {
+    width: 100%;
+    height: 100% !important;
+}
+#reactgooglegraph-1,
+#reactgooglegraph-2,
+#reactgooglegraph-3,
+#reactgooglegraph-4,
+#reactgooglegraph-5,
+#reactgooglegraph-6,
+#reactgooglegraph-7,
+#reactgooglegraph-8,
+#reactgooglegraph-9,
+#reactgooglegraph-10 {
+    svg rect {
+        fill: transparent;
+    }
+}
+.leaflet-container {
+    height: 300px;
+}
+
+.rsm-svg {
+    width: 506.984px;
+    height: 250px !important;
+}
+svg g text {
+    fill: #000;
+}
+.wd-100p {
+    width: 100%;
+}

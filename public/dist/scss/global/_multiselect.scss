@@ -1,0 +1,116 @@
+
+.multi-step ol.progtrckr li.progtrckr-doing {
+    border-bottom-color: $primary-1;
+}
+
+.multi-step ol.progtrckr li.progtrckr-doing:before {
+    background-color: $primary-1;
+}
+
+.multi-step ol.progtrckr li.progtrckr-todo {
+    width: 33.33333333%;
+}
+
+.multi-step {
+    ol.progtrckr li.progtrckr-todo {
+        border-color: $border  !important;
+    }
+
+    ol.progtrckr li.progtrckr-todo:before {
+        background-color: #e8e6ff;
+        width: 1.4em;
+        border-radius: 50px;
+    }
+}
+ol.progtrckr li.progtrckr-doing:before,
+.multi-step ol.progtrckr li.progtrckr-todo:before,
+ol.progtrckr li.progtrckr-done:before {
+    width: 1.7em !important;
+    line-height: 1.7em !important;
+    border-radius: 1.7em !important;
+}
+@media (max-width: 650px) {
+
+    ol.progtrckr li.progtrckr-doing,
+    ol.progtrckr li.progtrckr-todo,
+    ol.progtrckr li.progtrckr-done {
+        border-bottom: 0 !important;
+    }
+
+    ol.progtrckr li.progtrckr-done:before,
+    ol.progtrckr li.progtrckr-doing:before,
+    .multi-step ol.progtrckr li.progtrckr-todo:before {
+        line-height: 1.7em !important;
+        width: 1.7em !important;
+    }
+
+    ol.progtrckr li {
+        line-height: 2.5rem !important;
+    }
+
+    ol.progtrckr li:before {
+        bottom: 0.3rem !important;
+    }
+
+    .progtrckr li span {
+        display: block;
+    }
+
+    .progtrckr em {
+        display: none !important;
+    }
+}
+.rmsc.multi-select .dropdown-container,
+.rdl-actions .rdl-move {
+    // border: 1px solid $border;
+    color: #424e79;
+    // background: #f6f6fb;
+    border-radius: 5px;
+}
+
+.rmsc .dropdown-heading-dropdown-arrow.gray {
+    color: $text-color;
+}
+.rmsc.multi-select .MuiDropzoneArea-textContainer {
+    border: 1px solid $border  !important;
+}
+///Select ////
+
+.Select-sm {
+    height: 30px;
+}
+
+.Select-lg {
+    .react-select__menu {
+        height: 80px;
+    }
+}
+.Select-sm__indicators {
+    height: 25px;
+}
+.Select-sm__control {
+    min-height: inherit !important;
+    height: 29px;
+}
+.Select-sm__value-container {
+    padding: 0px 8px !important;
+}
+.Select-lg__indicators {
+    height: 43px;
+}
+.Select-lg__control {
+    min-height: inherit !important;
+    height: 47px;
+}
+.Select-lg__value-container {
+    padding: 0px 8px !important;
+}
+.Select-sm__option.selected {
+    background-color: $primary-1  !important;
+    color: #000 !important;
+}
+.Select__menu {
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 6 !important;
+}

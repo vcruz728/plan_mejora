@@ -1,0 +1,161 @@
+
+.Stepperh3 {
+    font-size: 18px;
+    color: #282f53;
+    font-weight: 600;
+    padding-bottom: 15px;
+
+    margin: 0;
+}
+.Stepperh3 .number {
+    display: block;
+    text-align: center;
+    line-height: 2;
+    min-width: 30px;
+    height: 30px;
+    background-color: $primary-1;
+    color: #fff;
+    border-radius: 100%;
+}
+.Step1 {
+    color: #bdbdbd !important;
+}
+
+.Step2 {
+    background-color: $primary-03  !important;
+    color: #fff;
+}
+.step3 {
+    background-color: $primary-1;
+    color: #fff;
+}
+.Stepperh3 .number.step2 {
+    display: block;
+    text-align: center;
+    line-height: 2;
+    width: 30px;
+    height: 30px;
+    background-color: #bdbdbd;
+    color: #fff;
+    border-radius: 100%;
+}
+.Stepperh3 .number {
+    line-height: 1.5 !important;
+}
+.sun-editor .se-btn-primary {
+    color: #fff !important;
+    background-color: $primary-1;
+    border: 1px solid $primary-1;
+    &:focus, &:hover {
+        color: #fff !important;
+        background-color: $primary-09;
+        border: 1px solid $primary-1;
+    }
+}
+.DraftEditor-root {
+    height: 300px;
+}
+.text-editor {
+    font-size: 15px;
+}
+//Advanced Forms
+.Upload-button {
+    padding-top: 3px;
+    border: 1px;
+    background-color: #f1f0ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 76px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.filepond--credits {
+    display: none !important;
+}
+.react-tel-input .form-control {
+    height: 38px !important;
+}
+.default-date-picker,
+.multiple-months  {
+    .react-datepicker__input-container {
+        input {
+            display: block;
+            width: 100%;
+            padding: 0.475rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 400;
+            line-height: 1.5;
+            outline: 0;
+            color: #4d5875;
+            background-color: $white;
+            background-clip: padding-box;
+            border: 1px solid $border;
+            border-radius: 7px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+    }
+}
+@media (max-width: 480px) {
+    .react-dual-listbox {
+        display: block !important;
+    }
+    .rdl-actions {
+        align-items: center !important;
+        margin: 10px 0 !important;
+        flex-direction: inherit !important;
+        justify-content: center !important;
+ }
+    .rdl-actions-right,
+    .rdl-actions-left {
+        flex-direction: inherit !important;
+    }
+
+    .rdl-move,
+    .rdl-actions-left,
+    .rdl-actions-right {
+        margin-bottom: 0 !important;
+        margin-left: 5px;
+    }
+    .rdl-has-filter .rdl-actions {
+        padding-top: 0 !important;
+    }
+    .react-tel-input .form-control {
+        width: 100% !important;
+    }
+    .CountrySelector {
+        display: block;
+    }
+
+    .CountrySelector .react-tel-input {
+        margin-bottom: 10px;
+    }
+}
+//** countryselector in advanced forms **//
+
+.CountrySelector {
+    display: flex;
+
+    .react-tel-input {
+        margin-right: 10px;
+    }
+
+    .react-tel-input .flag-dropdown {
+        background: #f6f6fb;
+        border: 1px solid $border;
+    }
+
+    .react-tel-input .form-control {
+        border: 1px solid $border;
+    }
+}
+
+.react-tel-input .country-list .country.highlight {
+    background: #f6f6fb !important;
+}
+
+.CountrySelector .flag {
+    background: transparent no-repeat;
+}

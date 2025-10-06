@@ -1,0 +1,15 @@
+body {
+    background-color: #253f57;
+}
+
+.header-brand-img {
+    width: clamp(120px, 14vw, 180px);
+    height: auto;
+}
+
+.system-desc {
+    color: #e9eef5;
+    opacity: 0.9;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}

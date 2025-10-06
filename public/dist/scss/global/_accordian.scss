@@ -1,0 +1,77 @@
+
+.accordionjs .acc_section>.acc_head {
+    .accordion-button:not(.collapsed) {
+        background: $primary-1  !important;
+        color: #fff !important;
+    }
+  
+    padding: 0px;
+  }
+  .accordionjs .acc_section .acc_head h3:before {
+    content: "\e9b0";
+    position: absolute;
+    font-family: "feather" !important;
+    left: 12px;
+    top: 14px;
+    font-size: 15px;
+    transition: all 0.5s;
+    transform: scale(1);
+}
+.acc_section {
+    .accordion-button:not(.collapsed)::after {
+        content: "\e995" !important;
+        position: absolute;
+        font-family: "feather" !important;
+        right: 0 !important;
+        top: 14px;
+        font-size: 15px;
+        transition: all 0.5s;
+        transform: scale(1);
+    }
+    .accordion-button::after {
+        content: "\e9b0" !important;
+        position: absolute;
+        font-family: "feather" !important;
+        right: 5px !important;
+        top: 14px;
+        font-size: 15px;
+        transition: all 0.5s;
+        transform: scale(1);
+    }
+    .filepond--drop-label,
+    .Upload-button,
+    .react-dual-listbox select  {
+        background-color: $dark-body;
+        color: $dark-body;
+        border: 1px solid $border-dark;
+        border-radius: 2px;
+    }
+}
+.landing-page #faqs .accordion-header {
+    background: none;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    background-color: transparent;
+    letter-spacing: 0.2px;
+    width: 100% !important;
+    height: 100% !important;
+}
+.landing-page #faqs {
+    .bg-primary-transparent .accordion-header {
+        border-left: 5px solid $primary-1  !important;
+    }
+    .bg-secondary-transparent .accordion-header {
+        border-left: 5px solid $secondary  !important;
+    }
+    .bg-success-transparent .accordion-header {
+        border-left: 5px solid $success  !important;
+    }
+    .bg-warning-transparent .accordion-header {
+        border-left: 5px solid $warning  !important;
+    }
+    .bg-danger-transparent .accordion-header {
+        border-left: 5px solid $danger  !important;
+    }
+}

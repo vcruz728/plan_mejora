@@ -1,0 +1,200 @@
+
+.transparent-mode {
+    .apexcharts-tooltip {
+        color: #000;
+    }
+    .preview-pic, .preview-thumbnail li {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .is-loading .form-control:disabled option {
+        color: rgba(255, 255, 255, 0.4);
+    }
+    .rdt_Table:first-child div {
+        background-color: transparent;
+        color:#9595b5 !important;
+    }
+
+    .btn-group.file-attach .btn-close.btn-outline-primary {
+        border-color: $white-6  !important;
+        color: $white-6  !important;
+    }
+
+    .panel-default .accordion-header {
+        background-color: transparent !important;
+        color: #fff;
+    }
+
+    .Stepperh3,
+    ol.progtrckr li.progtrckr-doing,
+    .MuiStepLabel-label,
+    .Select__single-value {
+        color: $white  !important;
+    }
+
+    .Select2__single-value {
+        color: $white;
+    }
+
+    .table td{
+        color: #fff;
+    }
+
+    .MuiSvgIcon-fontSizeMedium {
+        color: #fff;
+    }
+    .accordion-body {
+        color: #fff;
+    }
+}
+.transparent-mode {
+
+    .rdt_TableHeader,
+    .rdt_Table,
+    .rdt_TableHeadRow,
+    .rdt_TableRow {
+        background: transparent !important;
+        color: $white  !important;
+    }
+
+    .table thead th {
+        border-top: none !important;
+    }
+
+    .rdt_Table {
+        border: 1px solid $transparent-border  !important;
+    }
+
+    .rdt_TableHeader,
+    .rdt_TableRow,
+    .rdt_TableHeadRow,
+    .rdt_Pagination {
+        background: transparent !important;
+        color: $white  !important;
+        border-bottom-color: $transparent-border  !important;
+    }
+
+    @media (max-width:480px) {
+        .sidebar .tabs-menu .nav-pills .nav-item a {
+            border-color: $transparent-border  !important;
+        }
+    }
+}
+.transparent-mode .rdl-control-container .rdl-control {
+    background: $transparent-theme  !important;
+}
+
+.transparent-mode .rdl-actions .rdl-move {
+    background: $transparent-theme  !important;
+}
+
+.transparent-mode .dropzone {
+    background: $transparent-theme  !important;
+}
+.transparent-mode .item2-gl-menu.nav.nav-pills .nav-item .nav-link {
+    padding: 8px 15px !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.transparent-mode .item2-gl-menu.nav.nav-pills .nav-item .nav-link.active {
+    color: $white  !important;
+    background-color: transparent !important;
+}
+@supports (backdrop-filter: blur(25px)) {
+    .transparent-mode .side-header {
+        backdrop-filter: blur(25px);
+    }
+}
+
+@supports not (backdrop-filter: blur(25px)) {
+    .transparent-mode .side-header {
+        background-color: $primary-1;
+    }
+}
+.transparent-mode {
+    .stateh {
+        svg g text {
+            fill: $white  !important;
+            font-size: larger !important;
+        }
+
+        .rsm-geography {
+            fill: #5a6970 !important;
+        }
+    }
+}
+.transparent-mode .card {
+    color: #fff;
+}
+.transparent-mode.layout-boxed.bg-img1 {
+    &.header-light {
+        &.gradient-menu,
+        &.color-menu {
+            .app-sidebar .side-header .header-brand-img {
+                &.desktop-logo {
+                    display: none !important;
+                }
+                &.light-logo1 {
+                    display: block !important;
+                }
+            }
+        }
+    }
+}
+.transparent-mode {
+    .data-table-extensions>.data-table-extensions-filter>.filter-text {
+        color: $white  !important;
+    }
+
+    .slide.is-expanded .slide-item.active {
+        color: $primary-1  !important
+    }
+
+    .side-menu__item.active {
+        color: $primary-1  !important;
+    }
+
+    .side-menu__item.active {
+        .side-menu__icon {
+            color: var(--primary-bg-color) !important;
+        }
+    }
+
+    .demo_changer .form_holder {
+        background-color: transparent !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+    }
+}
+.transparent-mode svg g text {
+    fill: $white  !important;
+
+    z-index: 9;
+}
+.transparent-mode .app-header.sticky.stickyClass,
+.transparent-mode .horizontal-main {
+    backdrop-filter: blur(20px);
+}
+.transparent-mode .nav-tabs .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 0;
+}
+.transparent-mode {
+    @media (max-width: 991px) {
+
+        @supports (-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px)) {
+            &.app.sidebar-mini .app-sidebar {
+                background: transparent !important;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+        }
+    }
+    &.dark-menu.horizontal .horizontal-main.fixed-header {
+        background-color: #2a2a4a !important;
+    }
+    
+}
+.transparent-mode .demo_changer .form_holder  {
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+}
