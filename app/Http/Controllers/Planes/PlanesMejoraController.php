@@ -26,10 +26,11 @@ use DB;
 
 class PlanesMejoraController extends Controller
 {
-    public function getPlanes(){
-    	try {
-    		if(\Auth::user()->rol == 1){
-    			$planes = Planes::select(
+    public function getPlanes()
+    {
+        try {
+            if (\Auth::user()->rol == 1) {
+                $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
                     'mejoras.id',
@@ -40,21 +41,19 @@ class PlanesMejoraController extends Controller
                     'users.name',
                     DB::raw("coalesce(acciones.id_plan,0) as acciones")
                 )
-                ->leftJoin('users', function($join)
-                {
-                    $join->on('users.nivel', '=', 'mejoras.nivel');
-                    $join->on('users.id_des', '=', 'mejoras.id_des');
-                    $join->on(DB::raw("coalesce(users.id_ua,0)"), '=', DB::raw("coalesce(mejoras.id_ua,0)"));
-                    $join->on(DB::raw("coalesce(users.id_sede,0)"), '=', DB::raw("coalesce(mejoras.id_sede,0)"));
-                    $join->on(DB::raw("coalesce(users.id_programa,0)"), '=', DB::raw("coalesce(mejoras.id_programa_educativo,0)"));
-                    $join->on(DB::raw("coalesce(users.id_nivel,0)"), '=', DB::raw("coalesce(mejoras.id_nivel_estudio,0)"));
-                    $join->on(DB::raw("coalesce(users.id_modalidad,0)"), '=', DB::raw("coalesce(mejoras.id_modalidad_estudio,0)"));
-
-                })
-                ->leftJoin('complemento_plan','complemento_plan.id_plan','mejoras.id')
-                ->leftJoin(DB::raw("(SELECT id_plan FROM acciones GROUP BY id_plan) as acciones"),'acciones.id_plan','mejoras.id')
-                ->where('activo', 1)->orderBy('orden')->get();
-    		}else if(\Auth::user()->rol == 4){
+                    ->leftJoin('users', function ($join) {
+                        $join->on('users.nivel', '=', 'mejoras.nivel');
+                        $join->on('users.id_des', '=', 'mejoras.id_des');
+                        $join->on(DB::raw("coalesce(users.id_ua,0)"), '=', DB::raw("coalesce(mejoras.id_ua,0)"));
+                        $join->on(DB::raw("coalesce(users.id_sede,0)"), '=', DB::raw("coalesce(mejoras.id_sede,0)"));
+                        $join->on(DB::raw("coalesce(users.id_programa,0)"), '=', DB::raw("coalesce(mejoras.id_programa_educativo,0)"));
+                        $join->on(DB::raw("coalesce(users.id_nivel,0)"), '=', DB::raw("coalesce(mejoras.id_nivel_estudio,0)"));
+                        $join->on(DB::raw("coalesce(users.id_modalidad,0)"), '=', DB::raw("coalesce(mejoras.id_modalidad_estudio,0)"));
+                    })
+                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id')
+                    ->leftJoin(DB::raw("(SELECT id_plan FROM acciones GROUP BY id_plan) as acciones"), 'acciones.id_plan', 'mejoras.id')
+                    ->where('activo', 1)->orderBy('orden')->get();
+            } else if (\Auth::user()->rol == 4) {
                 $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
@@ -65,36 +64,36 @@ class PlanesMejoraController extends Controller
                     DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy"),
 
                 )
-                ->leftJoin('complemento_plan','complemento_plan.id','mejoras.id')
-                ->where('procedencia', \Auth::user()->procedencia)
-                ->where('activo', 1)
-                ->orderBy('orden')
-                ->get();
-            }else{
+                    ->leftJoin('complemento_plan', 'complemento_plan.id', 'mejoras.id')
+                    ->where('procedencia', \Auth::user()->procedencia)
+                    ->where('activo', 1)
+                    ->orderBy('orden')
+                    ->get();
+            } else {
 
                 switch (\Auth::user()->nivel) {
                     case 1:
-                        $where = " AND id_des = ".\Auth::user()->id_des;
+                        $where = " AND id_des = " . \Auth::user()->id_des;
                         break;
                     case 2:
-                        $where = " AND id_ua = ".\Auth::user()->id_ua;
+                        $where = " AND id_ua = " . \Auth::user()->id_ua;
                         break;
                     case 3:
-                        $where = " AND id_sede = ".\Auth::user()->id_sede;
+                        $where = " AND id_sede = " . \Auth::user()->id_sede;
                         break;
                     case 4:
-                        $where = " AND id_programa_educativo = ".\Auth::user()->id_programa;
+                        $where = " AND id_programa_educativo = " . \Auth::user()->id_programa;
                         break;
                     case 5:
-                        $where = " AND id_nivel_estudio = ".\Auth::user()->id_nivel;
+                        $where = " AND id_nivel_estudio = " . \Auth::user()->id_nivel;
                         break;
                     case 6:
-                        $where = " AND id_modalidad_estudio = ".\Auth::user()->id_modalidad;
+                        $where = " AND id_modalidad_estudio = " . \Auth::user()->id_modalidad;
                         break;
                 }
 
 
-    			$planes = Planes::select(
+                $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
                     'mejoras.id',
@@ -104,50 +103,51 @@ class PlanesMejoraController extends Controller
                     DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy"),
 
                 )
-                ->leftJoin('complemento_plan','complemento_plan.id','mejoras.id')
-                ->where('activo', 1)
-                ->where('mejoras.nivel', \Auth::user()->nivel)
-                ->whereRaw("1=1 $where")
-                ->orderBy('orden')
-                ->get();
-    		}
+                    ->leftJoin('complemento_plan', 'complemento_plan.id', 'mejoras.id')
+                    ->where('activo', 1)
+                    ->where('mejoras.nivel', \Auth::user()->nivel)
+                    ->whereRaw("1=1 $where")
+                    ->orderBy('orden')
+                    ->get();
+            }
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Listado de planes de mejora.',
                 'data' => $planes,
                 'rol' => \Auth::user()->rol
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function delMejora($id){
+    public function delMejora($id)
+    {
         try {
-            if(Acciones::where('id_plan', $id)->count() > 0){
+            if (Acciones::where('id_plan', $id)->count() > 0) {
                 $acciones = Acciones::where('id_plan', $id)->get();
                 foreach ($acciones as $value) {
                     $elimina = Acciones::find($value->id);
-                    if($elimina->evidencia != ''){
+                    if ($elimina->evidencia != '') {
                         \Storage::disk('files')->delete($elimina->evidencia);
                     }
                     $elimina->delete();
                 }
             }
-            
+
             $plan = Planes::find($id);
             $plan->delete();
 
@@ -156,7 +156,6 @@ class PlanesMejoraController extends Controller
                 'code' => 200,
                 'mensaje' => 'Registro eliminado de manera correcta.'
             ];
-
         } catch (\Illuminate\DataBase\QueryException $ex) {
             $msg = [
                 'code' => 400,
@@ -174,9 +173,10 @@ class PlanesMejoraController extends Controller
         return response()->json($msg, $msg['code']);
     }
 
-    public function adminEdita($id){
-    	$plan = Planes::find($id);
-    	$procedencias = Procedencias::all();
+    public function adminEdita($id)
+    {
+        $plan = Planes::find($id);
+        $procedencias = Procedencias::all();
         $des = Des::where('tipo', $plan->tipo_mejora)->orderBy('nombre')->get();
         $ejes = EjesPDI::all();
         $ambitos = AmbitosSiemec::all();
@@ -189,21 +189,24 @@ class PlanesMejoraController extends Controller
         $modalidad = Modalidad::where('id_nivel_estudio', $plan->id_nivel_estudio)->orderBy('nombre')->get();
 
         $ods = OdsPDI::where('id_eje', $plan->eje_pdi)->orderBy('descripcion')->get();
-        $objetivos = ObjetivosEspesificos::where('id_ods',$plan->id_ods_pdi)->orderBy('descripcion')->get();
-        $estategias = Estrategias::where('id_objetivo',$plan->objetivo_pdi)->orderBy('descripcion')->get();
-        $metas = Metas::where('id_estrategia',$plan->id_estrategia)->get();
+        $objetivos = ObjetivosEspesificos::where('id_ods', $plan->id_ods_pdi)->orderBy('descripcion')->get();
+        $estategias = Estrategias::where('id_objetivo', $plan->objetivo_pdi)->orderBy('descripcion')->get();
+        $metas = Metas::where('id_estrategia', $plan->id_estrategia)->get();
 
-    	return view('Admin.edita_plan', compact('plan', 'procedencias', 'verificadores','des', 'ejes', 'ambitos', 'criterios', 'unidades','sedes','programasEducativos','nivelesEstudio', 'modalidad', 'ods','objetivos', 'estategias','metas'));
+        return view('Admin.edita_plan', compact('plan', 'procedencias', 'verificadores', 'des', 'ejes', 'ambitos', 'criterios', 'unidades', 'sedes', 'programasEducativos', 'nivelesEstudio', 'modalidad', 'ods', 'objetivos', 'estategias', 'metas'));
     }
 
-    public function editPlan(Request $request){
-    	try {
-	    	$validate =  \Validator::make($request->all(), [
+    public function editPlan(Request $request)
+    {
+        try {
+            $validate =  \Validator::make(
+                $request->all(),
+                [
                     'tipo_plan' => 'required',
                     'procedencia' => 'required',
                     'plan_no' => 'required',
                     'cantidad' => 'required|numeric|min:1',
-                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:'.date("Y-m-d"),
+                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:' . date("Y-m-d"),
                     'tipo_mejora' => 'required',
                     'des' => 'required',
                     'recomendacion_meta' => 'required|string|min:2|max:700',
@@ -218,7 +221,7 @@ class PlanesMejoraController extends Controller
                 ],
             );
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 $msg = [
                     'code' => 411,
                     'mensaje' => 'Error',
@@ -228,17 +231,17 @@ class PlanesMejoraController extends Controller
                 return response()->json($msg, $msg['code']);
             }
 
-            if($request->input('unidad_academica') === NULL){  
+            if ($request->input('unidad_academica') === NULL) {
                 $nivel = 1;
-            }else if($request->input('sede') === NULL){
+            } else if ($request->input('sede') === NULL) {
                 $nivel = 2;
-            }else if($request->input('programa_educativo') === NULL){
+            } else if ($request->input('programa_educativo') === NULL) {
                 $nivel = 3;
-            }else if($request->input('nivel') === NULL){
+            } else if ($request->input('nivel') === NULL) {
                 $nivel = 4;
-            }else if($request->input('modalidad') === NULL){
+            } else if ($request->input('modalidad') === NULL) {
                 $nivel = 5;
-            }else if($request->input('modalidad') !== NULL){
+            } else if ($request->input('modalidad') !== NULL) {
                 $nivel = 6;
             }
 
@@ -275,31 +278,32 @@ class PlanesMejoraController extends Controller
             ];
 
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Registro actualizado correctamente.',
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
 
 
-    public function edita($id){
-    	$plan = Planes::select(
+    public function edita($id)
+    {
+        $plan = Planes::select(
             'mejoras.id',
             'mejoras.tipo',
             'mejoras.verifico',
@@ -327,69 +331,71 @@ class PlanesMejoraController extends Controller
             'cat_estrategias.descripcion as estrategia',
             'cat_metas.descripcion as meta',
         )
-        ->join('cat_ejes_pdi','cat_ejes_pdi.id','mejoras.eje_pdi')
-        ->join('cat_objetivos_espesifico','cat_objetivos_espesifico.id','mejoras.objetivo_pdi')
-        ->join('cat_ambitos_siemec','cat_ambitos_siemec.id','mejoras.ambito_siemec')
-        ->join('cat_criterios_siemec','cat_criterios_siemec.id','mejoras.criterio_siemec')
-        ->join('cat_des','cat_des.id','mejoras.id_des')
-        ->join('cat_ods_pdi','cat_ods_pdi.id','mejoras.id_ods_pdi')
-        ->join('cat_estrategias','cat_estrategias.id','mejoras.id_estrategia')
-        ->join('cat_metas','cat_metas.id','mejoras.id_meta')
-        ->leftJoin('cat_unidades_academicas','cat_unidades_academicas.id','mejoras.id_ua')
-        ->leftJoin('cat_sedes','cat_sedes.id','mejoras.id_sede')
-        ->leftJoin('cat_programas_educativos_dos','cat_programas_educativos_dos.id','mejoras.id_programa_educativo')
-        ->leftJoin('cat_niveles_estudio','cat_niveles_estudio.id','mejoras.id_nivel_estudio')
-        ->leftJoin('cat_modalidades_estudio','cat_modalidades_estudio.id','mejoras.id_modalidad_estudio')
-        ->where('mejoras.id', $id)
-        ->first();
+            ->join('cat_ejes_pdi', 'cat_ejes_pdi.id', 'mejoras.eje_pdi')
+            ->join('cat_objetivos_espesifico', 'cat_objetivos_espesifico.id', 'mejoras.objetivo_pdi')
+            ->join('cat_ambitos_siemec', 'cat_ambitos_siemec.id', 'mejoras.ambito_siemec')
+            ->join('cat_criterios_siemec', 'cat_criterios_siemec.id', 'mejoras.criterio_siemec')
+            ->join('cat_des', 'cat_des.id', 'mejoras.id_des')
+            ->join('cat_ods_pdi', 'cat_ods_pdi.id', 'mejoras.id_ods_pdi')
+            ->join('cat_estrategias', 'cat_estrategias.id', 'mejoras.id_estrategia')
+            ->join('cat_metas', 'cat_metas.id', 'mejoras.id_meta')
+            ->leftJoin('cat_unidades_academicas', 'cat_unidades_academicas.id', 'mejoras.id_ua')
+            ->leftJoin('cat_sedes', 'cat_sedes.id', 'mejoras.id_sede')
+            ->leftJoin('cat_programas_educativos_dos', 'cat_programas_educativos_dos.id', 'mejoras.id_programa_educativo')
+            ->leftJoin('cat_niveles_estudio', 'cat_niveles_estudio.id', 'mejoras.id_nivel_estudio')
+            ->leftJoin('cat_modalidades_estudio', 'cat_modalidades_estudio.id', 'mejoras.id_modalidad_estudio')
+            ->where('mejoras.id', $id)
+            ->first();
 
-    	$procedencias = Procedencias::all();
-    	$programas = ProgramasEducativos::all();
-    	$complemento = ComplementosPlan::where('id_plan', $id)->first();
+        $procedencias = Procedencias::all();
+        $programas = ProgramasEducativos::all();
+        $complemento = ComplementosPlan::where('id_plan', $id)->first();
 
-    	return view('Unidad.edita_plan', compact('plan', 'procedencias', 'programas', 'complemento'));
+        return view('Unidad.edita_plan', compact('plan', 'procedencias', 'programas', 'complemento'));
     }
 
-    public function getAcciones($id){
-    	try {
-    		$acciones = Acciones::where('id_plan', $id)->orderBy('id')->get();
+    public function getAcciones($id)
+    {
+        try {
+            $acciones = Acciones::where('id_plan', $id)->orderBy('id')->get();
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Listado de acciones.',
                 'data' => $acciones
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function saveAccion(Request $request){
-    	try {
+    public function saveAccion(Request $request)
+    {
+        try {
             $mejora = Planes::find($request->input('id_plan'));
 
             $bandera = ComplementosPlan::where('id_plan', $request->input('id_plan'))->first();
 
-            if(empty($bandera)){
+            if (empty($bandera)) {
                 $msg = [
                     'code' => 400,
                     'mensaje' => 'Para poder subir una acción primero debe de guardar su indicador clave. ',
                 ];
 
                 return response()->json($msg, $msg['code']);
-            }elseif (!empty($bandera) && $bandera->indicador_clave == '') {
+            } elseif (!empty($bandera) && $bandera->indicador_clave == '') {
                 $msg = [
                     'code' => 400,
                     'mensaje' => 'Para poder subir una acción primero debe de guardar su indicador clave. ',
@@ -398,312 +404,328 @@ class PlanesMejoraController extends Controller
                 return response()->json($msg, $msg['code']);
             }
 
-	    	$validate =  \Validator::make($request->all(), [
-	                'accion' => 'required|string|min:2|max:500',
-	                'producto_resultado' => 'required|string|min:2|max:500',
-	                'fecha_inicio' => 'required|date_format:Y-m-d|after_or_equal:'.$mejora->fecha_creacion.'|before_or_equal:'.$mejora->fecha_vencimiento,
-	                'fecha_fin' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:'.$mejora->fecha_vencimiento,
+            $validate =  \Validator::make(
+                $request->all(),
+                [
+                    'accion' => 'required|string|min:2|max:500',
+                    'producto_resultado' => 'required|string|min:2|max:500',
+                    'fecha_inicio' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
+                    'fecha_fin' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
                     'evidencia' => 'nullable|mimes:pdf|max:2048',
                     'responsable' => 'required|string|min:2|max:200',
-		        ],
-		    );
+                ],
+            );
 
-	        if($validate->fails()){
-	            $msg = [
-	                'code' => 411,
-	                'mensaje' => 'Error',
-	                'errors' => $validate->errors()
-	            ];
+            if ($validate->fails()) {
+                $msg = [
+                    'code' => 411,
+                    'mensaje' => 'Error',
+                    'errors' => $validate->errors()
+                ];
 
-	            return response()->json($msg, $msg['code']);
-	        }
+                return response()->json($msg, $msg['code']);
+            }
 
-	        $accion = new Acciones();
+            $accion = new Acciones();
 
-            if( $request->file('evidencia') ){
-                $evidencia = 'acciones/'.time()."_archivo_".$request->input('id_plan')."_file.".$request->evidencia->getClientOriginalExtension();
+            if ($request->file('evidencia')) {
+                $evidencia = 'acciones/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
                 $path = \Storage::disk('public')->put($evidencia, \File::get($request->evidencia));
 
                 $accion->evidencia = $evidencia;
             }
 
-	        $accion->id_plan = $request->input('id_plan');
-	        $accion->id_usuario = \Auth::user()->id;
-	        $accion->unidad_academica = \Auth::user()->usuario;
-			$accion->accion = $request->input('accion');
+            $accion->id_plan = $request->input('id_plan');
+            $accion->id_usuario = \Auth::user()->id;
+            $accion->unidad_academica = \Auth::user()->usuario;
+            $accion->accion = $request->input('accion');
             $accion->responsable = $request->input('responsable');
-			$accion->producto_resultado = $request->input('producto_resultado');
-			$accion->fecha_inicio = $request->input('fecha_inicio');
-			$accion->fecha_fin = $request->input('fecha_fin');
-			$accion->save();
+            $accion->producto_resultado = $request->input('producto_resultado');
+            $accion->fecha_inicio = $request->input('fecha_inicio');
+            $accion->fecha_fin = $request->input('fecha_fin');
+            $accion->save();
 
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Acción agregada correctamente.',
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
 
-    public function delAccion($id){
-    	try {
-    		$acciones = Acciones::find($id);
-            if( $acciones->evidencia != '' && $acciones->evidencia !== null ){
+    public function delAccion($id)
+    {
+        try {
+            $acciones = Acciones::find($id);
+            if ($acciones->evidencia != '' && $acciones->evidencia !== null) {
                 \Storage::disk('public')->delete($acciones->evidencia);
             }
-			$acciones->delete();
+            $acciones->delete();
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Registro eliminado correctamente.',
                 'data' => $acciones
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function detalleAccion($id){
-    	try {
-    		$accion = Acciones::find($id);
+    public function detalleAccion($id)
+    {
+        try {
+            $accion = Acciones::find($id);
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Detalle de la acción.',
                 'data' => $accion
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function editAccion(Request $request){
-    	try {
+    public function editAccion(Request $request)
+    {
+        try {
             $mejora = Planes::find($request->input('id_plan'));
-            
-	    	$validate =  \Validator::make($request->all(), [
-	                'accion_edit' => 'required|string|min:2|max:500',
-	                'producto_resultado_edit' => 'required|string|min:2|max:500',
-	                'fecha_inicio_edit' => 'required|date_format:Y-m-d|after_or_equal:'.$mejora->fecha_creacion.'|before_or_equal:'.$mejora->fecha_vencimiento,
-	                'fecha_fin_edit' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:'.$mejora->fecha_vencimiento,
+
+            $validate =  \Validator::make(
+                $request->all(),
+                [
+                    'accion_edit' => 'required|string|min:2|max:500',
+                    'producto_resultado_edit' => 'required|string|min:2|max:500',
+                    'fecha_inicio_edit' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
+                    'fecha_fin_edit' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
                     'evidencia_edit' => 'nullable|mimes:pdf|max:2048',
                     'responsable_edit' => 'required|string|min:2|max:200',
-		        ],
-		    );
+                ],
+            );
 
-	        if($validate->fails()){
-	            $msg = [
-	                'code' => 411,
-	                'mensaje' => 'Error',
-	                'errors' => $validate->errors()
-	            ];
+            if ($validate->fails()) {
+                $msg = [
+                    'code' => 411,
+                    'mensaje' => 'Error',
+                    'errors' => $validate->errors()
+                ];
 
-	            return response()->json($msg, $msg['code']);
-	        }
+                return response()->json($msg, $msg['code']);
+            }
 
-	        $accion = Acciones::find($request->input('id_accion'));
+            $accion = Acciones::find($request->input('id_accion'));
 
-            if( $request->file('evidencia_edit') ){
+            if ($request->file('evidencia_edit')) {
 
-                if( $accion->evidencia != '' && $accion->evidencia !== null ){
+                if ($accion->evidencia != '' && $accion->evidencia !== null) {
                     \Storage::disk('public')->delete($accion->evidencia);
                 }
-                
-                $evidencia = 'acciones/'.time()."_archivo_".$request->input('id_plan')."_file.".$request->evidencia_edit->getClientOriginalExtension();
+
+                $evidencia = 'acciones/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia_edit->getClientOriginalExtension();
                 $path = \Storage::disk('public')->put($evidencia, \File::get($request->evidencia_edit));
 
                 $accion->evidencia = $evidencia;
             }
 
-			$accion->accion = $request->input('accion_edit');
-			$accion->producto_resultado = $request->input('producto_resultado_edit');
-			$accion->fecha_inicio = $request->input('fecha_inicio_edit');
-			$accion->fecha_fin = $request->input('fecha_fin_edit');
+            $accion->accion = $request->input('accion_edit');
+            $accion->producto_resultado = $request->input('producto_resultado_edit');
+            $accion->fecha_inicio = $request->input('fecha_inicio_edit');
+            $accion->fecha_fin = $request->input('fecha_fin_edit');
             $accion->responsable = $request->input('responsable_edit');
-			$accion->save();
+            $accion->save();
 
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Acción actualizada correctamente.',
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getinfoPrograma($id){
-    	try {
-    		$programa = ProgramasEducativos::find($id);
+    public function getinfoPrograma($id)
+    {
+        try {
+            $programa = ProgramasEducativos::find($id);
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Detalle del programa educativo.',
                 'data' => $programa
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
 
-    public function saveComplemento(Request $request){
-    	try {
-	        $bandera = ComplementosPlan::where('id_plan', $request->input('id_plan'))->first();
+    public function saveComplemento(Request $request)
+    {
+        try {
+            $bandera = ComplementosPlan::where('id_plan', $request->input('id_plan'))->first();
 
             $valida = "nullable";
-            if(empty($bandera)){
+            if (empty($bandera)) {
                 $valida = "required";
-            }elseif (!empty($bandera) && $bandera->archivo == '') {
+            } elseif (!empty($bandera) && $bandera->archivo == '') {
                 $valida = "required";
             }
 
-	    	$validate =  \Validator::make($request->all(), [
-					'logros' => 'required|string|min:2|max:150',
-					'impactos' => 'required|string|min:2|max:150',
-                    'evidencia' => $valida.'|mimes:pdf|max:2048',
-					'observaciones' => 'nullable|string|min:2|max:600',
+            $validate =  \Validator::make(
+                $request->all(),
+                [
+                    'logros' => 'required|string|min:2|max:150',
+                    'impactos' => 'required|string|min:2|max:150',
+                    'evidencia' => $valida . '|mimes:pdf|max:2048',
+                    'control_observaciones' => 'required|string|min:2|max:600',
+                    'observaciones' => 'nullable|string|min:2|max:600',
 
-		        ],
-		    );
+                ],
+            );
 
-	        if($validate->fails()){
-	            $msg = [
-	                'code' => 411,
-	                'mensaje' => 'Error',
-	                'errors' => $validate->errors()
-	            ];
+            if ($validate->fails()) {
+                $msg = [
+                    'code' => 411,
+                    'mensaje' => 'Error',
+                    'errors' => $validate->errors()
+                ];
 
-	            return response()->json($msg, $msg['code']);
-	        }
+                return response()->json($msg, $msg['code']);
+            }
 
-	        if(empty($bandera)){
-	        	$comple = new ComplementosPlan();
-		        $comple->id_plan = $request->input('id_plan');
-		        $comple->id_usuario = \Auth::user()->id;
-		        $comple->id_ua = \Auth::user()->usuario;
+            if (empty($bandera)) {
+                $comple = new ComplementosPlan();
+                $comple->id_plan = $request->input('id_plan');
+                $comple->id_usuario = \Auth::user()->id;
+                $comple->id_ua = \Auth::user()->usuario;
 
-                $archivo = 'evidencias/'.time()."_archivo_".$request->input('id_plan')."_file.".$request->evidencia->getClientOriginalExtension();
+                $archivo = 'evidencias/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
                 $path = \Storage::disk('public')->put($archivo, \File::get($request->evidencia));
 
                 $comple->archivo = $archivo;
-	        }else{
-	        	$comple = ComplementosPlan::find($bandera->id);
+            } else {
+                $comple = ComplementosPlan::find($bandera->id);
 
-                if( $request->file('evidencia') ){
-                    if($comple->archivo != ''){
+                if ($request->file('evidencia')) {
+                    if ($comple->archivo != '') {
                         \Storage::disk('public')->delete($comple->archivo);
                     }
-                    
-                    $archivo = 'evidencias/'.time()."_archivo_".$request->input('id_plan')."_file.".$request->evidencia->getClientOriginalExtension();
+
+                    $archivo = 'evidencias/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
                     $path = \Storage::disk('public')->put($archivo, \File::get($request->evidencia));
 
                     $comple->archivo = $archivo;
                 }
-	        }
+            }
 
-			$comple->logros = $request->input('logros');
-			$comple->impactos = $request->input('impactos');
-			$comple->programa_educativo = $request->input('programa_educativo');
-			$comple->observaciones = $request->input('observaciones');
-			$comple->save();
+            $comple->logros = $request->input('logros');
+            $comple->impactos = $request->input('impactos');
+            $comple->programa_educativo = $request->input('programa_educativo');
+            $comple->control_observaciones = $request->input('control_observaciones');
+            $comple->observaciones = $request->input('observaciones');
+            $comple->save();
 
 
 
 
-    		$msg = [
+            $msg = [
                 'code' => 200,
                 'mensaje' => 'Complemento guardado correctamente.',
                 'archivo' => $comple->archivo
             ];
-    	} catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
- 	       
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function saveIndicador(Request $request){
+    public function saveIndicador(Request $request)
+    {
         try {
-            $validate =  \Validator::make($request->all(), [
+            $validate =  \Validator::make(
+                $request->all(),
+                [
                     'indicador_clave' => 'required|string|min:2|max:150',
                 ],
             );
 
-            if($validate->fails()){
+            if ($validate->fails()) {
                 $msg = [
                     'code' => 411,
                     'mensaje' => 'Error',
@@ -714,12 +736,12 @@ class PlanesMejoraController extends Controller
             }
 
             $bandera = ComplementosPlan::where('id_plan', $request->input('id_plan'))->first();
-            if(empty($bandera)){
+            if (empty($bandera)) {
                 $comple = new ComplementosPlan();
                 $comple->id_plan = $request->input('id_plan');
                 $comple->id_usuario = \Auth::user()->id;
                 $comple->id_ua = \Auth::user()->usuario;
-            }else{
+            } else {
                 $comple = ComplementosPlan::find($bandera->id);
             }
 
@@ -733,25 +755,26 @@ class PlanesMejoraController extends Controller
                 'code' => 200,
                 'mensaje' => 'Indicador clave guardado correctamente.',
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function adminVer($id){
-    	$plan = Planes::select(
+    public function adminVer($id)
+    {
+        $plan = Planes::select(
             'mejoras.id',
             'mejoras.tipo',
             'mejoras.verifico',
@@ -779,49 +802,53 @@ class PlanesMejoraController extends Controller
             'cat_estrategias.descripcion as estrategia',
             'cat_metas.descripcion as meta',
         )
-        ->join('cat_ejes_pdi','cat_ejes_pdi.id','mejoras.eje_pdi')
-        ->join('cat_objetivos_espesifico','cat_objetivos_espesifico.id','mejoras.objetivo_pdi')
-        ->join('cat_ambitos_siemec','cat_ambitos_siemec.id','mejoras.ambito_siemec')
-        ->join('cat_criterios_siemec','cat_criterios_siemec.id','mejoras.criterio_siemec')
-        ->join('cat_des','cat_des.id','mejoras.id_des')
-        ->join('cat_ods_pdi','cat_ods_pdi.id','mejoras.id_ods_pdi')
-        ->join('cat_estrategias','cat_estrategias.id','mejoras.id_estrategia')
-        ->join('cat_metas','cat_metas.id','mejoras.id_meta')
-        ->leftJoin('cat_unidades_academicas','cat_unidades_academicas.id','mejoras.id_ua')
-        ->leftJoin('cat_sedes','cat_sedes.id','mejoras.id_sede')
-        ->leftJoin('cat_programas_educativos_dos','cat_programas_educativos_dos.id','mejoras.id_programa_educativo')
-        ->leftJoin('cat_niveles_estudio','cat_niveles_estudio.id','mejoras.id_nivel_estudio')
-        ->leftJoin('cat_modalidades_estudio','cat_modalidades_estudio.id','mejoras.id_modalidad_estudio')
-        ->where('mejoras.id', $id)
-        ->first();
+            ->join('cat_ejes_pdi', 'cat_ejes_pdi.id', 'mejoras.eje_pdi')
+            ->join('cat_objetivos_espesifico', 'cat_objetivos_espesifico.id', 'mejoras.objetivo_pdi')
+            ->join('cat_ambitos_siemec', 'cat_ambitos_siemec.id', 'mejoras.ambito_siemec')
+            ->join('cat_criterios_siemec', 'cat_criterios_siemec.id', 'mejoras.criterio_siemec')
+            ->join('cat_des', 'cat_des.id', 'mejoras.id_des')
+            ->join('cat_ods_pdi', 'cat_ods_pdi.id', 'mejoras.id_ods_pdi')
+            ->join('cat_estrategias', 'cat_estrategias.id', 'mejoras.id_estrategia')
+            ->join('cat_metas', 'cat_metas.id', 'mejoras.id_meta')
+            ->leftJoin('cat_unidades_academicas', 'cat_unidades_academicas.id', 'mejoras.id_ua')
+            ->leftJoin('cat_sedes', 'cat_sedes.id', 'mejoras.id_sede')
+            ->leftJoin('cat_programas_educativos_dos', 'cat_programas_educativos_dos.id', 'mejoras.id_programa_educativo')
+            ->leftJoin('cat_niveles_estudio', 'cat_niveles_estudio.id', 'mejoras.id_nivel_estudio')
+            ->leftJoin('cat_modalidades_estudio', 'cat_modalidades_estudio.id', 'mejoras.id_modalidad_estudio')
+            ->where('mejoras.id', $id)
+            ->first();
 
 
-    	$procedencias = Procedencias::all();
-    	$programas = ProgramasEducativos::all();
-    	$complemento = ComplementosPlan::where('id_plan', $id)->first();
+        $procedencias = Procedencias::all();
+        $programas = ProgramasEducativos::all();
+        $complemento = ComplementosPlan::where('id_plan', $id)->first();
         $verificadores = User::where('rol', 3)->get();
 
-    	return view('Admin.ver_plan', compact('plan', 'procedencias', 'programas', 'complemento', 'verificadores'));
+        return view('Admin.ver_plan', compact('plan', 'procedencias', 'programas', 'complemento', 'verificadores'));
     }
 
-    public function viewAlta(){
+    public function viewAlta()
+    {
         $procedencias = Procedencias::all();
         $ejes = EjesPDI::all();
         $ambitos = AmbitosSiemec::all();
         $criterios = CriteriosSiemec::all();
         $verificadores = User::where('rol', 3)->get();
 
-        return view('Admin.agrega_nueva_meta', compact('procedencias','ejes','ambitos' ,'criterios', 'verificadores'));
+        return view('Admin.agrega_nueva_meta', compact('procedencias', 'ejes', 'ambitos', 'criterios', 'verificadores'));
     }
 
-    public function addNuevo(Request $request){
+    public function addNuevo(Request $request)
+    {
         try {
-            $validate =  \Validator::make($request->all(), [
+            $validate =  \Validator::make(
+                $request->all(),
+                [
                     'tipo_plan' => 'required',
                     'procedencia' => 'required',
                     'plan_no' => 'required',
                     'cantidad' => 'required|numeric|min:1',
-                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:'.date("Y-m-d"),
+                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:' . date("Y-m-d"),
                     'tipo_mejora' => 'required',
                     'des' => 'required',
                     'recomendacion_meta' => 'required|string|min:2|max:4000',
@@ -836,8 +863,8 @@ class PlanesMejoraController extends Controller
                     'criterio_siemec' => 'required',
                 ],
             );
-            
-            if($validate->fails()){
+
+            if ($validate->fails()) {
                 $msg = [
                     'code' => 411,
                     'mensaje' => 'Error',
@@ -848,28 +875,28 @@ class PlanesMejoraController extends Controller
             }
 
 
-            if($request->input('unidad_academica') == ''){  
+            if ($request->input('unidad_academica') == '') {
                 $nivel = 1;
-            }else if($request->input('sede') == ""){
+            } else if ($request->input('sede') == "") {
                 $nivel = 2;
-            }else if($request->input('programa_educativo') == ""){
+            } else if ($request->input('programa_educativo') == "") {
                 $nivel = 3;
-            }else if($request->input('nivel') == ""){
+            } else if ($request->input('nivel') == "") {
                 $nivel = 4;
-            }else if($request->input('modalidad') == ""){
+            } else if ($request->input('modalidad') == "") {
                 $nivel = 5;
-            }else if($request->input('modalidad') != ""){
+            } else if ($request->input('modalidad') != "") {
                 $nivel = 6;
             }
 
             $orden = Planes::where('procedencia', $request->input('procedencia'))->count();
-            $orden = $orden+1;
+            $orden = $orden + 1;
 
             $plan = new Planes();
             $plan->tipo = $request->input('tipo_plan');
             $plan->procedencia = $request->input('procedencia');
             $plan->orden = $orden;
-            $plan->plan_no = $request->input('plan_no').$orden;
+            $plan->plan_no = $request->input('plan_no') . $orden;
             $plan->cantidad = $request->input('cantidad');
             $plan->fecha_vencimiento = $request->input('fecha_vencimiento');
             $plan->id_des = $request->input('des');
@@ -900,284 +927,295 @@ class PlanesMejoraController extends Controller
                 'code' => 200,
                 'mensaje' => 'Registro actualizado correctamente.',
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getOdsPdi($id){
+    public function getOdsPdi($id)
+    {
         try {
-            $ods = OdsPDI::where('id_eje',$id)->get();
+            $ods = OdsPDI::where('id_eje', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'ODS PDI.',
                 'data' => $ods
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getObjetivosPdi($id){
+    public function getObjetivosPdi($id)
+    {
         try {
-            $programa = ObjetivosEspesificos::where('id_ods',$id)->get();
+            $programa = ObjetivosEspesificos::where('id_ods', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Objetivos espesificos.',
                 'data' => $programa
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getEstrategiasPdi($id){
+    public function getEstrategiasPdi($id)
+    {
         try {
-            $programa = Estrategias::where('id_objetivo',$id)->get();
+            $programa = Estrategias::where('id_objetivo', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Estrategias.',
                 'data' => $programa
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getMetasPdi($id){
+    public function getMetasPdi($id)
+    {
         try {
-            $programa = Metas::where('id_estrategia',$id)->get();
+            $programa = Metas::where('id_estrategia', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Metas.',
                 'data' => $programa
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getDesDep($valor){
+    public function getDesDep($valor)
+    {
         try {
-            $datos = Des::where('tipo',$valor)->orderBy('nombre')->get();
+            $datos = Des::where('tipo', $valor)->orderBy('nombre')->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Des.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getUnidades($id){
+    public function getUnidades($id)
+    {
         try {
-            $datos = UnidadesAcademicas::where('id_des',$id)->get();
+            $datos = UnidadesAcademicas::where('id_des', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Unidades académicas.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getSedes($id){
+    public function getSedes($id)
+    {
         try {
-            $datos = Sedes::where('id_ua',$id)->get();
+            $datos = Sedes::where('id_ua', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Sedes.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getProgramas($id){
+    public function getProgramas($id)
+    {
         try {
-            $datos = ProgramasEducativos::where('id_sede',$id)->get();
+            $datos = ProgramasEducativos::where('id_sede', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Programas educativos.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function getNiveles($id){
+    public function getNiveles($id)
+    {
         try {
-            $datos = NivelesEstudio::where('id_programa_estudio',$id)->get();
+            $datos = NivelesEstudio::where('id_programa_estudio', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Nivel.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
-    
-    public function getModalidades($id){
+
+    public function getModalidades($id)
+    {
         try {
-            $datos = Modalidad::where('id_nivel_estudio',$id)->get();
+            $datos = Modalidad::where('id_nivel_estudio', $id)->get();
 
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Modalidades.',
                 'data' => $datos
             ];
-        } catch(\Illuminate\Database\QueryException $ex){
+        } catch (\Illuminate\Database\QueryException $ex) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $ex,
             ];
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             $msg = [
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
                 'data' => $e,
             ];
         }
-           
+
         return response()->json($msg, $msg['code']);
     }
 
-    public function delArcivo($id){
+    public function delArcivo($id)
+    {
         try {
             $elimina = Acciones::find($id);
             \Storage::disk('public')->delete($elimina->evidencia);
@@ -1187,8 +1225,7 @@ class PlanesMejoraController extends Controller
             $msg = [
                 'code' => 200,
                 'mensaje' => 'Archivo eliminado de manera correcta.'
-            ];          
-            
+            ];
         } catch (\Illuminate\DataBase\QueryException $ex) {
             $msg = [
                 'code' => 400,
