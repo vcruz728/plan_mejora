@@ -48,7 +48,7 @@
                     <ul class="treeview-menu">
                         <li class="{{ request()->is('admin/nuevo/usuario') ? 'active' : '' }}">
                             <a href="{{ url('/admin/nuevo/usuario') }}">
-                                <i class="fa fa-address-book nav-icon" aria-hidden="true"></i>
+                                <i class="fa fa-address-book nav-icon"></i>
                                 <span class="text">Nuevo usuario</span>
                             </a>
                         </li>
@@ -71,7 +71,7 @@
                     <ul class="treeview-menu">
                         <li class="{{ request()->is('admin/consultores') ? 'active' : '' }}">
                             <a href="{{ url('/admin/consultores') }}">
-                                <i class="fa fa-address-book nav-icon" aria-hidden="true"></i>
+                                <i class="fa fa-address-book nav-icon"></i>
                                 <span class="text">Administrar Consultores</span>
                             </a>
                         </li>

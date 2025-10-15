@@ -85,11 +85,13 @@ Route::middleware('auth')->group(function () {
 	Route::get('/admin/get/informacion/usuario/{id}', [UsuariosController::class, 'getInfoUser']);
 	Route::post('/admin/edita/usuario/{id}', [UsuariosController::class, 'editUsuario']);
 	Route::post('/admin/usuario/resetea-password/{id}', [UsuariosController::class, 'resetPassword']);
+
 	Route::get('/admin/consultores', [UsuariosController::class, 'viewAltaRev']);
 	Route::get('admin/get/usuarios/sistema/consultores', [UsuariosController::class, 'getConsultores']);
 	Route::post('/admin/edita/consultor/{id}', [UsuariosController::class, 'editConsultor']);
-
 	Route::post('admin/guarda/nuevo/consultor', [UsuariosController::class, 'saveConsultor']);
+	Route::delete('/admin/consultor/{id}', [UsuariosController::class, 'destroyConsultor']);
+
 
 	Route::get('/admin/catalogo/procedencias', [CatalogosController::class, 'viewProcedencias']);
 	Route::get('/admin/get/catalogo/procedencia', [CatalogosController::class, 'getProcedencias']);

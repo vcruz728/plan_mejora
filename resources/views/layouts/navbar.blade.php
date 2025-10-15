@@ -65,4 +65,5 @@
         </div>
     </nav>
     @stack('styles')
+
 </header>

@@ -20,6 +20,6 @@
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
     <link href="{{ asset('css/toastr/toastr.min.css') }}" rel="stylesheet">
     <script src="{{ asset('js/index.js?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}"></script>
-
+    @stack('scripts')
 
 </head>
