@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 
+use App\Models\Catalogos\Procedencias;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -45,14 +46,16 @@ Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
 	->name('password.request');
 
 Route::get('/dashboard', function () {
-	return view('dashboard');
+	$procedencias = \App\Models\Catalogos\Procedencias::orderBy('descripcion')->get();
+	return view('dashboard', compact('procedencias'));
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+
 
 Route::middleware('auth')->group(function () {
 	Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 	Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 	Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
 
 
 	Route::get('/get/planes-mejora', [PlanesMejoraController::class, 'getPlanes']);
@@ -65,8 +68,13 @@ Route::middleware('auth')->group(function () {
 	Route::get('/admin/edita/plan-mejora/{id}', [PlanesMejoraController::class, 'adminEdita']);
 	Route::post('/admin/guarda/actualizacion/plan-mejora', [PlanesMejoraController::class, 'editPlan']);
 	Route::get('/admin/ver/plan-mejora/{id}', [PlanesMejoraController::class, 'adminVer']);
-	Route::get('/admin/agregar/nuvea', [PlanesMejoraController::class, 'viewAlta']);
+	Route::get('/admin/agregar/nueva', [PlanesMejoraController::class, 'viewAlta']);
 	Route::post('/admin/guarda/nuevo/plan/mejora', [PlanesMejoraController::class, 'addNuevo']);
+	Route::get('/admin/planes-mejora', function () {
+		$procedencias = \App\Models\Catalogos\Procedencias::orderBy('descripcion')->get();
+		return view('dashboard', compact('procedencias'));
+	})->middleware(['auth', 'verified']);
+
 
 	Route::get('/admin/nuevo/usuario', [UsuariosController::class, 'viewAlta']);
 	Route::post('/admin/guarda/nuevo/usuario', [UsuariosController::class, 'addNuevo']);

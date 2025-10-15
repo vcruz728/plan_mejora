@@ -19,7 +19,8 @@
 
     {{-- Tus estilos --}}
     <link rel="stylesheet" href="{{ asset('dist/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/login2.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/login.css') }}">
+
 
     <title>Seguimiento de planes de mejora | Login</title>
 </head>

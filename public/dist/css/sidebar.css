@@ -1,0 +1,420 @@
+/* Layout y alineación */
+.main-sidebar .sidebar-menu > li > a,
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+}
+
+/* Caja de icono: tamaño uniforme */
+.main-sidebar .sidebar-menu .icon {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-sidebar .sidebar-menu .icon .fa {
+    font-size: 16px; /* tamaño de ícono consistente */
+    line-height: 1;
+}
+
+/* Submenú: icono un pelín más chico si quieres */
+.main-sidebar .sidebar-menu .treeview-menu .icon .fa {
+    font-size: 15px;
+}
+
+/* Ocupa el resto del espacio con el texto */
+.main-sidebar .sidebar-menu .text {
+    flex: 1;
+}
+
+/* Hover / Active más vistoso */
+.main-sidebar .sidebar-menu > li > a:hover {
+    background: rgba(13, 110, 253, 0.12); /* azul tenue */
+    color: #fff;
+}
+
+.main-sidebar .sidebar-menu > li.active > a {
+    background: #1e5ab3; /* azul bootstrap-like */
+    color: #fff;
+}
+
+/* Iconos: color suave por defecto */
+.main-sidebar .sidebar-menu > li > a .icon .fa {
+    color: #c2c7d0;
+}
+.main-sidebar .sidebar-menu > li.active > a .icon .fa,
+.main-sidebar .sidebar-menu > li > a:hover .icon .fa {
+    color: #fff;
+}
+
+/* Sangría del submenú */
+.main-sidebar .sidebar-menu .treeview-menu {
+    padding-left: 36px;
+}
+
+/* Header de sección */
+.main-sidebar .sidebar .header {
+    color: #a0a4a8;
+    padding: 10px 15px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+}
+
+/* Enlace como fila flex para alinear icono + texto */
+.main-sidebar .sidebar-menu > li > a,
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+}
+
+/* Íconos uniformes (nivel 1) */
+.main-sidebar .sidebar-menu > li > a > i.nav-icon {
+    width: 26px;
+    text-align: center;
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Íconos uniformes (submenú) */
+.main-sidebar .sidebar-menu .treeview-menu > li > a > i.nav-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1;
+}
+
+/* Texto ocupa el resto */
+.main-sidebar .sidebar-menu .text {
+    flex: 1;
+}
+
+/* Hover/active */
+.main-sidebar .sidebar-menu > li > a:hover {
+    background: rgba(13, 110, 253, 0.12);
+    color: #fff;
+}
+.main-sidebar .sidebar-menu > li.active > a {
+    background: #1e5ab3;
+    color: #fff;
+}
+.main-sidebar .sidebar-menu > li > a > i.nav-icon {
+    color: #c2c7d0;
+}
+.main-sidebar .sidebar-menu > li.active > a > i.nav-icon,
+.main-sidebar .sidebar-menu > li > a:hover > i.nav-icon {
+    color: #fff;
+}
+
+/* Sangría del submenú */
+.main-sidebar .sidebar-menu .treeview-menu {
+    padding-left: 36px;
+}
+
+/* ---- Modo colapsado (AdminLTE 2) ---- */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a {
+    justify-content: center;
+}
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > i.nav-icon {
+    width: 50px;
+    font-size: 18px; /* se verá bien centrado */
+}
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .text,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .pull-right-container {
+    display: none !important; /* oculta texto y caret en colapsado */
+}
+
+/* ====== Ajustes de tamaño (modifica estos valores) ====== */
+:root {
+    --sb-icon-size: 22px; /* tamaño de ícono nivel 1 */
+    --sb-icon-width: 34px; /* ancho de la caja del ícono nivel 1 */
+    --sb-row-height: 44px; /* alto mínimo del renglón nivel 1 */
+
+    --sb-sub-icon-size: 19px; /* tamaño de ícono submenú */
+    --sb-sub-icon-width: 28px; /* ancho de la caja del ícono submenú */
+    --sb-sub-row-height: 40px; /* alto mínimo del renglón submenú */
+}
+
+/* Enlace como fila flex */
+.main-sidebar .sidebar-menu > li > a,
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+}
+
+/* Nivel 1: ícono grande y fila más alta */
+.main-sidebar .sidebar-menu > li > a {
+    min-height: var(--sb-row-height);
+}
+.main-sidebar .sidebar-menu > li > a > i.nav-icon {
+    width: var(--sb-icon-width);
+    text-align: center;
+    font-size: var(--sb-icon-size);
+    line-height: 1;
+}
+
+/* Submenú: ícono un poco más chico */
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    min-height: var(--sb-sub-row-height);
+}
+.main-sidebar .sidebar-menu .treeview-menu > li > a > i.nav-icon {
+    width: var(--sb-sub-icon-width);
+    text-align: center;
+    font-size: var(--sb-sub-icon-size);
+    line-height: 1;
+}
+
+/* Colores / estados (opcional) */
+.main-sidebar .sidebar-menu > li > a:hover {
+    background: rgba(13, 110, 253, 0.12);
+    color: #fff;
+}
+.main-sidebar .sidebar-menu > li.active > a {
+    background: #1e5ab3;
+    color: #fff;
+}
+.main-sidebar .sidebar-menu > li > a > i.nav-icon {
+    color: #c2c7d0;
+}
+.main-sidebar .sidebar-menu > li.active > a > i.nav-icon,
+.main-sidebar .sidebar-menu > li > a:hover > i.nav-icon {
+    color: #fff;
+}
+
+/* Sangría del submenú */
+.main-sidebar .sidebar-menu .treeview-menu {
+    padding-left: 36px;
+}
+
+/* ====== Compatibilidad barra colapsada (AdminLTE 2) ====== */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a {
+    justify-content: center; /* centra el ícono */
+}
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > i.nav-icon {
+    width: 50px; /* ancho del rail colapsado */
+    font-size: calc(
+        var(--sb-icon-size) + 2px
+    ); /* un poquito más grande en colapsado */
+}
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .text,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .pull-right-container {
+    display: none !important; /* oculta texto/caret en colapsado */
+}
+
+/* L */
+:root {
+    --sb-icon-size: 20px;
+    --sb-icon-width: 32px;
+    --sb-row-height: 42px;
+    --sb-sub-icon-size: 18px;
+    --sb-sub-icon-width: 26px;
+    --sb-sub-row-height: 38px;
+}
+
+/* XL */
+/* :root {
+    --sb-icon-size: 24px;
+    --sb-icon-width: 38px;
+    --sb-row-height: 46px;
+    --sb-sub-icon-size: 21px;
+    --sb-sub-icon-width: 32px;
+    --sb-sub-row-height: 42px;
+}
+ */
+.main-sidebar .sidebar-menu .pull-right-container {
+    display: none !important;
+}
+
+/* Oculta caret y contenedor a la derecha en colapsado */
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li
+    > a
+    > .pull-right-container,
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li
+    > a
+    > .fa-angle-left {
+    display: none !important;
+}
+
+/* Por si tu CSS agrega un triángulo con ::after */
+.sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a::after {
+    content: none !important;
+}
+
+:root {
+    --brand: #003a5c; /* color principal BUAP/VD */
+    --brand-hover: #003a5c;
+    --sb-active: #003a5c; /* fondo item activo en sidebar */
+    --sb-hover: rgba(13, 110, 253, 0.12);
+}
+
+/* Header (AdminLTE 2 skin-blue) */
+.skin-blue .main-header .navbar,
+.skin-blue .main-header .logo {
+    background-color: var(--brand) !important;
+}
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+    background: var(--brand-hover) !important;
+}
+
+/* Sidebar: activo/hover coherentes */
+.main-sidebar .sidebar-menu > li.active > a {
+    background: var(--sb-active) !important;
+    color: #fff !important;
+}
+.main-sidebar .sidebar-menu > li > a:hover {
+    background: var(--sb-hover);
+    color: #fff;
+}
+/* Submenú activo un poco destacado */
+.main-sidebar .sidebar-menu .treeview-menu > li.active > a {
+    font-weight: 600;
+    color: var(--brand);
+}
+
+/* 1) Oculta chevrons/carets en modo colapsado */
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li
+    > a
+    > .pull-right-container,
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li
+    > a
+    > .fa-angle-left,
+.sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu i.pull-right {
+    display: none !important;
+}
+
+/* 2) Quita el triangulito (wedge) del flyout en colapsado */
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li:hover
+    > a::after,
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li.menu-open
+    > a::after,
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    > li
+    > .treeview-menu::before {
+    content: none !important;
+}
+
+/* (extra) por si algún submenú también genera wedge */
+.sidebar-mini.sidebar-collapse
+    .main-sidebar
+    .sidebar-menu
+    .treeview-menu
+    > li
+    > a::after {
+    content: none !important;
+}
+
+/* Quitar caret/chevron en sidebar colapsado */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .pull-right-container,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .fa-angle-left,
+.sidebar-mini:not(.sidebar-mini-expand-feature).sidebar-collapse
+    .sidebar-menu
+    > li:hover
+    > a
+    > .pull-right-container,
+.sidebar-mini:not(.sidebar-mini-expand-feature).sidebar-collapse
+    .sidebar-menu
+    > li:hover
+    > a
+    > .fa-angle-left {
+    display: none !important;
+}
+
+/* Ajustar padding (al quitar la flecha queda un hueco a la derecha) */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a {
+    padding-right: 12px !important;
+}
+
+/* Por si algún pseudo-elemento dibuja un “wedge” en el flyout */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > a::after {
+    content: none !important;
+}
+
+/* 1) Ocultar flecha/caret en colapsado */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .pull-right-container,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li > a > .fa-angle-left {
+    display: none !important;
+}
+
+/* 2) Ocultar el encabezado (pestaña azul con el título) en el flyout */
+.sidebar-mini.sidebar-collapse
+    .sidebar-menu
+    > li:hover
+    > a
+    > span:not(.pull-right) {
+    display: none !important;
+}
+
+/* 3) Recolocar el submenú para que no quede el hueco del encabezado */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > .treeview-menu {
+    top: 0 !important;
+    left: 50px !important;
+    margin-left: 0 !important;
+}
+
+/* 4) Por si algún pseudo-elemento dibuja “picos” */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > a::before,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > a::after {
+    content: none !important;
+}
+
+/* (Opcional) Colores de activo/hover unificados */
+.skin-blue .sidebar-menu > li.active > a,
+.skin-blue .sidebar-menu > li:hover > a {
+    background: #183a59; /* ajusta a tu color */
+    color: #fff;
+}
+.skin-blue .sidebar-menu .treeview-menu > li > a:hover {
+    background: #eef4ff;
+    color: #183a59;
+}
+
+/* Alternativa: conservar el título del flyout, pero sin “pestaña” azul */
+.sidebar-mini.sidebar-collapse
+    .sidebar-menu
+    > li:hover
+    > a
+    > span:not(.pull-right) {
+    display: block !important;
+    background: #fff !important;
+    color: #183a59 !important;
+    padding: 10px 12px !important;
+    border: 1px solid #e6e9f2;
+    border-bottom: 0;
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    margin-left: 0 !important;
+}
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > .treeview-menu {
+    top: 36px !important; /* queda justo debajo del título */
+    border: 1px solid #e6e9f2;
+    border-top: 0;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+}

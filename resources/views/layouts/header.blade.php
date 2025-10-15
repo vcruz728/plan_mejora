@@ -1,4 +1,5 @@
 <head>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>@yield('htmlheader_title')</title>
@@ -15,8 +16,10 @@
     <link rel="stylesheet" href="{{ asset('css/custom.css?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}">
     <link rel="stylesheet" href="{{ asset('css/apexcharts.css') }}">
     <link rel="stylesheet" href="{{ asset('bower_components/sweetalert/sweetalert.css') }}">
+
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
     <link href="{{ asset('css/toastr/toastr.min.css') }}" rel="stylesheet">
     <script src="{{ asset('js/index.js?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}"></script>
-    
+
+
 </head>

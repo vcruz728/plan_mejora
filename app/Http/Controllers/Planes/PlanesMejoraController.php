@@ -29,10 +29,13 @@ class PlanesMejoraController extends Controller
     public function getPlanes()
     {
         try {
-            if (\Auth::user()->rol == 1) {
+            $u = \Auth::user();
+
+            if ($u->rol == 1) {
                 $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
+                    'mejoras.procedencia as procedencia', // ← asegúrate de traerlo
                     'mejoras.id',
                     'plan_no',
                     'complemento_plan.archivo as cerrado',
@@ -53,86 +56,73 @@ class PlanesMejoraController extends Controller
                     ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id')
                     ->leftJoin(DB::raw("(SELECT id_plan FROM acciones GROUP BY id_plan) as acciones"), 'acciones.id_plan', 'mejoras.id')
                     ->where('activo', 1)->orderBy('orden')->get();
-            } else if (\Auth::user()->rol == 4) {
+            } else if ($u->rol == 4) {
                 $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
+                    'mejoras.procedencia as procedencia', // ← añade procedencia
                     'mejoras.id',
                     'plan_no',
                     'complemento_plan.archivo as cerrado',
                     'fecha_vencimiento',
-                    DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy"),
-
+                    DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy")
                 )
-                    ->leftJoin('complemento_plan', 'complemento_plan.id', 'mejoras.id')
-                    ->where('procedencia', \Auth::user()->procedencia)
+                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id') // ← corregido
+                    ->where('procedencia', $u->procedencia)
                     ->where('activo', 1)
                     ->orderBy('orden')
                     ->get();
             } else {
-
-                switch (\Auth::user()->nivel) {
+                $where = '';
+                switch ($u->nivel) {
                     case 1:
-                        $where = " AND id_des = " . \Auth::user()->id_des;
+                        $where = " AND id_des = " . (int)$u->id_des;
                         break;
                     case 2:
-                        $where = " AND id_ua = " . \Auth::user()->id_ua;
+                        $where = " AND id_ua = " . (int)$u->id_ua;
                         break;
                     case 3:
-                        $where = " AND id_sede = " . \Auth::user()->id_sede;
+                        $where = " AND id_sede = " . (int)$u->id_sede;
                         break;
                     case 4:
-                        $where = " AND id_programa_educativo = " . \Auth::user()->id_programa;
+                        $where = " AND id_programa_educativo = " . (int)$u->id_programa;
                         break;
                     case 5:
-                        $where = " AND id_nivel_estudio = " . \Auth::user()->id_nivel;
+                        $where = " AND id_nivel_estudio = " . (int)$u->id_nivel;
                         break;
                     case 6:
-                        $where = " AND id_modalidad_estudio = " . \Auth::user()->id_modalidad;
+                        $where = " AND id_modalidad_estudio = " . (int)$u->id_modalidad;
                         break;
                 }
-
 
                 $planes = Planes::select(
                     'tipo',
                     'recomendacion_meta',
+                    'mejoras.procedencia as procedencia', // ← añade procedencia
                     'mejoras.id',
                     'plan_no',
                     'complemento_plan.archivo as cerrado',
                     'fecha_vencimiento',
-                    DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy"),
-
+                    DB::raw("FORMAT(GetDate(), 'yyyy-MM-dd') AS fecha_hoy")
                 )
-                    ->leftJoin('complemento_plan', 'complemento_plan.id', 'mejoras.id')
+                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id') // ← corregido
                     ->where('activo', 1)
-                    ->where('mejoras.nivel', \Auth::user()->nivel)
+                    ->where('mejoras.nivel', $u->nivel)
                     ->whereRaw("1=1 $where")
                     ->orderBy('orden')
                     ->get();
             }
 
-            $msg = [
-                'code' => 200,
-                'mensaje' => 'Listado de planes de mejora.',
-                'data' => $planes,
-                'rol' => \Auth::user()->rol
-            ];
+            $msg = ['code' => 200, 'mensaje' => 'Listado de planes de mejora.', 'data' => $planes, 'rol' => $u->rol];
         } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+            $msg = ['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.', 'data' => $ex];
+        } catch (\Exception $e) {
+            $msg = ['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.', 'data' => $e];
         }
 
         return response()->json($msg, $msg['code']);
     }
+
 
     public function delMejora($id)
     {
