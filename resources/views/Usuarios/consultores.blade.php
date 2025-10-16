@@ -1,31 +1,13 @@
 @extends('app')
 
 @push('styles')
-    {{-- Extras de UI para esta pantalla --}}
+    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+    {{-- Opcional: tema bootstrap para combinar con AdminLTE/Bootstrap --}}
+    <link rel="stylesheet" href="{{ asset('bower_components/select2-bootstrap-theme/dist/select2-bootstrap.min.css') }}">
+
     <style>
-        .btn-icon {
-            width: 34px;
-            height: 34px;
-            padding: 6px 0;
-            text-align: center;
-        }
-
-        .btn-icon i {
-            font-size: 16px;
-            line-height: 20px;
-        }
-
-        .dt-loader {
-            padding: 1rem;
-            color: #666;
-        }
-
-        .modal .help {
-            font-size: 12px;
-            color: #777;
-        }
-
-        .select2-container--default .select2-selection--single {
+        .select2-container--default .select2-selection--single,
+        .select2-container--bootstrap .select2-selection--single {
             height: 34px;
         }
 
@@ -36,13 +18,44 @@
         .select2-container .select2-selection--single .select2-selection__arrow {
             height: 32px;
         }
+
+        /* no hacer wrap y mostrar separación real entre botones */
+        .btn-actions {
+            display: inline-flex;
+            gap: 8px;
+            /* <-- el “espacio” entre botones */
+            align-items: center;
+            flex-wrap: nowrap;
+            /* evita 2ª fila */
+        }
+
+        td.dt-actions {
+            white-space: nowrap;
+        }
+
+        /* estilo de los icon-badges (puedes reciclar tu .btn-icon existente) */
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
+            transition: transform .1s ease-in-out, box-shadow .1s;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .18);
+        }
+
+        .btn-icon i {
+            font-size: 16px;
+        }
     </style>
 @endpush
-
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
-@endpush
-
 
 @section('htmlheader_title', 'Listar consultores')
 
@@ -50,8 +63,7 @@
     <section class="content-header">
         <h1>Lista de consultores</h1>
     </section>
-
-    <div class="col-xs-12">
+    <div class="col-xs-12 page-consultores">
         <div class="box box-success">
             <div class="box-header with-border">
 
@@ -59,7 +71,7 @@
                     <label for="filtro_procedencia" class="control-label" style="margin-right:10px;">Filtrar por
                         procedencia:</label>
                     <select id="filtro_procedencia" class="form-control select2" data-placeholder="Todas las procedencias"
-                        style="width:400px">
+                        style="width:400px;">
                         <option value=""></option>
                         @foreach ($procedencias as $p)
                             <option value="{{ $p->id }}">{{ $p->descripcion }}</option>
@@ -78,7 +90,7 @@
             </div>
 
 
-            <div class="box-body" style="padding-top: .75rem;">
+            <div class="box-body">
                 <div id="div_tabla" class="table-responsive">
                     <div class="dt-loader"><i class="fa fa-spinner fa-spin"></i> Cargando…</div>
                 </div>
@@ -257,6 +269,35 @@
         var base_url = $("input[name='base_url']").val();
         var tabla, idEnEdicion = null;
 
+        // =============== Helper desbloquear Scroll despues de usar modal ===============
+        // --- Parche anti-overlay SweetAlert v1 ---
+        function unlockScroll() {
+            // Limpia estados de scroll
+            $('body')
+                .removeClass('stop-scrolling modal-open swal2-shown swal2-height-auto')
+                .css({
+                    overflow: '',
+                    height: '',
+                    'padding-right': ''
+                });
+
+            // NO eliminar .sweet-overlay: solo ocultarlo y desactivar eventos
+            var $ov = $('.sweet-overlay');
+            if ($ov.length) {
+                $ov.off(); // quita handlers colgados
+                $ov.css('display', 'none'); // lo deja oculto
+                $ov.css('pointer-events', 'none'); // que no bloquee clics
+            }
+
+            // Backdrops de Bootstrap sí se pueden quitar
+            $('.modal-backdrop').remove();
+        }
+
+        // Refuerzos
+        $(document).on('hidden.bs.modal', unlockScroll);
+        $(document).on('click', '.sweet-overlay', function() {
+            setTimeout(unlockScroll, 0);
+        });
         // ======================= Helpers =======================
         const enable = (btnId) => $(btnId).prop('disabled', false);
         const disable = (btnId) => $(btnId).prop('disabled', true);
@@ -338,7 +379,6 @@
                         d.procedencia = $('#filtro_procedencia').val() || '';
                     },
                     dataSrc: function(json) {
-                        console.log('DT response:', json); // <-- mira la forma real en la consola
 
                         // 1) Toma el array correcto
                         let rows = Array.isArray(json) ? json :
@@ -374,12 +414,12 @@
                     {
                         data: null,
                         orderable: false,
-                        className: 'text-center',
+                        className: 'text-center dt-actions',
                         render: o => {
                             const id = o.id ?? '';
                             const nombre = (o.name ?? '').replace(/"/g, '&quot;');
                             return `
-          <div class="btn-group" role="group">
+             <div class="btn-actions">
             <button class="btn btn-primary btn-icon" title="Editar" onclick="abrirEdicion('${id}')"><i class="fa fa-pencil"></i></button>
             <button class="btn btn-info btn-icon" title="Resetear contraseña" onclick="abrirReset('${id}')"><i class="fa fa-key"></i></button>
             <button class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaConsultor('${id}')"><i class="fa fa-trash"></i></button>
@@ -599,26 +639,54 @@
                 showCancelButton: true,
                 confirmButtonColor: '#d9534f',
                 confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }, async (isConfirm) => {
-                if (!isConfirm) return;
-                const resp = await fetch(`${base_url}/admin/consultor/${userId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                        'X-Requested-With': 'XMLHttpRequest'
+                cancelButtonText: 'Cancelar',
+                closeOnConfirm: true,
+                closeOnCancel: true
+            }, async isConfirm => {
+                if (!isConfirm) {
+                    unlockScroll();
+                    return;
+                }
+                try {
+                    const resp = await fetch(`${base_url}/admin/consultor/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await resp.json();
+                    if (data.code === 200) {
+                        swal({
+                            title: '¡Correcto!',
+                            text: data.mensaje,
+                            type: 'success',
+                            timer: 1300,
+                            showConfirmButton: false
+                        });
+                        tabla.ajax?.reload(null, false);
+                    } else {
+                        swal({
+                            title: '¡Error!',
+                            text: data.mensaje || 'No se pudo eliminar.',
+                            type: 'error',
+                            timer: 1800,
+                            showConfirmButton: false
+                        });
                     }
-                });
-                const data = await resp.json();
-                if (data.code == 200) {
-                    swal('¡Correcto!', data.mensaje, 'success');
-                    tabla.row(`#row_${userId}`).remove().draw(false);
-                    reloadTabla();
-                } else {
-                    swal('¡Error!', data.mensaje || 'No se pudo eliminar.', 'error');
+                } catch (e) {
+                    swal({
+                        title: '¡Error!',
+                        text: 'Problema de red.',
+                        type: 'error',
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                } finally {
+                    setTimeout(unlockScroll, 0);
                 }
             });
-        };
+        }
 
 
         function confirmarEliminacion(id, nombre = '') {

@@ -418,3 +418,29 @@
     border-bottom-right-radius: 4px;
     border-bottom-left-radius: 4px;
 }
+
+/* === Evitar desbordes: permitir que el texto del menú haga wrap === */
+.main-sidebar .sidebar-menu > li > a,
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    white-space: normal !important; /* anula posibles nowrap heredados */
+}
+
+.main-sidebar .sidebar-menu .text {
+    flex: 1 1 0%; /* que pueda encoger en flex */
+    min-width: 0; /* CLAVE: permite que el texto se reduzca y envuelva */
+    white-space: normal;
+    overflow-wrap: anywhere; /* rompe si hay palabras muy largas */
+    word-break: break-word; /* fallback */
+    line-height: 1.25; /* un poquito más compacto en 2 líneas */
+}
+
+/* Asegura que el icono no “coma” ancho y el texto use el resto */
+.main-sidebar .sidebar-menu > li > a > i.nav-icon,
+.main-sidebar .sidebar-menu .treeview-menu > li > a > i.nav-icon {
+    flex: 0 0 var(--sb-icon-width); /* ya tienes --sb-icon-width */
+    text-align: center;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu {
+    overflow: hidden; /* evita que algún pseudo-elemento se salga */
+}

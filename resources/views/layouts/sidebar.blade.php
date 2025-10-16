@@ -46,23 +46,16 @@
                         <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
                     </a>
                     <ul class="treeview-menu">
-                        <li class="{{ request()->is('admin/nuevo/usuario') ? 'active' : '' }}">
-                            <a href="{{ url('/admin/nuevo/usuario') }}">
-                                <i class="fa fa-address-book nav-icon"></i>
-                                <span class="text">Nuevo usuario</span>
-                            </a>
-                        </li>
                         <li class="{{ request()->is('admin/lista/usuario') ? 'active' : '' }}">
                             <a href="{{ url('/admin/lista/usuario') }}">
-                                <i class="fa fa-list-ol nav-icon"></i>
-                                <span class="text">Listar</span>
+                                <i class="fa fa-address-book nav-icon"></i>
+                                <span class="text">Administrar usuarios</span>
                             </a>
                         </li>
                     </ul>
                 </li>
 
-                <li
-                    class="treeview {{ request()->is('admin/consultores', 'admin/edita/usuario*', 'edita/usuario/*') ? 'menu-open active' : '' }}">
+                <li class="treeview {{ request()->is('admin/consultores') ? 'menu-open active' : '' }}">
                     <a href="#">
                         <i class="fa fa-eye nav-icon"></i>
                         <span class="text">Consultores</span>
@@ -72,7 +65,7 @@
                         <li class="{{ request()->is('admin/consultores') ? 'active' : '' }}">
                             <a href="{{ url('/admin/consultores') }}">
                                 <i class="fa fa-address-book nav-icon"></i>
-                                <span class="text">Administrar Consultores</span>
+                                <span class="text">Administrar consultores</span>
                             </a>
                         </li>
                     </ul>
@@ -104,6 +97,29 @@
                             </a>
                         </li>
                     </ul>
+                </li>
+
+                <li class="treeview {{ request()->is('admin/resportes/*') ? 'menu-open active' : '' }}">
+                    <a href="#">
+                        <i class="fa fa-book nav-icon"></i>
+                        <span class="text">Reportes</span>
+                        <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
+                    </a>
+                    {{-- <ul class="treeview-menu">
+                        <li class="{{ request()->is('admin/reportes/reporte1') ? 'active' : '' }}">
+                            <a href="{{ url('/admin/reportes/reporte1') }}">
+                                <i class="fa fa-cog nav-icon"></i>
+                                <span class="text">Programas por vencimiento/estatus</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->is('admin/reportes/reporte2') ? 'active' : '' }}">
+                            <a href="{{ url('/admin/reportes/reporte2') }}">
+                                <i class="fa fa-cog nav-icon"></i>
+                                <span class="text">Planeas de mejora por procedencia</span>
+                            </a>
+                        </li>
+
+                    </ul> --}}
                 </li>
             @endif
         </ul>

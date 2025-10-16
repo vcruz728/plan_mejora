@@ -76,15 +76,24 @@ Route::middleware('auth')->group(function () {
 	})->middleware(['auth', 'verified']);
 
 
+	// LISTA + DATOS
+	Route::get('/admin/lista/usuario', [UsuariosController::class, 'listaUsuarios']);
+	Route::get('/admin/get/usuarios/sistema', [UsuariosController::class, 'getUsuarios']); // acepta filtros
+
+	Route::get('/admin/get/informacion/usuario/{id}', [UsuariosController::class, 'getInfoUser']);
+	// EDITAR (vista + post)
+	Route::get('/edita/usuario/{id}', [UsuariosController::class, 'viewEdit']);
+	Route::post('/admin/edita/usuario', [UsuariosController::class, 'editUser']); // ya la tienes
+
+	// NUEVO (vista + post)
 	Route::get('/admin/nuevo/usuario', [UsuariosController::class, 'viewAlta']);
 	Route::post('/admin/guarda/nuevo/usuario', [UsuariosController::class, 'addNuevo']);
-	Route::get('/edita/usuario/{id}', [UsuariosController::class, 'viewEdit']);
-	Route::post('/admin/edita/usuario', [UsuariosController::class, 'editUser']);
-	Route::get('/admin/lista/usuario', [UsuariosController::class, 'listaUsuarios']);
-	Route::get('/admin/get/usuarios/sistema', [UsuariosController::class, 'getUsuarios']);
-	Route::get('/admin/get/informacion/usuario/{id}', [UsuariosController::class, 'getInfoUser']);
-	Route::post('/admin/edita/usuario/{id}', [UsuariosController::class, 'editUsuario']);
+
+	// RESET PASSWORD (con modal o “one-click” si mandas action=reset)
 	Route::post('/admin/usuario/resetea-password/{id}', [UsuariosController::class, 'resetPassword']);
+
+	// ELIMINAR
+	Route::delete('/admin/usuario/{id}', [UsuariosController::class, 'destroyUsuario']);
 
 	Route::get('/admin/consultores', [UsuariosController::class, 'viewAltaRev']);
 	Route::get('admin/get/usuarios/sistema/consultores', [UsuariosController::class, 'getConsultores']);

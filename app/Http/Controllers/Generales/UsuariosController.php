@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Generales;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -16,6 +15,8 @@ use App\Models\Catalogos\NivelesEstudio;
 use App\Models\Catalogos\Modalidad;
 use App\Models\Catalogos\Procedencias;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 
 class UsuariosController extends Controller
@@ -218,42 +219,47 @@ class UsuariosController extends Controller
         return view('Usuarios.lista');
     }
 
-    public function getUsuarios()
+    public function getUsuarios(Request $request)
     {
         try {
-            $usuarios = User::select(
+            $q = User::select(
                 'users.id',
                 'users.name',
                 'users.email',
                 'users.usuario',
                 'ua.nombre as unidad'
-
             )
-                ->leftJoin('cat_unidades_academicas as ua', 'ua.id', 'users.id_ua')
-                ->where('users.rol', 2)
-                ->get();
+                ->leftJoin('cat_unidades_academicas as ua', 'ua.id', '=', 'users.id_ua')
+                ->where('users.rol', 2);
 
-            $msg = [
+            if ($request->filled('tipo_mejora')) {
+                $q->where('users.tipo_mejora', $request->tipo_mejora);
+            }
+            if ($request->filled('des')) {
+                $q->where('users.id_des', $request->des);
+            }
+            if ($request->filled('ua')) {
+                $q->where('users.id_ua', $request->ua);
+            }
+            if ($request->filled('sede')) {
+                $q->where('users.id_sede', $request->sede);
+            }
+
+            $usuarios = $q->orderBy('users.name')->get();
+
+            return response()->json([
                 'code' => 200,
                 'mensaje' => 'Listado de usuarios.',
                 'data' => $usuarios
-            ];
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
                 'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'
+            ], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
+
 
     public function getInfoUser($id)
     {
@@ -581,6 +587,16 @@ class UsuariosController extends Controller
                 'code' => 400,
                 'mensaje' => 'No se pudo eliminar el consultor.',
             ]);
+        }
+    }
+    public function destroyUsuario($id)
+    {
+        try {
+            $user = User::where('id', $id)->where('rol', 2)->firstOrFail();
+            $user->delete();
+            return response()->json(['code' => 200, 'mensaje' => 'Usuario eliminado correctamente.']);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'No se pudo eliminar el usuario.'], 400);
         }
     }
 }
