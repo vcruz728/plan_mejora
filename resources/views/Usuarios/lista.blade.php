@@ -366,7 +366,12 @@
             }
             $('.modal-backdrop').remove();
         }
-        $(document).on('hidden.bs.modal', unlockScroll);
+        //  $(document).on('hidden.bs.modal', unlockScroll);
+        $(document).on('hidden.bs.modal', function() {
+            if (!$('.modal:visible').length) {
+                unlockScroll(); // solo limpia si ya no hay modales
+            }
+        });
         $(document).on('click', '.sweet-overlay', function() {
             setTimeout(unlockScroll, 0);
         });
@@ -1146,7 +1151,31 @@
             const id = $('#eu_id_usuario').val();
             $('#reset_user_id').val(id);
             $('#form_reset')[0].reset();
-            $('#modal_reset').modal('show');
+
+            // Asegura que el reset se apendea al body y se apila arriba
+            $('#modal_reset').appendTo('body').modal({
+                backdrop: 'static', // opcional: evita cerrar al hacer clic fuera
+                keyboard: false // opcional
+            });
+        });
+
+        // Stack de modales (segundo modal siempre arriba)
+        $(document).on('show.bs.modal', '.modal', function() {
+            const zIndex = 1040 + (10 * $('.modal:visible').length);
+            $(this).css('z-index', zIndex);
+            // Aplila el backdrop justo debajo del modal
+            setTimeout(() => {
+                $('.modal-backdrop').not('.modal-stack')
+                    .css('z-index', zIndex - 1)
+                    .addClass('modal-stack');
+            }, 0);
+        });
+
+        // Si se cierra un modal pero sigue habiendo otro abierto, conserva el scroll lock
+        $(document).on('hidden.bs.modal', '.modal', function() {
+            if ($('.modal:visible').length) {
+                $('body').addClass('modal-open');
+            }
         });
     </script>
 @endsection
