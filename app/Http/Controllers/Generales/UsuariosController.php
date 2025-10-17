@@ -264,40 +264,48 @@ class UsuariosController extends Controller
     public function getInfoUser($id)
     {
         try {
-            $usuario = User::select(
-                'users.id',
-                'users.name',
-                'users.email',
-                'users.usuario',
-                'ua.nombre as unidad',
-                'users.procedencia',
-
-            )
+            $usuario = \App\Models\User::query()
                 ->leftJoin('cat_unidades_academicas as ua', 'ua.id', 'users.id_ua')
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    'users.usuario',
+                    'users.rol',
+                    'users.tipo_mejora',
+                    'users.id_des',
+                    'users.id_ua',
+                    'users.id_sede',
+                    'users.id_programa',
+                    'users.id_nivel',
+                    'users.id_modalidad',
+                    'users.procedencia',
+                    \DB::raw('ua.nombre as unidad'), // back-compat para consultores
+                ])
                 ->where('users.id', $id)
                 ->first();
 
-            $msg = [
-                'code' => 200,
-                'mensaje' => 'Información del usuario.',
-                'data' => $usuario
-            ];
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
-        }
+            if (!$usuario) {
+                return response()->json([
+                    'code'    => 404,
+                    'mensaje' => 'Usuario no encontrado',
+                ], 404);
+            }
 
-        return response()->json($msg, $msg['code']);
+            return response()->json([
+                'code'    => 200,
+                'mensaje' => 'Información del usuario.',
+                'data'    => $usuario,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'code'    => 500,
+                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
+                'error'   => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
+
 
     public function editUsuario(Request $request, $id)
     {

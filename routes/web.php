@@ -78,6 +78,7 @@ Route::middleware('auth')->group(function () {
 
 	// LISTA + DATOS
 	Route::get('/admin/lista/usuario', [UsuariosController::class, 'listaUsuarios']);
+
 	Route::get('/admin/get/usuarios/sistema', [UsuariosController::class, 'getUsuarios']); // acepta filtros
 
 	Route::get('/admin/get/informacion/usuario/{id}', [UsuariosController::class, 'getInfoUser']);

@@ -406,204 +406,634 @@
 @section('localscripts')
     <script src="{{ asset('bower_components/select2/js/select2.min.js') }}"></script>
     <script>
-        var base_url = $("input[name='base_url']").val();
-
+        // ====== Pickers / select2 existentes ======
         $('#fecha_vencimiento').datepicker({
             dateFormat: 'yy-mm-dd'
         }).datepicker();
-
-        // Select2 donde aplica
         $('#ods_pdi_select').select2();
         $('#objetivo_pdi').select2();
 
-        const guardaCambios = async () => {
+        // ====== Guardar ======
+        async function guardaCambios() {
             const body = new FormData(document.getElementById('form_edita_plan'));
             body.append('tipo_plan', $('input[name="tipo"]:checked').val());
             body.append('id_plan', {{ $plan->id }});
-
-            const response = await fetch(`${base_url}/admin/guarda/actualizacion/plan-mejora`, {
-                method: 'post',
-                body,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-            const data = await response.json();
-
-            if (data.code == 200) {
-                swal("¡Correcto!", data.mensaje, "success");
-            } else if (data.code == 411) {
-                let num = 0;
-                $.each(data.errors, function(key, value) {
-                    if (num++ == 0) swal("¡Error!", value[0], "error");
+            try {
+                const resp = await fetch(`${base_url}/admin/guarda/actualizacion/plan-mejora`, {
+                    method: 'POST',
+                    body,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
                 });
-            } else {
-                swal("¡Error!", data.mensaje, "error");
+                const data = await resp.json();
+                if (data.code === 200) swal('¡Correcto!', data.mensaje, 'success');
+                else if (data.code === 411) {
+                    const first = Object.values(data.errors)[0][0];
+                    swal('¡Error!', first, 'error');
+                } else swal('¡Error!', data.mensaje || 'No se pudo guardar.', 'error');
+            } finally {
+                $("#btn_edita").prop("disabled", false);
             }
-            $("#btn_edita").removeAttr("disabled");
-        };
+        }
+        window.guardaCambios = guardaCambios; // expone para el botón
 
-        // Autocompletar plan_no desde siglas (mismo comportamiento que en "nuevo")
-        const tipoProcedencia = async (valor) => {
+        // ====== Autocompleta plan_no desde procedencia ======
+        async function tipoProcedencia(valor) {
             const resp = await fetch(`${base_url}/admin/get/siglas-procedencia/${valor}`);
             const data = await resp.json();
-            $("#plan_no").val('');
-            if (data?.data?.siglas) {
-                $("#plan_no").val(`${data.data.siglas}-`);
-            }
+            $("#plan_no").val(data?.data?.siglas ? `${data.data.siglas}-` : '');
+        }
+        window.tipoProcedencia = tipoProcedencia;
+
+        // ================== MEMORIA + CACHÉ (AC/Dependencia) ==================
+        let prefilling = false; // evita handlers durante precarga
+        let currentTipo = ''; // '1' AC, '2' Dependencia
+
+        // Memoria de lo que el usuario eligió/capturó por tipo
+        const formMemory = {
+            '1': null,
+            '2': null
         };
 
-        // Resto de helpers (idénticos a tu versión)
-        const getOdsPdi = async (valor) => {
+
+        // Helpers de fetch + caché
+        async function getDesCached(tipo) {
+            if (!listsCache.des[tipo]) {
+                const r = await fetch(`${base_url}/admin/get/des-o-dependencias/${tipo}`);
+                const j = await r.json();
+                listsCache.des[tipo] = j.data || [];
+            }
+            return listsCache.des[tipo];
+        }
+        async function getUaCached(idDes) {
+            if (!listsCache.ua[idDes]) {
+                const r = await fetch(`${base_url}/admin/get/unidades/${idDes}`);
+                const j = await r.json();
+                listsCache.ua[idDes] = j.data || [];
+            }
+            return listsCache.ua[idDes];
+        }
+        async function getSedesCached(idUa) {
+            if (!listsCache.sedes[idUa]) {
+                const r = await fetch(`${base_url}/admin/get/sedes/${idUa}`);
+                const j = await r.json();
+                listsCache.sedes[idUa] = j.data || [];
+            }
+            return listsCache.sedes[idUa];
+        }
+        async function getProgramasCached(idSede) {
+            if (!listsCache.programas[idSede]) {
+                const r = await fetch(`${base_url}/admin/get/programas/${idSede}`);
+                const j = await r.json();
+                listsCache.programas[idSede] = j.data || [];
+            }
+            return listsCache.programas[idSede];
+        }
+        async function getNivelesCached(idProg) {
+            if (!listsCache.niveles[idProg]) {
+                const r = await fetch(`${base_url}/admin/get/niveles/${idProg}`);
+                const j = await r.json();
+                listsCache.niveles[idProg] = j.data || [];
+            }
+            return listsCache.niveles[idProg];
+        }
+        async function getModalidadesCached(idNivel) {
+            if (!listsCache.modalidades[idNivel]) {
+                const r = await fetch(`${base_url}/admin/get/modalidades/${idNivel}`);
+                const j = await r.json();
+                listsCache.modalidades[idNivel] = j.data || [];
+            }
+            return listsCache.modalidades[idNivel];
+        }
+
+        // Rellena un select con items [{id,nombre}] y selecciona "selectedId"
+        function fillSelect($sel, items = [], selectedId = '') {
+            const frag = document.createDocumentFragment();
+            const empty = new Option('', '', false, false);
+            empty.value = '';
+            frag.appendChild(empty);
+            items.forEach(({
+                id,
+                nombre
+            }) => {
+                frag.appendChild(new Option(nombre, String(id), false, String(id) === String(selectedId)));
+            });
+            const el = $sel[0];
+            el.innerHTML = '';
+            el.appendChild(frag);
+            $sel.val(String(selectedId || ''));
+            // si algún día pones select2 en estos combos, descomenta:
+            // $sel.trigger('change.select2');
+        }
+
+        // Guarda estado actual en memoria del tipo
+        function remember(tipo) {
+            if (!tipo) return;
+            formMemory[tipo] = {
+                des: $('#des').val() || '',
+                ua: $('#unidad_academica').val() || '',
+                sede: $('#sede').val() || '',
+                prog: $('#programa_educativo').val() || '',
+                nivel: $('#nivel').val() || '',
+                mod: $('#modalidad').val() || ''
+            };
+        }
+
+        // Lee opciones del DOM para “sembrar” el caché en el tipo actual (arranca más rápido)
+        function optionList($sel) {
+            const out = [];
+            $sel.find('option').each(function() {
+                const v = $(this).attr('value');
+                if (v !== '' && v != null) out.push({
+                    id: v,
+                    nombre: $(this).text()
+                });
+            });
+            return out;
+        }
+
+        function seedCacheFromDOM() {
+            const t = $('#tipo_mejora').val() || '';
+            if (!t) return;
+            const idDes = $('#des').val() || '';
+            const idUa = $('#unidad_academica').val() || '';
+            const idSede = $('#sede').val() || '';
+            const idProg = $('#programa_educativo').val() || '';
+            const idNivel = $('#nivel').val() || '';
+
+            const desList = optionList($('#des'));
+            if (desList.length) listsCache.des[t] = desList;
+            const uaList = optionList($('#unidad_academica'));
+            if (uaList.length && idDes) listsCache.ua[idDes] = uaList;
+            const sedList = optionList($('#sede'));
+            if (sedList.length && idUa) listsCache.sedes[idUa] = sedList;
+            const proList = optionList($('#programa_educativo'));
+            if (proList.length && idSede) listsCache.programas[idSede] = proList;
+            const nivList = optionList($('#nivel'));
+            if (nivList.length && idProg) listsCache.niveles[idProg] = nivList;
+            const modList = optionList($('#modalidad'));
+            if (modList.length && idNivel) listsCache.modalidades[idNivel] = modList;
+        }
+
+        // Restaura memoria + listas para un tipo
+        async function restore(tipo) {
+            const snap = formMemory[tipo] || {};
+            prefilling = true;
+
+            if (tipo === '2') { // Dependencia
+                $('#div_des').attr('hidden', true);
+                $('#labelDes').text('Dependencia');
+            } else {
+                $('#div_des').removeAttr('hidden');
+                $('#labelDes').text('AC');
+            }
+
+            // DES
+            const desList = await getDesCached(tipo);
+            fillSelect($('#des'), desList, snap.des);
+
+            if (tipo === '2') {
+                // Solo DES; limpia resto
+                fillSelect($('#unidad_academica'), [], '');
+                fillSelect($('#sede'), [], '');
+                fillSelect($('#programa_educativo'), [], '');
+                fillSelect($('#nivel'), [], '');
+                fillSelect($('#modalidad'), [], '');
+                prefilling = false;
+                return;
+            }
+
+            // UA
+            if (snap.des) fillSelect($('#unidad_academica'), await getUaCached(snap.des), snap.ua);
+            else fillSelect($('#unidad_academica'), [], '');
+
+            // Sede
+            if (snap.ua) fillSelect($('#sede'), await getSedesCached(snap.ua), snap.sede);
+            else fillSelect($('#sede'), [], '');
+
+            // Programa
+            if (snap.sede) fillSelect($('#programa_educativo'), await getProgramasCached(snap.sede), snap.prog);
+            else fillSelect($('#programa_educativo'), [], '');
+
+            // Nivel
+            if (snap.prog) fillSelect($('#nivel'), await getNivelesCached(snap.prog), snap.nivel);
+            else fillSelect($('#nivel'), [], '');
+
+            // Modalidad
+            if (snap.nivel) fillSelect($('#modalidad'), await getModalidadesCached(snap.nivel), snap.mod);
+            else fillSelect($('#modalidad'), [], '');
+
+            prefilling = false;
+        }
+
+        // ====== “Sobreescribo” las funciones que llama tu HTML (onchange="...") ======
+        window.getDesoDep = async function(valor) {
+            // Cambiar de AC↔︎Dependencia preservando lo capturado
+            const nuevo = String(valor || '');
+            if (nuevo === currentTipo) return;
+            remember(currentTipo);
+            currentTipo = nuevo;
+            await restore(currentTipo);
+        };
+
+        window.getUa = async function(idDes) {
+            if (prefilling || currentTipo === '2') return; // En Dependencia no aplica cascada
+            // limpia abajo
+            fillSelect($('#unidad_academica'), [], '');
+            fillSelect($('#sede'), [], '');
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idDes) {
+                const list = await getUaCached(idDes);
+                fillSelect($('#unidad_academica'), list, '');
+            }
+            remember(currentTipo);
+        };
+
+        window.getSedes = async function(idUa) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#sede'), [], '');
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idUa) {
+                const list = await getSedesCached(idUa);
+                fillSelect($('#sede'), list, '');
+            }
+            remember(currentTipo);
+        };
+
+        window.getProgramas = async function(idSede) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idSede) {
+                const list = await getProgramasCached(idSede);
+                fillSelect($('#programa_educativo'), list, '');
+            }
+            remember(currentTipo);
+        };
+
+        window.getNiveles = async function(idProg) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idProg) {
+                const list = await getNivelesCached(idProg);
+                fillSelect($('#nivel'), list, '');
+            }
+            remember(currentTipo);
+        };
+
+        window.getModalidades = async function(idNivel) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#modalidad'), [], '');
+            if (idNivel) {
+                const list = await getModalidadesCached(idNivel);
+                fillSelect($('#modalidad'), list, '');
+            }
+            remember(currentTipo);
+        };
+
+        // ====== PDI/SEAEs (como ya los tenías) ======
+        window.getOdsPdi = async function(valor) {
             const r = await fetch(`${base_url}/admin/get/ods-pdi/${valor}`);
             const data = await r.json();
-            if (data.code == 200) {
+            if (data.code === 200) {
                 $("#estrategias,#meta_pdi,#objetivo_pdi,#indicador_pdi").html(
                     `<option value="">Seleccione una opción</option>`);
                 $("#ods_pdi_select").html(`<option value="">Seleccione una opción</option>`);
-                data.data.map(x => $("#ods_pdi_select").append(
+                data.data.forEach(x => $("#ods_pdi_select").append(
                     `<option value="${x.id}">${x.descripcion}</option>`));
                 $('#ods_pdi_select').select2();
             } else swal("¡Error!", data.mensaje, "error");
         };
-
-        const getObjetivosPdi = async (valor) => {
+        window.getObjetivosPdi = async function(valor) {
             const r = await fetch(`${base_url}/admin/get/objetivos-pdi/${valor}`);
             const data = await r.json();
-            if (data.code == 200) {
+            if (data.code === 200) {
                 $("#estrategias,#meta_pdi,#objetivo_pdi,#indicador_pdi").html(
                     `<option value="">Seleccione una opción</option>`);
-                data.data.map(x => $("#objetivo_pdi").append(`<option value="${x.id}">${x.descripcion}</option>`));
+                data.data.forEach(x => $("#objetivo_pdi").append(
+                    `<option value="${x.id}">${x.descripcion}</option>`));
                 $('#objetivo_pdi').select2();
             } else swal("¡Error!", data.mensaje, "error");
         };
-
-        const getEstrategiasPdi = async (valor) => {
+        window.getEstrategiasPdi = async function(valor) {
             const r = await fetch(`${base_url}/admin/get/estrategias-pdi/${valor}`);
             const data = await r.json();
-            if (data.code == 200) {
+            if (data.code === 200) {
                 $("#meta_pdi").html(`<option value="">Seleccione una opción</option>`);
                 $("#estrategias").html(`<option value="">Seleccione una opción</option>`);
-                data.data.map(x => $("#estrategias").append(`<option value="${x.id}">${x.descripcion}</option>`));
+                data.data.forEach(x => $("#estrategias").append(
+                    `<option value="${x.id}">${x.descripcion}</option>`));
                 $('#estrategias').select2();
             } else swal("¡Error!", data.mensaje, "error");
         };
-
-        const getIndicadoresMetas = async (valor) => {
+        window.getIndicadoresMetas = async function(valor) {
             const r = await fetch(`${base_url}/admin/get/metas-pdi/${valor}`);
             const data = await r.json();
-            if (data.code == 200) {
+            if (data.code === 200) {
                 $("#meta_pdi").html(`<option value="">Seleccione una opción</option>`);
-                data.data.map(x => $("#meta_pdi").append(`<option value="${x.id}">${x.descripcion}</option>`));
+                data.data.forEach(x => $("#meta_pdi").append(`<option value="${x.id}">${x.descripcion}</option>`));
                 $('#meta_pdi').select2();
             } else swal("¡Error!", data.mensaje, "error");
         };
 
-        const getDesoDep = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/des-o-dependencias/${valor}`);
-            const data = await r.json();
-
-            if (valor == 2) {
-                $("#div_des").attr('hidden', true);
-                $("#labelDes").html(`Dependencia <small><p class="obligatorio">*</p></small>`);
-            } else {
-                $("#div_des").removeAttr('hidden');
-                $("#labelDes").html(`AC <small><p class="obligatorio">*</p></small>`);
-            }
-
-            $("#des,#unidad_academica,#sede,#programa_educativo,#nivel,#modalidad")
-                .html(`<option value="">Seleccione una opción</option>`);
-
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#des").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        const getUa = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/unidades/${valor}`);
-            const data = await r.json();
-            $("#unidad_academica,#sede,#programa_educativo,#nivel,#modalidad")
-                .html(`<option value="">Seleccione una opción</option>`);
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#unidad_academica").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        const getSedes = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/sedes/${valor}`);
-            const data = await r.json();
-            $("#sede,#programa_educativo,#nivel,#modalidad")
-                .html(`<option value="">Seleccione una opción</option>`);
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#sede").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        const getProgramas = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/programas/${valor}`);
-            const data = await r.json();
-            $("#programa_educativo,#nivel,#modalidad")
-                .html(`<option value="">Seleccione una opción</option>`);
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#programa_educativo").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        const getNiveles = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/niveles/${valor}`);
-            const data = await r.json();
-            $("#nivel,#modalidad").html(`<option value="">Seleccione una opción</option>`);
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#nivel").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        const getModalidades = async (valor) => {
-            const r = await fetch(`${base_url}/admin/get/modalidades/${valor}`);
-            const data = await r.json();
-            $("#modalidad").html(`<option value="">Seleccione una opción</option>`);
-            if (data.code == 200) {
-                data.data.forEach(({
-                    id,
-                    nombre
-                }) => {
-                    $("#modalidad").append($('<option>').val(id).text(`${nombre}`));
-                });
-            } else swal("¡Error!", data.mensaje, "error");
-        };
-
-        // Estado inicial para UA/Dependencia al cargar
+        // ====== Estado inicial al cargar ======
         $(function() {
+            // Ajusta visibilidad según valor inicial
             const preset = $('#tipo_mejora').val();
-            if (preset === '2') {
-                $("#div_des").attr('hidden', true);
-                $("#labelDes").html(`Dependencia <small><p class="obligatorio">*</p></small>`);
+            currentTipo = String(preset || '');
+            if (currentTipo === '2') {
+                $('#div_des').attr('hidden', true);
+                $('#labelDes').text('Dependencia');
+            } else {
+                $('#div_des').removeAttr('hidden');
+                $('#labelDes').text('AC');
             }
+
+            // Si el servidor ya trajo combos llenos, siembro el caché para que alternar sea inmediato
+            seedCacheFromDOM();
+            // Guardo snapshot inicial del tipo actual
+            remember(currentTipo);
+        });
+        (function() {
+            // Muestra/oculta la cascada y pone el label con el *
+            function toggleACUI(tipo) {
+                const esDep = String(tipo) === '2';
+                $('#div_des').prop('hidden', esDep);
+                $('#labelDes').html(`${esDep ? 'Dependencia' : 'AC'} <small class="obligatorio">*</small>`);
+            }
+
+            // Define la versión GLOBAL (para el onchange inline)
+            window.getDesoDep = async function(valor) {
+                const nuevo = String(valor || '');
+
+                // Si tienes la memoria/caché del snippet anterior, respétala
+                if (typeof remember === 'function') remember(typeof currentTipo !== 'undefined' ? currentTipo :
+                    '');
+                if (typeof currentTipo !== 'undefined') currentTipo = nuevo;
+
+                // Toggle visual inmediato
+                toggleACUI(nuevo);
+
+                // Restaura selects desde memoria/caché si existe esa función
+                if (typeof restore === 'function') {
+                    try {
+                        await restore(nuevo);
+                    } catch (e) {
+                        console.warn('restore() falló:', e);
+                    }
+                } else {
+                    // Si no tienes restore(), al menos limpia los combos cuando sea AC
+                    if (nuevo === '1') {
+                        ['#unidad_academica', '#sede', '#programa_educativo', '#nivel', '#modalidad']
+                        .forEach(sel => $(sel).val(''));
+                    } else {
+                        // Dependencia: solo se usa DES
+                        ['#unidad_academica', '#sede', '#programa_educativo', '#nivel', '#modalidad']
+                        .forEach(sel => $(sel).val(''));
+                    }
+                }
+            };
+
+            // Por si el handler inline no se dispara en tu navegador/escenario:
+            $('#tipo_mejora').off('change._acdep').on('change._acdep', function() {
+                window.getDesoDep(this.value);
+            });
+
+            // Estado inicial al cargar la página
+            const initial = $('#tipo_mejora').val();
+            toggleACUI(initial);
+        })();
+
+
+
+        const listsCache = {
+            des: {
+                '1': null,
+                '2': null
+            }, // por tipo
+            ua: {}, // id_des -> []
+            sedes: {}, // id_ua  -> []
+            programas: {}, // id_sede-> []
+            niveles: {}, // id_prog-> []
+            modalidades: {} // id_nivel-> []
+        };
+
+        function setACUI(tipo) {
+            const esDep = String(tipo) === '2';
+            $('#div_des').prop('hidden', esDep);
+            $('#labelDes').html(`${esDep ? 'Dependencia' : 'AC'} <small class="obligatorio">*</small>`);
+        }
+
+        function fillSelect($sel, items = [], selectedId = '') {
+            const frag = document.createDocumentFragment();
+            const empty = new Option('', '', false, false);
+            empty.value = '';
+            frag.appendChild(empty);
+            items.forEach(({
+                    id,
+                    nombre
+                }) =>
+                frag.appendChild(new Option(nombre, String(id), false, String(id) === String(selectedId)))
+            );
+            const el = $sel[0];
+            el.innerHTML = '';
+            el.appendChild(frag);
+            $sel.val(String(selectedId || ''));
+        }
+
+        function remember(tipo) {
+            if (!tipo) return;
+            formMemory[tipo] = {
+                des: $('#des').val() || '',
+                ua: $('#unidad_academica').val() || '',
+                sede: $('#sede').val() || '',
+                prog: $('#programa_educativo').val() || '',
+                nivel: $('#nivel').val() || '',
+                mod: $('#modalidad').val() || '',
+            };
+        }
+
+        function optionList($sel) {
+            const out = [];
+            $sel.find('option').each(function() {
+                const v = $(this).attr('value');
+                if (v !== '' && v != null) out.push({
+                    id: v,
+                    nombre: $(this).text()
+                });
+            });
+            return out;
+        }
+
+        function seedCacheFromDOM() {
+            const t = $('#tipo_mejora').val() || '';
+            if (!t) return;
+            const idDes = $('#des').val() || '';
+            const idUa = $('#unidad_academica').val() || '';
+            const idSede = $('#sede').val() || '';
+            const idProg = $('#programa_educativo').val() || '';
+            const idNivel = $('#nivel').val() || '';
+
+            const desList = optionList($('#des'));
+            if (desList.length) listsCache.des[t] = desList;
+            const uaList = optionList($('#unidad_academica'));
+            if (uaList.length && idDes) listsCache.ua[idDes] = uaList;
+            const sedList = optionList($('#sede'));
+            if (sedList.length && idUa) listsCache.sedes[idUa] = sedList;
+            const proList = optionList($('#programa_educativo'));
+            if (proList.length && idSede) listsCache.programas[idSede] = proList;
+            const nivList = optionList($('#nivel'));
+            if (nivList.length && idProg) listsCache.niveles[idProg] = nivList;
+            const modList = optionList($('#modalidad'));
+            if (modList.length && idNivel) listsCache.modalidades[idNivel] = modList;
+        }
+
+        // Fetchers con caché
+        async function getDesCached(tipo) {
+            if (!listsCache.des[tipo]) {
+                const j = await (await fetch(`${base_url}/admin/get/des-o-dependencias/${tipo}`)).json();
+                listsCache.des[tipo] = j.data || [];
+            }
+            return listsCache.des[tipo];
+        }
+        async function getUaCached(idDes) {
+            if (!listsCache.ua[idDes]) {
+                const j = await (await fetch(`${base_url}/admin/get/unidades/${idDes}`)).json();
+                listsCache.ua[idDes] = j.data || [];
+            }
+            return listsCache.ua[idDes];
+        }
+        async function getSedesCached(idUa) {
+            if (!listsCache.sedes[idUa]) {
+                const j = await (await fetch(`${base_url}/admin/get/sedes/${idUa}`)).json();
+                listsCache.sedes[idUa] = j.data || [];
+            }
+            return listsCache.sedes[idUa];
+        }
+        async function getProgramasCached(idSede) {
+            if (!listsCache.programas[idSede]) {
+                const j = await (await fetch(`${base_url}/admin/get/programas/${idSede}`)).json();
+                listsCache.programas[idSede] = j.data || [];
+            }
+            return listsCache.programas[idSede];
+        }
+        async function getNivelesCached(idProg) {
+            if (!listsCache.niveles[idProg]) {
+                const j = await (await fetch(`${base_url}/admin/get/niveles/${idProg}`)).json();
+                listsCache.niveles[idProg] = j.data || [];
+            }
+            return listsCache.niveles[idProg];
+        }
+        async function getModalidadesCached(idNivel) {
+            if (!listsCache.modalidades[idNivel]) {
+                const j = await (await fetch(`${base_url}/admin/get/modalidades/${idNivel}`)).json();
+                listsCache.modalidades[idNivel] = j.data || [];
+            }
+            return listsCache.modalidades[idNivel];
+        }
+
+        async function restore(tipo) {
+            const snap = formMemory[tipo] || {};
+            prefilling = true;
+            setACUI(tipo);
+
+            // DES
+            const desList = await getDesCached(tipo);
+            fillSelect($('#des'), desList, snap.des);
+
+            // Dependencia: solo DES
+            if (String(tipo) === '2') {
+                fillSelect($('#unidad_academica'), [], '');
+                fillSelect($('#sede'), [], '');
+                fillSelect($('#programa_educativo'), [], '');
+                fillSelect($('#nivel'), [], '');
+                fillSelect($('#modalidad'), [], '');
+                prefilling = false;
+                return;
+            }
+
+            // AC: cascada
+            if (snap.des) fillSelect($('#unidad_academica'), await getUaCached(snap.des), snap.ua);
+            else fillSelect($('#unidad_academica'), [], '');
+            if (snap.ua) fillSelect($('#sede'), await getSedesCached(snap.ua), snap.sede);
+            else fillSelect($('#sede'), [], '');
+            if (snap.sede) fillSelect($('#programa_educativo'), await getProgramasCached(snap.sede), snap.prog);
+            else fillSelect($('#programa_educativo'), [], '');
+            if (snap.prog) fillSelect($('#nivel'), await getNivelesCached(snap.prog), snap.nivel);
+            else fillSelect($('#nivel'), [], '');
+            if (snap.nivel) fillSelect($('#modalidad'), await getModalidadesCached(snap.nivel), snap.mod);
+            else fillSelect($('#modalidad'), [], '');
+
+            prefilling = false;
+        }
+
+        // ===== EXPONE UNA SOLA VERSIÓN de las funciones llamadas desde el HTML =====
+        window.getDesoDep = async function(valor) {
+            const nuevo = String(valor || '');
+            if (nuevo === currentTipo) return;
+            remember(currentTipo);
+            currentTipo = nuevo;
+            await restore(currentTipo);
+        };
+        window.getUa = async function(idDes) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#unidad_academica'), [], '');
+            fillSelect($('#sede'), [], '');
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idDes) fillSelect($('#unidad_academica'), await getUaCached(idDes), '');
+            remember(currentTipo);
+        };
+        window.getSedes = async function(idUa) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#sede'), [], '');
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idUa) fillSelect($('#sede'), await getSedesCached(idUa), '');
+            remember(currentTipo);
+        };
+        window.getProgramas = async function(idSede) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#programa_educativo'), [], '');
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idSede) fillSelect($('#programa_educativo'), await getProgramasCached(idSede), '');
+            remember(currentTipo);
+        };
+        window.getNiveles = async function(idProg) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#nivel'), [], '');
+            fillSelect($('#modalidad'), [], '');
+            if (idProg) fillSelect($('#nivel'), await getNivelesCached(idProg), '');
+            remember(currentTipo);
+        };
+        window.getModalidades = async function(idNivel) {
+            if (prefilling || currentTipo === '2') return;
+            fillSelect($('#modalidad'), [], '');
+            if (idNivel) fillSelect($('#modalidad'), await getModalidadesCached(idNivel), '');
+            remember(currentTipo);
+        };
+
+        // Bind seguro por si el inline no disparara
+        $('#tipo_mejora').off('change.acdep').on('change.acdep', function() {
+            window.getDesoDep(this.value);
+        });
+
+        // Estado inicial
+        $(function() {
+            currentTipo = String($('#tipo_mejora').val() || '');
+            setACUI(currentTipo);
+            seedCacheFromDOM();
+            remember(currentTipo);
         });
     </script>
 @endsection
