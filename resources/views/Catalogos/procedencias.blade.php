@@ -26,13 +26,15 @@
                             Agregar</button>
                     </div>
                     <div class="col-md-12" id="div_tabla">
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Procedencia</th>
-                                </tr>
-                            </thead>
+                        <table class="table table-bordered table-striped compact" id="tabla_procedencias"
+                            style="width:100%"></table>
+
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Procedencia</th>
+                            </tr>
+                        </thead>
                         </table>
                     </div>
                 </div>
@@ -130,52 +132,89 @@
         var id
 
         const getProcedencias = async () => {
-            $("#div_tabla").html("<h4>Cargando..</h4>");
-            const response = await fetch(`${ base_url }/admin/get/catalogo/procedencia`, {
+            // placeholder mientras carga
+            $("#div_tabla").html(`
+    <table class="table table-bordered table-striped compact" id="tabla_procedencias" style="width:100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Procedencia</th>
+          <th>Siglas</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+    </table>
+  `);
+
+            const response = await fetch(`${base_url}/admin/get/catalogo/procedencia`, {
                 method: 'GET'
             });
+            const {
+                data = []
+            } = await response.json();
 
-            const data = await response.json();
-            $("#div_tabla").html(`<table class="table table-bordered table-striped compact" id="tabla_usuarios">
-      </table>`);
+            // Si ya existe, destruye para volver a crear limpio
+            if ($.fn.DataTable.isDataTable('#tabla_procedencias')) {
+                $('#tabla_procedencias').DataTable().clear().destroy();
+            }
 
-
-            const table = $("#tabla_usuarios").DataTable({
-                data: data.data,
-                scrollX: true,
+            $('#tabla_procedencias').DataTable({
+                data,
+                deferRender: true,
+                autoWidth: false,
                 searching: true,
                 ordering: true,
-                info: false,
-                paging: false,
-                autoWidth: true,
+                info: true,
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, 'Todos']
+                ],
                 language: {
                     url: base_url + '/js/Spanish.json'
                 },
+                order: [
+                    [1, 'asc']
+                ],
                 columns: [{
+                        title: "#",
+                        data: null,
+                        orderable: false,
+                        visible: false,
+                        className: "text-center",
+                        render: (data, type, row, meta) =>
+                            meta.row + meta.settings._iDisplayStart + 1
+                    },
+                    {
                         title: "Procedencia",
                         data: 'descripcion'
                     },
                     {
                         title: "Siglas",
-                        data: 'siglas'
+                        data: 'siglas',
+                        defaultContent: ''
                     },
                     {
                         title: 'Acciones',
-                        defaultContent: '',
                         data: null,
                         orderable: false,
                         className: 'text-center dt-actions',
-                        fnCreatedCell: (nTd, sData, oData, iRow, iCol) => {
-                            $(nTd).append(`
-                <div class="btn-actions">
-                  <button class="btn btn-primary btn-icon" title="Editar" onclick="abreModal('${ oData.id }', '${ oData.descripcion }', '${ oData.siglas }')"><i class="fa fa-pencil"></i></button>
-                  <button class="btn btn-danger btn-icon" title="Eliminar"  onclick="confirmaElimina('${ oData.id }')"><i class="fa fa-trash"></i></button>
-                </div>`);
-                        }
+                        render: (_, __, o) => `
+          <div class="btn-actions">
+            <button class="btn btn-primary btn-icon" title="Editar"
+              onclick="abreModal('${o.id}', '${(o.descripcion||'').replace(/'/g, "\\'")}', '${(o.siglas||'').replace(/'/g, "\\'")}')">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="btn btn-danger btn-icon" title="Eliminar"
+              onclick="confirmaElimina('${o.id}')">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>`
                     }
-                ],
+                ]
             });
-        }
+        };
 
         const abreModal = async (id_pro, texto, sigla) => {
             id = id_pro
