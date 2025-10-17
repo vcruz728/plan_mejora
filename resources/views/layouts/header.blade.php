@@ -16,10 +16,15 @@
     <link rel="stylesheet" href="{{ asset('css/custom.css?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}">
     <link rel="stylesheet" href="{{ asset('css/apexcharts.css') }}">
     <link rel="stylesheet" href="{{ asset('bower_components/sweetalert/sweetalert.css') }}">
-
+    <link rel="stylesheet" href="{{ asset('dist/css/menu_acciones.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/datatables.css') }}">
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
     <link href="{{ asset('css/toastr/toastr.min.css') }}" rel="stylesheet">
     <script src="{{ asset('js/index.js?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}"></script>
-    @stack('scripts')
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css">
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 </head>

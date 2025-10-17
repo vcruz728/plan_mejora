@@ -1,0 +1,234 @@
+/* =========================
+   Variables base
+   ========================= */
+:root {
+    --brand: #003a5c; /* azul institucional */
+    --brand-600: #0a4466;
+    --border: #e6e9f2;
+    --soft: #f7fafc;
+    --muted: #6b7280;
+}
+
+/* =========================
+   Contenedor centrado
+   ========================= */
+.form-narrow {
+    float: none !important; /* ignora floats del grid */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100%;
+    max-width: clamp(
+        1080px,
+        92vw,
+        1480px
+    ); /* ajusta si lo quieres más/menos ancho */
+}
+
+/* =========================
+   Tarjetas de sección
+   ========================= */
+.section-card {
+    background: #fff;
+    border: 1px solid #e7ecf3;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+.section-card__title {
+    background: #eef4ff;
+    color: #0f3d63;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e2e8f5;
+}
+.section-card__body {
+    padding: 20px 22px 14px;
+}
+
+/* gutters suaves entre columnas */
+.gutters-sm > [class*="col-"] {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Campos y foco */
+.section-card .form-group {
+    margin-bottom: 12px;
+}
+.section-card .form-control {
+    height: 38px;
+    border-radius: 8px;
+    border-color: #d9e2ec;
+}
+.section-card .form-control:focus {
+    border-color: #9bbcf2;
+    box-shadow: 0 0 0 3px rgba(61, 139, 253, 0.12);
+}
+
+/* Texto de ayuda bajo el input */
+.help-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* Inputs compactos (para fecha, cantidad, etc.) */
+.form-compact .form-control {
+    height: 34px;
+}
+.w-160 {
+    max-width: 160px;
+}
+.w-200 {
+    max-width: 200px;
+}
+.w-260 {
+    max-width: 260px;
+}
+.form-control.w-160,
+.form-control.w-200,
+.form-control.w-260 {
+    display: inline-block;
+}
+
+/* =========================
+   Select2 al alto del input
+   ========================= */
+.select2-container .select2-selection--single {
+    height: 38px !important;
+    border-radius: 8px !important;
+    border: 1px solid #d9e2ec !important;
+}
+.select2-selection__rendered {
+    line-height: 36px !important;
+    padding-left: 10px !important;
+}
+.select2-selection__arrow {
+    height: 36px !important;
+    right: 6px !important;
+}
+
+/* =========================
+   Ajuste del body del card
+   ========================= */
+.box.box-success .box-body {
+    padding-top: 12px;
+}
+
+/* =========================
+   Utilidad de ocultar
+   ========================= */
+.is-hidden {
+    display: none !important;
+}
+
+/* =========================================================
+   Toggle “Tipo” (píldora) — VERSIÓN ÚNICA (sin duplicados)
+   ========================================================= */
+.form-modern .tipo-toggle {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 4px;
+    border: 1px solid #d8e0ee;
+    border-radius: 9999px;
+    background: #f6f8fc;
+    overflow: visible; /* evita cortes */
+    min-width: 340px; /* opcional: ancho mínimo cómodo */
+}
+/* oculta radios nativos */
+.form-modern .tipo-toggle input[type="radio"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+/* neutraliza adornos de iCheck/AdminLTE SOLO dentro del toggle */
+.form-modern .tipo-toggle [class^="iradio_"],
+.form-modern .tipo-toggle [class*=" iradio_"] {
+    display: none !important;
+}
+.form-modern .tipo-toggle label::before,
+.form-modern .tipo-toggle label::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* mitades del control */
+.form-modern .tipo-toggle label {
+    display: flex; /* quita “baseline gap” */
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0; /* ambas mitades mismo ancho */
+    height: 40px; /* alto completo */
+    padding: 0 18px; /* solo horizontal */
+    border-radius: 9999px;
+    color: #123f5b;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+.form-modern .tipo-toggle input:checked + label {
+    background: #0f4c81;
+    color: #fff;
+    box-shadow: none; /* sin sombras que se “corten” */
+}
+
+/* ===== Listados más angostos y tabla compacta ===== */
+
+/* Centra el contenido y limita el ancho, igual que los formularios */
+.list-narrow {
+    float: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100%;
+    max-width: clamp(1080px, 92vw, 1480px);
+}
+
+/* Menos padding general en el body de la tarjeta cuando es listado */
+.table-tight {
+    padding: 14px !important;
+}
+
+/* Compacta la tabla (celdas con menos padding) */
+table.table.compact > thead > tr > th,
+table.table.compact > tbody > tr > td {
+    padding: 7px 10px; /* antes ~12–14px */
+    line-height: 1.2;
+}
+
+/* DataTables: controles más pegaditos */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 8px;
+}
+.dataTables_wrapper .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Columna Acciones un poco más angosta y centrada (ajusta a tu gusto) */
+.table-tight th:last-child,
+.table-tight td:last-child {
+    text-align: center;
+    width: 140px;
+}
+
+/* En pantallas MUY grandes, no te estires de más */
+@media (min-width: 1600px) {
+    .list-narrow {
+        max-width: 1300px;
+    }
+}
+@media (min-width: 1900px) {
+    .list-narrow {
+        max-width: 1400px;
+    }
+}

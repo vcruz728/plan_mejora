@@ -65,5 +65,5 @@
         </div>
     </nav>
     @stack('styles')
-
+    @stack('scripts')
 </header>

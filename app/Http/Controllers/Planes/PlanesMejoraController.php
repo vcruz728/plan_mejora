@@ -166,7 +166,7 @@ class PlanesMejoraController extends Controller
     public function adminEdita($id)
     {
         $plan = Planes::find($id);
-        $procedencias = Procedencias::all();
+        $procedencias = Procedencias::orderBy('descripcion')->get();
         $des = Des::where('tipo', $plan->tipo_mejora)->orderBy('nombre')->get();
         $ejes = EjesPDI::all();
         $ambitos = AmbitosSiemec::all();
@@ -337,7 +337,7 @@ class PlanesMejoraController extends Controller
             ->where('mejoras.id', $id)
             ->first();
 
-        $procedencias = Procedencias::all();
+        $procedencias = Procedencias::orderBy('descripcion')->get();
         $programas = ProgramasEducativos::all();
         $complemento = ComplementosPlan::where('id_plan', $id)->first();
 
@@ -809,7 +809,7 @@ class PlanesMejoraController extends Controller
             ->first();
 
 
-        $procedencias = Procedencias::all();
+        $procedencias = Procedencias::orderBy('descripcion')->get();
         $programas = ProgramasEducativos::all();
         $complemento = ComplementosPlan::where('id_plan', $id)->first();
         $verificadores = User::where('rol', 3)->get();
@@ -819,7 +819,7 @@ class PlanesMejoraController extends Controller
 
     public function viewAlta()
     {
-        $procedencias = Procedencias::all();
+        $procedencias = Procedencias::orderBy('descripcion')->get();
         $ejes = EjesPDI::all();
         $ambitos = AmbitosSiemec::all();
         $criterios = CriteriosSiemec::all();

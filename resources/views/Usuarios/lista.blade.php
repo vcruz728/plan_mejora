@@ -3,51 +3,16 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
-    <style>
-        /* no hacer wrap y mostrar separación real entre botones */
-        .btn-actions {
-            display: inline-flex;
-            gap: 8px;
-            /* <-- el “espacio” entre botones */
-            align-items: center;
-            flex-wrap: nowrap;
-            /* evita 2ª fila */
-        }
-
-        td.dt-actions {
-            white-space: nowrap;
-        }
-
-        /* estilo de los icon-badges (puedes reciclar tu .btn-icon existente) */
-        .btn-icon {
-            width: 34px;
-            height: 34px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
-            transition: transform .1s ease-in-out, box-shadow .1s;
-        }
-
-        .btn-icon:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, .18);
-        }
-
-        .btn-icon i {
-            font-size: 16px;
-        }
-    </style>
+    <link rel="stylesheet"
+        href="{{ asset('dist/css/forms-modern.css') }}?v={{ filemtime(public_path('dist/css/forms-modern.css')) }}">
 @endpush
 
 @section('main-content')
     <section class="content-header">
-        <h1>Lista de usuarios</h1>
+        <h1 style="text-align: center; margin: 15px 0;">Lista de usuarios</h1>
     </section>
 
-    <div class="col-xs-12">
+    <div class="col-xs-12 list-narrow">
         <div class="box box-success">
             <div class="box-header with-border">
                 <div class="form-inline">
@@ -84,16 +49,16 @@
                 </button>
             </div>
 
-            <div class="box-body">
+            <div class="box-body table-tight">
                 <div id="div_tabla" class="table-responsive">
-                    <table class="table table-bordered table-striped" id="tabla_usuarios" style="width:100%">
+                    <table class="table table-bordered table-striped compact" id="tabla_usuarios" style="width:100%">
                         <thead>
                             <tr>
                                 <th>Usuario</th>
                                 <th>Nombre</th>
                                 <th>Email</th>
                                 <th>Unidad</th>
-                                <th style="width:110px;">Acciones</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                     </table>
@@ -455,7 +420,7 @@
         });
 
         // botón “Quitar filtros”
-        $('#btn_limpiar').on('click', function() {
+        $('#btn_limpiar_filtros').on('click', function() {
             $('#flt_tipo').val('').trigger('change.select2');
             $('#flt_des').val('').trigger('change.select2');
             $('#flt_ua').val('').trigger('change.select2');

@@ -1,0 +1,35 @@
+/* no hacer wrap y mostrar separación real entre botones */
+.btn-actions {
+    display: inline-flex;
+    gap: 8px;
+    /* <-- el “espacio” entre botones */
+    align-items: center;
+    flex-wrap: nowrap;
+    /* evita 2ª fila */
+}
+
+td.dt-actions {
+    white-space: nowrap;
+}
+
+/* estilo de los icon-badges (puedes reciclar tu .btn-icon existente) */
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.1s ease-in-out, box-shadow 0.1s;
+}
+
+.btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.btn-icon i {
+    font-size: 16px;
+}

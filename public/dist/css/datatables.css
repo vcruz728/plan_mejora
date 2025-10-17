@@ -1,0 +1,203 @@
+/* ================================
+   DataTables – estilos depurados
+   ================================ */
+
+:root {
+    --dt-header-bg: #123f5b;
+    --dt-header-fg: #fff;
+    --dt-border: #e6e9f2;
+    --dt-row-hover: #e2e7eb;
+    --dt-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --topbar-h: 50px; /* altura de tu navbar fijo */
+}
+
+/* Cabecera */
+table.dataTable thead th {
+    background: var(--dt-header-bg) !important;
+    color: var(--dt-header-fg) !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    border-color: var(--dt-header-bg) !important;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+/* Celdas */
+table.dataTable tbody td {
+    vertical-align: middle !important;
+    text-align: center;
+    border-color: var(--dt-border) !important;
+    padding: 10px 12px !important;
+    font-size: 13px;
+}
+
+/* Hover de fila (toda la anchura) */
+table.dataTable tbody tr:hover > *,
+table.dataTable.display tbody tr:hover > *,
+table.dataTable.hover tbody tr:hover > * {
+    background: var(--dt-row-hover) !important;
+}
+
+/* Look “flat”: solo líneas horizontales y laterales suaves */
+.dataTables_wrapper .dataTables_scroll {
+    border: 0 !important;
+    box-shadow: var(--dt-shadow);
+}
+table.dataTable.no-footer {
+    border-bottom: 1px solid var(--dt-border) !important;
+}
+table.dataTable thead th,
+table.dataTable tbody td {
+    border-right: 1px solid var(--dt-border) !important;
+}
+table.dataTable thead th:last-child,
+table.dataTable tbody td:last-child {
+    border-right: 0 !important;
+}
+table.dataTable tbody tr {
+    border-bottom: 0px solid var(--dt-border);
+}
+
+/* Paginación */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border: 1px solid var(--dt-border) !important;
+    border-radius: 6px !important;
+    padding: 0.25rem 0.55rem !important;
+    margin: 0 0.15rem !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #eef4ff !important;
+    border-color: #c7d7ff !important;
+    color: #123f5b !important;
+}
+
+/* Buscador / length */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    height: 30px;
+    border: 1px solid var(--dt-border);
+    border-radius: 6px;
+    padding: 0 0.5rem;
+}
+
+/* Badges de estatus (si las usas) */
+.dt-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: var(--dt-shadow);
+    white-space: nowrap;
+}
+.dt-badge.warn {
+    background: #ffe98a;
+    color: #2f2f2f;
+}
+.dt-badge.danger {
+    background: #ef4444;
+    color: #fff;
+}
+.dt-badge.success {
+    background: #22c55e;
+    color: #fff;
+}
+
+/* ===== Columna Acciones (sin artefactos) ===== */
+td.dt-actions {
+    padding: 8px 12px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+}
+td.dt-actions .dt-actions__wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+td.dt-actions .btn.btn-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    /* sombra OFF para evitar “líneas”; deja solo un borde suave */
+    box-shadow: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+td.dt-actions .btn-group {
+    display: flex;
+    gap: 10px;
+}
+td.dt-actions .btn-group .btn + .btn {
+    margin-left: 0 !important;
+}
+
+/* ===== Sticky header con CSS (si NO usas FixedHeader) ===== */
+.dataTables_wrapper .dataTables_scrollHead {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 10;
+    background: var(--dt-header-bg);
+}
+/* Necesario para que sticky funcione dentro del contenedor */
+.dataTables_wrapper .dataTables_scroll {
+    overflow: visible !important;
+}
+
+/* --- quitar la línea inferior que agrega DataTables al body con scroll --- */
+.dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border-bottom: 0 !important;
+}
+
+/* --- quitar tu borde inferior del no-footer --- */
+table.dataTable.no-footer {
+    border-bottom: 0 !important;
+}
+
+/* --- quitar separadores verticales entre columnas --- */
+table.dataTable thead th,
+table.dataTable tbody td {
+    border-right: 0 !important; /* antes 1px */
+}
+
+/* (opcional) si quieres sólo líneas horizontales suaves por fila: */
+table.dataTable tbody td {
+    border-top: 1px solid var(--dt-border) !important;
+}
+table.dataTable tbody tr:first-child td {
+    border-top: 0 !important;
+}
+
+/* por si el wrapper del header/body trae borde lateral */
+.dataTables_wrapper .dataTables_scrollHead,
+.dataTables_wrapper .dataTables_scrollBody {
+    border-right: 0 !important;
+    border-left: 0 !important;
+}
+
+/* anula los bordes que mete Bootstrap con table-bordered */
+.table.table-bordered,
+.table.table-bordered > thead > tr > th,
+.table.table-bordered > tbody > tr > td {
+    border: 0 !important;
+}
+
+/* opcional: solo líneas horizontales suaves */
+.table.table-bordered > tbody > tr + tr > td {
+    border-top: 1px solid var(--dt-border) !important;
+}
+
+/* quita líneas inferiores “extra” */
+.dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border-bottom: 0 !important;
+}
+table.dataTable.no-footer {
+    border-bottom: 0 !important;
+}

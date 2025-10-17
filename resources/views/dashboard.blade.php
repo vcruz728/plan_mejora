@@ -5,8 +5,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
-    {{-- Opcional: tema bootstrap para combinar con AdminLTE/Bootstrap --}}
-    <link rel="stylesheet" href="{{ asset('bower_components/select2-bootstrap-theme/dist/select2-bootstrap.min.css') }}">
+
 
     <style>
         .select2-container--default .select2-selection--single,
@@ -21,48 +20,12 @@
         .select2-container .select2-selection--single .select2-selection__arrow {
             height: 32px;
         }
-
-        /* no hacer wrap y mostrar separación real entre botones */
-        .btn-actions {
-            display: inline-flex;
-            gap: 8px;
-            /* <-- el “espacio” entre botones */
-            align-items: center;
-            flex-wrap: nowrap;
-            /* evita 2ª fila */
-        }
-
-        td.dt-actions {
-            white-space: nowrap;
-        }
-
-        /* estilo de los icon-badges (puedes reciclar tu .btn-icon existente) */
-        .btn-icon {
-            width: 34px;
-            height: 34px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
-            transition: transform .1s ease-in-out, box-shadow .1s;
-        }
-
-        .btn-icon:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, .18);
-        }
-
-        .btn-icon i {
-            font-size: 16px;
-        }
     </style>
 @endpush
 
 @section('main-content')
     <section class="content-header">
-        <h1>Plan de mejora</h1>
+        <h1 style="text-align: center; margin: 15px 0;">Plan de mejora</h1>
     </section>
 
     <div class="col-xs-12">
@@ -154,6 +117,21 @@
                 return;
             }
 
+            // helper: estatus como badge
+            function renderEstatus(row) {
+                // asumo formato 'YYYY-MM-DD' para comparar como string
+                const cerrada = row.cerrado !== null && row.cerrado !== undefined;
+                if (cerrada) return '<span class="dt-badge success">Concluida</span>';
+
+                const vencida = (row.fecha_hoy || '') > (row.fecha_vencimiento || '');
+                if (vencida) return '<span class="dt-badge danger">Vencida</span>';
+
+                return '<span class="dt-badge warn">En proceso</span>';
+            }
+
+            const headerOffset = $('.main-header').outerHeight() || 0; // si usas AdminLTE
+
+
             table = $("#tabla_planes").DataTable({
                 data: data.data,
                 scrollX: true,
@@ -162,82 +140,108 @@
                 info: false,
                 paging: true,
                 autoWidth: true,
+                fixedHeader: {
+                    header: true,
+                    headerOffset: headerOffset
+                },
                 language: {
                     url: base_url + '/js/Spanish.json'
                 },
-                columns: [{ // Procedencia (ID) para filtrar — oculta pero searchable
+                columns: [{
                         title: 'procedencia',
                         data: 'procedencia',
                         visible: false,
                         searchable: true
                     },
+
                     @if (Auth::user()->rol == 1)
                         {
                             title: "Responsable",
-                            data: 'name'
+                            data: 'name',
+                            className: 'dt-center dt-vmiddle'
                         },
-                    @endif {
+                    @endif
+
+                    {
                         title: "Tipo",
-                        data: 'tipo'
+                        data: 'tipo',
+                        className: 'dt-center dt-vmiddle'
                     },
                     {
                         title: "Plan",
                         data: 'plan_no',
-                        class: "text-nowrap"
+                        className: 'dt-center dt-vmiddle text-nowrap',
                     },
+
+                    // <-- SOLO aquí justificamos
                     {
                         title: "Recomendación/Meta",
-                        data: 'recomendacion_meta'
+                        data: 'recomendacion_meta',
+                        className: 'dt-justify dt-vmiddle'
                     },
+
                     {
                         title: 'Estatus',
-                        defaultContent: '',
-                        fnCreatedCell: (nTd, sData, oData) => {
-                            if (oData.cerrado === null && oData.fecha_hoy <= oData.fecha_vencimiento) {
-                                $(nTd).html('<div style="text-align:center;"><p>En proceso</p></div>')
-                                    .css('color', 'black').css('background', 'yellow');
-                            } else if (oData.cerrado === null && oData.fecha_hoy > oData
-                                .fecha_vencimiento) {
-                                $(nTd).html('<div style="text-align:center;"><p>Vencida</p></div>')
-                                    .css('color', 'white').css('background', 'red');
-                            } else if (oData.cerrado !== null) {
-                                $(nTd).html('<div style="text-align:center;"><p>Concluída</p></div>')
-                                    .css('color', 'white').css('background', 'green');
-                            }
-                        }
+                        data: null,
+                        render: (data, type, row) => renderEstatus(row),
+                        orderable: true
                     },
                     {
                         title: 'Acciones',
-                        defaultContent: '',
                         data: null,
+                        className: 'dt-actions', // <- se queda
                         orderable: false,
-                        className: 'text-center dt-actions',
-                        fnCreatedCell: (nTd, sData, oData) => {
+                        render: o => `
+    <div class="dt-actions__wrap">
+      <button class="btn btn-primary btn-icon" title="Editar"
+        onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
+        <i class="fa fa-pencil"></i>
+      </button>
+      <button class="btn btn-success btn-icon" title="Ver plan de mejora"
+        onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
+        <i class="fa fa-eye"></i>
+      </button>
+      <button class="btn btn-danger btn-icon" title="Eliminar"
+        onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
+        <i class="fa fa-trash"></i>
+      </button>
+    </div>`
+                    }
 
-                            if (data.rol == 1) {
-                                $(nTd).html(`
-                                 <div class="btn-actions">
-                                    <button class="btn btn-primary btn-icon" title="Editar" onclick="location.href='${base_url}/admin/edita/plan-mejora/${oData.id}'"><i class="fa fa-pencil"></i></button>
-                                    <button class="btn btn-success btn-icon" title="Ver plan de mejora" onclick="location.href='${base_url}/admin/ver/plan-mejora/${oData.id}'"><i class="fa fa-eye"></i></button>
-                                    <button class="btn btn-danger btn-icon" title="Eliminar" onclick="confirmaElimina(${oData.id}, ${oData.acciones})"><i class="fa fa-trash"></i></button>
-                                 </div>
-                            `);
-                            } else if (data.rol == 4) {
-                                $(nTd).html(`
-                                 <div class="btn-actions">
-                                    <button class="btn btn-success btn-icon" title="Ver plan de mejora" onclick="location.href='${base_url}/admin/ver/plan-mejora/${oData.id}'"><i class="fa fa-eye"></i></button>
-                                 </div>
-                            `);
-                            } else {
-                                $(nTd).html(`
-                                 <div class="btn-actions">
-                                    <button class="btn btn-primary btn-icon" title="Editar" onclick="location.href='${base_url}/edita/plan-mejora/${oData.id}'"><i class="fa fa-pencil"></i></button>
-                                </div>
-                            `);
-                            }
-                        }
+                    /*                     {
+                                                                    title: 'Acciones',
+                                                                    defaultContent: '',
+                                                                    data: null,
+                                                                    orderable: false,
+                                                                    className: 'text-center dt-actions',
+                                                                    fnCreatedCell: (nTd, sData, oData) => {
 
-                    },
+                                                                        if (data.rol == 1) {
+                                                                            $(nTd).html(`
+                    <td class="dt-actions">
+                       <div class="dt-actions__wrap">
+                        <button class="btn btn-primary btn-icon" title="Editar" onclick="location.href='${base_url}/admin/edita/plan-mejora/${oData.id}'"><i class="fa fa-pencil"></i></button>
+                        <button class="btn btn-success btn-icon" title="Ver plan de mejora" onclick="location.href='${base_url}/admin/ver/plan-mejora/${oData.id}'"><i class="fa fa-eye"></i></button>
+                        <button class="btn btn-danger btn-icon" title="Eliminar" onclick="confirmaElimina(${oData.id}, ${oData.acciones})"><i class="fa fa-trash"></i></button>
+                    </div>
+                    </td>
+                `);
+                                                                        } else if (data.rol == 4) {
+                                                                            $(nTd).html(`
+                     <div class="btn-actions">
+                        <button class="btn btn-success btn-icon" title="Ver plan de mejora" onclick="location.href='${base_url}/admin/ver/plan-mejora/${oData.id}'"><i class="fa fa-eye"></i></button>
+                     </div>
+                `);
+                                                                        } else {
+                                                                            $(nTd).html(`
+                     <div class="btn-actions">
+                        <button class="btn btn-primary btn-icon" title="Editar" onclick="location.href='${base_url}/edita/plan-mejora/${oData.id}'"><i class="fa fa-pencil"></i></button>
+                    </div>
+                `);
+                                                                        }
+                                                                    }
+
+                                                                }, */
                 ],
             });
 
@@ -245,6 +249,21 @@
             const pre = $('#filtro_procedencia').val();
             if (pre) table.column(0).search('^' + pre + '$', true, false).draw();
         }
+
+        (function() {
+            var head = document.querySelector('.dataTables_wrapper .dataTables_scrollHead');
+            if (!head) return;
+            var limit = parseInt(
+                getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')
+            ) || 50;
+
+            window.addEventListener('scroll', function() {
+                (head.getBoundingClientRect().top <= limit + 1) ?
+                head.classList.add('stuck'): head.classList.remove('stuck');
+            }, {
+                passive: true
+            });
+        })();
 
         // ======================= Eliminar =======================
         function confirmaElimina(id, accion) {

@@ -57,7 +57,7 @@
 
                 <li class="treeview {{ request()->is('admin/consultores') ? 'menu-open active' : '' }}">
                     <a href="#">
-                        <i class="fa fa-eye nav-icon"></i>
+                        <i class="fa fa-handshake-o nav-icon"></i>
                         <span class="text">Consultores</span>
                         <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
                     </a>
@@ -101,7 +101,7 @@
 
                 <li class="treeview {{ request()->is('admin/resportes/*') ? 'menu-open active' : '' }}">
                     <a href="#">
-                        <i class="fa fa-book nav-icon"></i>
+                        <i class="fa fa-file nav-icon"></i>
                         <span class="text">Reportes</span>
                         <span class="pull-right-container"><i class="fa fa-angle-left pull-right"></i></span>
                     </a>
