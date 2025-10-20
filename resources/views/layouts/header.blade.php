@@ -9,22 +9,27 @@
     <link rel="stylesheet" href="{{ asset('bower_components/bootstrap/dist/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('bower_components/font-awesome/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('bower_components/Ionicons/css/ionicons.min.css') }}">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" href="{{ asset('dist/css/AdminLTE.min.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/skins/_all-skins.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/fixedColumns.dataTables.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/custom.css?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}">
     <link rel="stylesheet" href="{{ asset('css/apexcharts.css') }}">
     <link rel="stylesheet" href="{{ asset('bower_components/sweetalert/sweetalert.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/menu_acciones.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/datatables.css') }}">
+
+    <!-- jQuery -->
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
+
+    <!-- ✅ ÚNICO bundle DT v2 + Buttons + HTML5 + JSZip -->
+    <link rel="stylesheet"
+        href="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/jszip-3.10.1/datatables.min.css">
+    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/jszip-3.10.1/datatables.min.js"></script>
+
+
     <link href="{{ asset('css/toastr/toastr.min.css') }}" rel="stylesheet">
     <script src="{{ asset('js/index.js?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}"></script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css">
-    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="{{ asset('dist/css/datatables.css') }}">
 </head>

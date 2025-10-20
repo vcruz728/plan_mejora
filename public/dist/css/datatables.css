@@ -201,3 +201,81 @@ table.dataTable tbody tr:first-child td {
 table.dataTable.no-footer {
     border-bottom: 0 !important;
 }
+
+/* ===== Variante A: Outline Excel ===== */
+.btn-outline-excel,
+.dt-button.btn-outline-excel {
+    background: #fff;
+    border: 1px solid #217346;
+    color: #217346;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+}
+
+.btn-outline-excel:hover,
+.dt-button.btn-outline-excel:hover {
+    background: #f7fbf8;
+    color: #1b5e37;
+    border-color: #1b5e37;
+}
+
+/* ===== Variante B: Solid Excel ===== */
+.btn-excel,
+.dt-button.btn-excel {
+    background: #217346;
+    border: 1px solid #1b5e37;
+    color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+}
+
+.btn-excel:hover,
+.dt-button.btn-excel:hover {
+    background: #1e6d3f;
+    border-color: #155a2d;
+    color: #fff;
+}
+
+/* ===== Icono tipo “badge” cuadrado ===== */
+.excel-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    margin-right: 8px;
+    line-height: 1;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    transform: translateY(-1px);
+    /* alinea mejor con el texto */
+}
+
+/* color del badge según variante */
+.btn-outline-excel .excel-badge,
+.dt-button.btn-outline-excel .excel-badge {
+    background: #228544;
+    color: #fff;
+}
+
+.btn-excel .excel-badge,
+.dt-button.btn-excel .excel-badge {
+    background: #228544;
+    color: #fff;
+}
+
+/* Texto */
+.excel-text {
+    vertical-align: middle;
+}
+
+/* Ajuste DT Buttons para que se vean como bootstrap */
+.dt-button.btn,
+.dt-button.btn:focus {
+    outline: none;
+}
