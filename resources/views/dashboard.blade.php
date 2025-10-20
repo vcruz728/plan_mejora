@@ -222,12 +222,18 @@
             dt = new DataTable('#tabla_planes', {
                 data: data.data,
                 deferRender: true,
-                autoWidth: false,
                 searching: true,
                 ordering: true,
                 info: true,
                 paging: true,
                 scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
+                responsive: true,
+                fixedHeader: {
+                    header: true,
+                    //     headerOffset: $('.main-header').outerHeight() || 0 // para que no lo tape el topbar
+                },
                 pageLength: 10,
                 lengthMenu: [
                     [10, 25, 50, 100, -1],
@@ -403,5 +409,21 @@
                 }
             }, 200);
         }
+        // Recalcular columnas tras expandir/colapsar el menú lateral (animación ~300ms)
+        $(document).on('expanded.pushMenu collapsed.pushMenu', function() {
+            setTimeout(function() {
+                if (dt) dt.columns.adjust();
+            }, 320);
+        });
+
+        (function() {
+            let tm = null;
+            $(window).on('resize.dt', function() {
+                clearTimeout(tm);
+                tm = setTimeout(function() {
+                    if (dt) dt.columns.adjust();
+                }, 150);
+            });
+        })();
     </script>
 @endsection

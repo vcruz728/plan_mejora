@@ -19,11 +19,12 @@
     <!-- jQuery -->
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
 
-    <!-- ✅ ÚNICO bundle DT v2 + Buttons + HTML5 + JSZip -->
+    <!-- DataTables v2 + Buttons + HTML5 + JSZip + Responsive + FixedHeader -->
     <link rel="stylesheet"
-        href="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/jszip-3.10.1/datatables.min.css">
-    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/jszip-3.10.1/datatables.min.js"></script>
-
+        href="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/r-3.0.3/fh-4.0.1/jszip-3.10.1/datatables.min.css">
+    <script
+        src="https://cdn.datatables.net/v/dt/dt-2.1.8/b-3.1.2/b-html5-3.1.2/r-3.0.3/fh-4.0.1/jszip-3.10.1/datatables.min.js">
+    </script>
 
     <link href="{{ asset('css/toastr/toastr.min.css') }}" rel="stylesheet">
     <script src="{{ asset('js/index.js?v=ccb56f50cd5c3fc4509b89f18bc871d3') }}"></script>
