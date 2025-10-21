@@ -242,9 +242,12 @@
                 language: {
                     url: base_url + '/js/Spanish.json'
                 },
+                search: {
+                    placeholder: 'Buscar…'
+                },
                 layout: {
-                    topStart: 'pageLength',
-                    topEnd: 'buttons',
+                    topStart: ['pageLength'],
+                    topEnd: ['search', 'buttons'],
                     bottomStart: 'info',
                     bottomEnd: 'paging'
                 },
