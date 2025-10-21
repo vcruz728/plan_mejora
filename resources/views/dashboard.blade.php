@@ -24,8 +24,9 @@
 @endpush
 
 @php
-    // Permiso de eliminación (solo rol 1)
-    $canDelete = (int) (Auth::user()->rol ?? 0) === 1;
+    // Permisos por rol
+    $isAdmin = (int) (Auth::user()->rol ?? 0) === 1;
+    $canDelete = $isAdmin; // solo admin elimina
 
     // Mapa id => descripción para etiquetar opciones del select desde JS
     $procMap = [];
@@ -81,10 +82,10 @@
         var base_url = $("input[name='base_url']").val();
         let dt = null;
 
-        // Si el usuario admin ve "Responsable"
-        const HAS_RESP = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
-        // Permiso de eliminación (desde Blade)
+        // Flags rol
+        const IS_ADMIN = @json($isAdmin);
         const CAN_DELETE = @json($canDelete);
+        const HAS_RESP = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
 
         // Mapa id => texto desde Blade para etiquetar las opciones
         const PROC_MAP = @json($procMap);
@@ -96,7 +97,7 @@
 
         /**
          * Rellena el select #filtro_procedencia únicamente con los IDs de procedencia
-         * presentes en las filas 'rows'. Si hay solo una, se auto-selecciona.
+         * presentes en 'rows'. Si hay solo una, se auto-selecciona.
          * Devuelve el valor seleccionado (o '' si no hay).
          */
         function refreshProcedenciaOptionsFromRows(rows) {
@@ -120,7 +121,7 @@
                     sensitivity: 'base'
                 }));
 
-            // Reconstruir opciones
+            // Reconstruir opciones del select
             $proc.find('option').remove();
             $proc.append(new Option('', '', false, false)); // opción vacía = todas
 
@@ -128,13 +129,12 @@
                 $proc.append(new Option(p.text, p.id, false, false));
             }
 
-            // Auto-selección si solo hay 1; si no, restaurar si sigue disponible; si no, vacío
+            // Auto-selecciona si hay 1; si no, restaura si sigue; si no, vacío
             const newVal = (ids.length === 1) ?
                 ids[0] :
                 (ids.includes(prev) ? prev : '');
 
-            // Refresca UI de select2 sin disparar tu handler change.pm
-            $proc.val(newVal).trigger('change.select2');
+            $proc.val(newVal).trigger('change.select2'); // refresca UI de select2
             return newVal;
         }
 
@@ -193,7 +193,7 @@
                 return;
             }
 
-            // helper: estatus como badge (como lo tenías)
+            // helper: estatus como badge (igual que tenías)
             function renderEstatus(row) {
                 const cerrada = row.cerrado !== null && row.cerrado !== undefined;
                 if (cerrada) return '<span class="dt-badge success">Concluida</span>';
@@ -252,8 +252,11 @@
                 className: 'dt-actions',
                 orderable: false,
                 render: o => {
-                    let html = `
-                            <div class="dt-actions__wrap">
+                    let html = `<div class="dt-actions__wrap">`;
+
+                    if (IS_ADMIN) {
+                        // Admin: Editar (admin), Ver (admin) y Eliminar
+                        html += `
                                 <button class="btn btn-primary btn-icon" title="Editar"
                                     onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
                                     <i class="fa fa-pencil"></i>
@@ -262,16 +265,25 @@
                                     onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
                                     <i class="fa fa-eye"></i>
                                 </button>
-                        `;
-                    // Eliminar solo si CAN_DELETE = true (rol 1)
-                    if (CAN_DELETE) {
+                            `;
+                        if (CAN_DELETE) {
+                            html += `
+                                    <button class="btn btn-danger btn-icon" title="Eliminar"
+                                        onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                `;
+                        }
+                    } else {
+                        // Rol 2: solo Editar (sin Ver, sin Eliminar)
                         html += `
-                                <button class="btn btn-danger btn-icon" title="Eliminar"
-                                    onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
-                                    <i class="fa fa-trash"></i>
+                                <button class="btn btn-primary btn-icon" title="Editar"
+                                    onclick="location.href='${base_url}/edita/plan-mejora/${o.id}'">
+                                    <i class="fa fa-pencil"></i>
                                 </button>
                             `;
                     }
+
                     html += `</div>`;
                     return html;
                 }

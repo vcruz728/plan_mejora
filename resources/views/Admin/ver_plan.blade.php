@@ -286,7 +286,7 @@
                         <div class="row gutters-sm section-card__body">
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="indicador_clave">Indicador clave</label>
+                                    <label for="indicador_clave">Indicador clave (UA o PE)</label>
                                     <input id="indicador_clave" class="form-control"
                                         value="{{ $complemento?->indicador_clave }}" disabled>
                                 </div>
