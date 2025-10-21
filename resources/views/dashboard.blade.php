@@ -23,6 +23,17 @@
     </style>
 @endpush
 
+@php
+    // Permiso de eliminación (solo rol 1)
+    $canDelete = (int) (Auth::user()->rol ?? 0) === 1;
+
+    // Mapa id => descripción para etiquetar opciones del select desde JS
+    $procMap = [];
+    foreach ($procedencias as $p) {
+        $procMap[(string) $p->id] = $p->descripcion;
+    }
+@endphp
+
 @section('main-content')
     <section class="content-header">
         <h1 style="text-align: center; margin: 15px 0;">Plan de mejora</h1>
@@ -33,7 +44,7 @@
             <div class="box-header with-border">
                 <h3 class="box-title">Listados</h3>
 
-                {{-- Filtro por Dependencia --}}
+                {{-- Filtro por Dependencia (las opciones se pintan dinámicamente desde los datos) --}}
                 <div class="form-inline" style="margin-right:10px">
                     <label for="filtro_procedencia" class="control-label" style="margin-right:10px;">
                         Filtrar por procedencia:
@@ -41,10 +52,7 @@
 
                     <select id="filtro_procedencia" class="form-control select2" data-placeholder="Todas las procedencias"
                         style="width:400px">
-                        <option value=""></option>
-                        @foreach ($procedencias as $p)
-                            <option value="{{ $p->id }}">{{ $p->descripcion }}</option>
-                        @endforeach
+                        <option value=""></option> {{-- Las opciones reales se agregan en JS --}}
                     </select>
 
                     <button id="btn_limpiar_filtro" class="btn btn-default">Quitar filtro</button>
@@ -75,11 +83,66 @@
 
         // Si el usuario admin ve "Responsable"
         const HAS_RESP = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
+        // Permiso de eliminación (desde Blade)
+        const CAN_DELETE = @json($canDelete);
+
+        // Mapa id => texto desde Blade para etiquetar las opciones
+        const PROC_MAP = @json($procMap);
+
+        // ======================= Helpers filtro =======================
+        function escapeRegex(s) {
+            return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        /**
+         * Rellena el select #filtro_procedencia únicamente con los IDs de procedencia
+         * presentes en las filas 'rows'. Si hay solo una, se auto-selecciona.
+         * Devuelve el valor seleccionado (o '' si no hay).
+         */
+        function refreshProcedenciaOptionsFromRows(rows) {
+            const $proc = $('#filtro_procedencia');
+            const prev = $proc.val();
+
+            // IDs únicos presentes en la data (ajusta 'procedencia' si tu campo se llama distinto)
+            const ids = Array.from(new Set(
+                (rows || [])
+                .map(r => r?.procedencia)
+                .filter(v => v !== null && v !== undefined && v !== '')
+            )).map(String);
+
+            // id + texto usando PROC_MAP; fallback si falta
+            const pairs = ids
+                .map(id => ({
+                    id,
+                    text: PROC_MAP[id] ?? `Procedencia ${id}`
+                }))
+                .sort((a, b) => a.text.localeCompare(b.text, 'es', {
+                    sensitivity: 'base'
+                }));
+
+            // Reconstruir opciones
+            $proc.find('option').remove();
+            $proc.append(new Option('', '', false, false)); // opción vacía = todas
+
+            for (const p of pairs) {
+                $proc.append(new Option(p.text, p.id, false, false));
+            }
+
+            // Auto-selección si solo hay 1; si no, restaurar si sigue disponible; si no, vacío
+            const newVal = (ids.length === 1) ?
+                ids[0] :
+                (ids.includes(prev) ? prev : '');
+
+            // Refresca UI de select2 sin disparar tu handler change.pm
+            $proc.val(newVal).trigger('change.select2');
+            return newVal;
+        }
 
         // ======================= Init =======================
         $(function() {
-            // Select2
             const $proc = $('#filtro_procedencia');
+
+            // Select2
             $proc.select2({
                 width: 'resolve',
                 placeholder: $proc.data('placeholder'),
@@ -101,7 +164,7 @@
                         dt.column(0).search('').draw();
                     } else {
                         // filtro exacto por ID en col oculta
-                        dt.column(0).search('^' + v + '$', true, false).draw();
+                        dt.column(0).search('^' + escapeRegex(v) + '$', true, false).draw();
                     }
                 });
             });
@@ -111,10 +174,10 @@
         async function getPlanes() {
             // mini loader
             $("#div_tabla").html(`
-      <div class="text-center" style="padding:24px;">
-        <i class="fa fa-spinner fa-spin"></i> Espere un momento...
-      </div>
-    `);
+                <div class="text-center" style="padding:24px;">
+                    <i class="fa fa-spinner fa-spin"></i> Espere un momento...
+                </div>
+            `);
 
             const resp = await fetch(`${base_url}/get/planes-mejora`, {
                 method: 'get'
@@ -130,7 +193,7 @@
                 return;
             }
 
-            // helper: estatus como badge
+            // helper: estatus como badge (como lo tenías)
             function renderEstatus(row) {
                 const cerrada = row.cerrado !== null && row.cerrado !== undefined;
                 if (cerrada) return '<span class="dt-badge success">Concluida</span>';
@@ -146,9 +209,9 @@
             }
 
             const excelBtnHTML = `
-      <span class="excel-badge">X</span>
-      <span class="excel-text">Exportar a Excel</span>
-    `;
+                <span class="excel-badge">X</span>
+                <span class="excel-text">Exportar a Excel</span>
+            `;
 
             // Columnas base (índice 0 = procedencia oculta para filtrar)
             const cols = [{
@@ -156,7 +219,7 @@
                 data: 'procedencia',
                 visible: false,
                 searchable: true
-            }, ];
+            }];
 
             if (HAS_RESP) {
                 cols.push({
@@ -188,21 +251,30 @@
                 data: null,
                 className: 'dt-actions',
                 orderable: false,
-                render: o => `
-          <div class="dt-actions__wrap">
-            <button class="btn btn-primary btn-icon" title="Editar"
-              onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
-              <i class="fa fa-pencil"></i>
-            </button>
-            <button class="btn btn-success btn-icon" title="Ver plan de mejora"
-              onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
-              <i class="fa fa-eye"></i>
-            </button>
-            <button class="btn btn-danger btn-icon" title="Eliminar"
-              onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
-              <i class="fa fa-trash"></i>
-            </button>
-          </div>`
+                render: o => {
+                    let html = `
+                            <div class="dt-actions__wrap">
+                                <button class="btn btn-primary btn-icon" title="Editar"
+                                    onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                                <button class="btn btn-success btn-icon" title="Ver plan de mejora"
+                                    onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
+                                    <i class="fa fa-eye"></i>
+                                </button>
+                        `;
+                    // Eliminar solo si CAN_DELETE = true (rol 1)
+                    if (CAN_DELETE) {
+                        html += `
+                                <button class="btn btn-danger btn-icon" title="Eliminar"
+                                    onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            `;
+                    }
+                    html += `</div>`;
+                    return html;
+                }
             });
 
             // Columnas para exportar (excluye procedencia oculta y Acciones)
@@ -231,8 +303,7 @@
                 autoWidth: false,
                 responsive: true,
                 fixedHeader: {
-                    header: true,
-                    //     headerOffset: $('.main-header').outerHeight() || 0 // para que no lo tape el topbar
+                    header: true
                 },
                 pageLength: 10,
                 lengthMenu: [
@@ -259,14 +330,13 @@
                     text: excelBtnHTML,
                     title: 'Plan_de_Mejora',
                     exportOptions: {
-                        columns: EXPORT_COLS, // lo que ya tienes
+                        columns: EXPORT_COLS,
                         modifier: {
                             search: 'applied',
                             page: 'all'
                         }
                     },
                     customize: function(xlsx) {
-                        // ===== helpers locales (no dependemos de variables externas) =====
                         function numToCol(n) {
                             let s = '';
                             while (n > 0) {
@@ -276,17 +346,14 @@
                             }
                             return s;
                         }
-                        var HAS_RESP_LOCAL =
-                            {{ Auth::user()->rol == 1 ? 'true' : 'false' }}; // blade, no variable global
-                        var estatusExportPos = HAS_RESP_LOCAL ? 5 :
-                            4; // Estatus es la 5a o 4a col del Excel
-                        var estatusColLetter = numToCol(estatusExportPos); // E o D
+                        var HAS_RESP_LOCAL = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
+                        var estatusExportPos = HAS_RESP_LOCAL ? 5 : 4;
+                        var estatusColLetter = numToCol(estatusExportPos);
 
                         var $ = window.jQuery;
                         var sheet = xlsx.xl.worksheets['sheet1.xml'];
                         var styles = xlsx.xl['styles.xml'];
-                        var sst = xlsx.xl[
-                            'sharedStrings.xml']; // puede ser undefined si no hay shared strings
+                        var sst = xlsx.xl['sharedStrings.xml'];
 
                         var $sheet = $(sheet);
                         var $styles = $(styles);
@@ -294,10 +361,9 @@
                         var $cellXfs = $styles.find('cellXfs');
                         var $sst = sst ? $(sst) : null;
 
-                        // Leer texto de celda sin importar formato
                         function cellText($c) {
                             var t = $c.attr('t');
-                            if (t === 's' && $sst) { // shared string
+                            if (t === 's' && $sst) {
                                 var idx = parseInt($c.find('v').text(), 10);
                                 var $si = $sst.find('si').eq(idx);
                                 var txt = '';
@@ -306,24 +372,19 @@
                                 });
                                 return txt;
                             }
-                            if (t === 'inlineStr') { // inline string
-                                return $c.find('is t').text();
-                            }
-                            return $c.find('v').text(); // número u otro
+                            if (t === 'inlineStr') return $c.find('is t').text();
+                            return $c.find('v').text();
                         }
 
-                        // ===== crea estilos (fills + xfs) =====
                         var fillCount = parseInt($fills.attr('count'), 10);
-                        // amarillo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="FFE98A"/><bgColor indexed="64"/></patternFill></fill>'
-                        );
+                            );
                         var yellowFillId = fillCount;
                         fillCount++;
-                        // rojo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="DE4D3A"/><bgColor indexed="64"/></patternFill></fill>'
-                        );
+                            );
                         var redFillId = fillCount;
                         fillCount++;
                         $fills.attr('count', fillCount);
@@ -338,13 +399,12 @@
                         xfCount++;
                         $cellXfs.attr('count', xfCount);
 
-                        // ===== aplica estilo a la columna de Estatus (toda la col, excepto encabezado) =====
                         var selector = 'row c[r^="' + estatusColLetter + '"]';
                         $(selector, $sheet).each(function() {
                             var $c = $(this);
-                            var rAttr = $c.attr('r'); // p.ej. "E2"
+                            var rAttr = $c.attr('r');
                             var rowNum = parseInt(rAttr.replace(/^[A-Z]+/, ''), 10);
-                            if (rowNum === 1) return; // saltar header
+                            if (rowNum === 1) return;
 
                             var text = (cellText($c) || '').trim().toLowerCase();
                             if (text.includes('vencida')) {
@@ -358,26 +418,22 @@
                 columns: cols
             });
 
-            // Si ya había un filtro seleccionado al cargar, aplícalo
-            const pre = $('#filtro_procedencia').val();
-            if (pre) dt.column(0).search('^' + pre + '$', true, false).draw();
+            // === Rellenar el filtro según lo que trae la data y auto-seleccionar si aplica
+            const selected = refreshProcedenciaOptionsFromRows(data.data);
+
+            // Aplicar el filtro inicial si hay selección (regex exacto)
+            if (selected) {
+                dt.column(0).search('^' + escapeRegex(selected) + '$', true, false).draw();
+            }
         }
 
-        // Sticky del header cuando hay scrollX (opcional, si ya tienes estilos .stuck)
-        (function() {
-            const limit = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) || 50;
-            window.addEventListener('scroll', function() {
-                const head = document.querySelector('.dataTables_wrapper .dataTables_scrollHead');
-                if (!head) return;
-                (head.getBoundingClientRect().top <= limit + 1) ? head.classList.add('stuck'): head.classList
-                    .remove('stuck');
-            }, {
-                passive: true
-            });
-        })();
-
-        // ======================= Eliminar =======================
+        // ======================= Eliminar (protegido por rol) =======================
         function confirmaElimina(id, accion) {
+            if (!CAN_DELETE) {
+                swal("Acción no permitida", "No cuentas con permisos para eliminar.", "warning");
+                return;
+            }
+
             let mensaje = '¿Está seguro?';
             let sub = 'El registro se eliminará de forma permanente.';
             if (accion > 0) sub =
@@ -412,13 +468,13 @@
                 }
             }, 200);
         }
+
         // Recalcular columnas tras expandir/colapsar el menú lateral (animación ~300ms)
         $(document).on('expanded.pushMenu collapsed.pushMenu', function() {
             setTimeout(function() {
                 if (dt) dt.columns.adjust();
             }, 320);
         });
-
         (function() {
             let tm = null;
             $(window).on('resize.dt', function() {
