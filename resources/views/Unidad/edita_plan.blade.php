@@ -52,7 +52,7 @@
             border-right: none;
             cursor: pointer;
             background: #fff;
-            user-select: none
+            user-select: none;
         }
 
         .seg-control label:first-of-type {
@@ -160,10 +160,6 @@
             }
         }
 
-        .w-160 {
-            max-width: 160px;
-        }
-
         .count-hint {
             text-align: right;
             font-size: .8rem;
@@ -183,6 +179,17 @@
             display: flex;
             gap: .5rem;
             align-items: center;
+            flex-wrap: wrap;
+            /* para que no se desborde en pantallas chicas */
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            padding: 0;
         }
     </style>
 @endpush
@@ -222,7 +229,6 @@
                                             {{ $plan->tipo === 'Meta' ? 'checked' : '' }} disabled>
                                         <label for="tipo_meta">Meta</label>
                                     </div>
-
                                 </div>
                             </div>
 
@@ -402,19 +408,17 @@
                                 </div>
                             </div>
                             <div class="col-md-12" style="margin-bottom:.5rem;">
-                                <button class="btn btn-success" onclick="guardaIndicador()">Guardar indicador
-                                    clave</button>
+                                <button type="button" class="btn btn-success" onclick="guardaIndicador()">Guardar
+                                    indicador clave</button>
                             </div>
 
                             <div class="col-md-12" style="display:flex;justify-content:flex-end;margin-bottom:.5rem;">
-                                <button class="btn btn-primary" onclick="abreModal()">
+                                <button type="button" class="btn btn-primary" onclick="verificaIndicadorYAbreModal()">
                                     <i class="fa fa-plus-circle"></i>&nbsp;Agregar acción
                                 </button>
                             </div>
 
-                            <div class="col-md-12" id="div_tabla_acciones">
-                                <!-- se pinta con JS -->
-                            </div>
+                            <div class="col-md-12" id="div_tabla_acciones"></div>
                         </div>
                     </div>
 
@@ -442,43 +446,40 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Evidencia <small class="obligatorio">*</small></label>
-
-                                        {{-- input real oculto --}}
+                                        <!-- input real oculto -->
                                         <input type="file" name="evidencia" id="evidencia" accept=".pdf"
                                             style="display:none">
-
+                                        @php $tieneArchivo = !empty($complemento?->archivo); @endphp
                                         <div class="evidence-actions">
-                                            <button type="button" class="btn btn-success" id="btn_pick_evidencia">
+                                            <button type="button" class="btn btn-success" id="btn_pick_evidencia"
+                                                @if ($tieneArchivo) style="display:none" @endif>
                                                 Seleccionar PDF <i class="fa fa-upload"></i>
                                             </button>
+                                            <a class="btn btn-default" id="btn_ver_evidencia"
+                                                href="{{ $tieneArchivo ? asset('storage/' . $complemento->archivo) : '#' }}"
+                                                target="_blank"
+                                                @unless ($tieneArchivo) style="display:none" @endunless>
+                                                Ver evidencia
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-icon"
+                                                id="btn_delete_evidencia"
+                                                onclick="confirmaEliminaArchivoComplemento({{ $plan->id }})"
+                                                @unless ($tieneArchivo) style="display:none" @endunless>
+                                                <i class="fa fa-remove"></i>
+                                            </button>
                                         </div>
-
                                         <small class="help">Solo PDF (máx. 6 MB).</small>
                                     </div>
+                                </div>
 
-                                    <div id="archivo_com">
-                                        @if ($complemento?->archivo)
-                                            <div class="dt-actions__wrap">
-                                                <a class="btn btn-default"
-                                                    href="{{ asset('storage/' . $complemento->archivo) }}"
-                                                    target="_blank">
-                                                    Ver evidencia
-                                                </a>
-                                                <button type="button" class="btn btn-danger btn-icon"
-                                                    onclick="confirmaEliminaArchivoComplemento({{ $plan->id }})">
-                                                    <i class="fa fa-remove"></i>
-                                                </button>
-                                            </div>
-                                        @endif
-                                    </div>
+                                {{-- =================== Actividades de control =================== --}}
+                                <div class="col-md-12"
+                                    style="display:flex;justify-content:flex-end;margin-bottom:.5rem; margin-top:1rem;">
+                                    <button type="button" class="btn btn-primary" onclick="abreModalControl(event)">
+                                        <i class="fa fa-plus-circle"></i>&nbsp;Agregar actividad de control
+                                    </button>
                                 </div>
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Control observaciones <small class="obligatorio">*</small></label>
-                                        <textarea name="control_observaciones" id="control_observaciones" class="form-control" style="min-height:100px;"
-                                            placeholder="Máximo 600 caracteres">{{ $complemento?->control_observaciones }}</textarea>
-                                    </div>
-                                </div>
+                                <div class="col-md-12" id="div_tabla_control"></div>
 
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -493,7 +494,6 @@
                                         onclick="guardaComplemento(this)">
                                         Guardar evidencia final
                                     </button>
-
                                 </div>
                             </form>
                         </div>
@@ -504,7 +504,57 @@
         </div>
     </div>
 
-    {{-- =================== Modales =================== --}}
+    {{-- =================== Modales independientes (FUERA del form grande) =================== --}}
+
+    {{-- Modal agregar/editar actividad de control --}}
+    <div class="modal fade modal-modern" id="modal_control" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="titulo_modal_control">Agregar actividad de control</h3>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form_control" class="form-compact">
+                        <input type="hidden" id="id_control">
+                        <div class="field">
+                            <label>Actividad <span class="required">*</span></label>
+                            <textarea id="actividad" class="form-control" maxlength="500" placeholder="Máximo 500 caracteres"></textarea>
+                            <div id="actividad_count" class="count-hint">0/500</div>
+                        </div>
+                        <div class="field">
+                            <label>Resultado/Producto <span class="required">*</span></label>
+                            <textarea id="producto_resultado_ctrl" class="form-control" maxlength="500" placeholder="Máximo 500 caracteres"></textarea>
+                            <div id="producto_resultado_ctrl_count" class="count-hint">0/500</div>
+                        </div>
+                        <div class="inline-2">
+                            <div class="field">
+                                <label>Fecha de inicio <span class="required">*</span></label>
+                                <input type="text" id="fecha_inicio_ctrl" data-provide="datepicker"
+                                    autocomplete="off" class="form-control w-160">
+                            </div>
+                            <div class="field">
+                                <label>Fecha de término <span class="required">*</span></label>
+                                <input type="text" id="fecha_fin_ctrl" data-provide="datepicker" autocomplete="off"
+                                    class="form-control w-160">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Responsable (nombre o puesto) <span class="required">*</span></label>
+                            <input type="text" id="responsable_ctrl" class="form-control">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn_guardar_control"
+                        onclick="guardarActividadControl()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal agregar acción --}}
     <div class="modal fade modal-modern" id="modal_agrega_accion" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -520,14 +570,12 @@
 
                 <div class="modal-body">
                     <form id="form_agrega_accion" class="form-compact">
-                        <!-- ACCIÓN -->
                         <div class="field">
                             <label>Acción <span class="required">*</span></label>
                             <textarea name="accion" id="accion" class="form-control" maxlength="500" placeholder="Máximo 500 caracteres"></textarea>
                             <div id="accion_count" class="count-hint">0/500</div>
                         </div>
 
-                        <!-- RESULTADO -->
                         <div class="field">
                             <label>Resultado/Producto <span class="required">*</span></label>
                             <textarea name="producto_resultado" id="producto_resultado" class="form-control" maxlength="500"
@@ -563,6 +611,8 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal editar acción --}}
     <div class="modal fade modal-modern" id="modal_edita_accion" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -575,7 +625,6 @@
 
                 <div class="modal-body">
                     <form id="form_edita_accion" class="form-compact" enctype="multipart/form-data">
-
                         <div class="esconde">
                             <div class="field">
                                 <label>Acción</label>
@@ -610,7 +659,7 @@
                                     class="form-control">
                             </div>
                         </div>
-                        <!-- Bloque SOLO para subir evidencia -->
+
                         <div class="esconde_evidencia" hidden>
                             <div class="field">
                                 <label for="evidencia_edit">Evidencia <span class="required">*</span></label>
@@ -626,7 +675,6 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btn_editaAccion"
                         onclick="editaAccion()">Actualizar acción</button>
-
                 </div>
             </div>
         </div>
@@ -639,132 +687,157 @@
         var base_url = $("input[name='base_url']").val();
         let id_accion;
         let EDIT_MODE = 'full'; // 'full' | 'evidence'
-        let evidenciaFile = null; // <-- NUEVO
+        let evidenciaFile = null;
+
+        // === Indicador clave guardado? (inicializa desde servidor)
+        let indicadorGuardado = {{ $complemento && $complemento->indicador_clave ? 'true' : 'false' }};
+        // Si el usuario escribe, marcamos como pendiente de guardar
+        $('#indicador_clave').on('input', () => {
+            indicadorGuardado = false;
+        });
+
+        function verificaIndicadorYAbreModal() {
+            const val = ($('#indicador_clave').val() || '').trim();
+            if (!val || !indicadorGuardado) {
+                swal('Falta el Indicador clave',
+                    'Captura y guarda el Indicador clave antes de agregar acciones.',
+                    'warning');
+                $('#indicador_clave').focus();
+                return;
+            }
+            $('#modal_agrega_accion').modal('show');
+        }
 
         function setEditMode(evidence) {
             const $m = $('#modal_edita_accion');
-
-            // quita atributos hidden y luego toggle
             $m.find('.esconde, .esconde_evidencia').removeAttr('hidden');
             $m.find('.esconde').toggle(!evidence);
             $m.find('.esconde_evidencia').toggle(!!evidence);
-
             $m.find('.modal-title').text(evidence ? 'Subir evidencia' : 'Edita acción de mejora');
             $m.find('#btn_editaAccion').text(evidence ? 'Subir evidencia' : 'Actualizar acción');
-
             EDIT_MODE = evidence ? 'evidence' : 'full';
         }
 
         // Datepickers compactos
-        $('#fecha_inicio, #fecha_fin, #fecha_inicio_edit, #fecha_fin_edit').datepicker({
-            dateFormat: 'yy-mm-dd'
-        }).datepicker();
+        $('#fecha_inicio, #fecha_fin, #fecha_inicio_edit, #fecha_fin_edit, #fecha_inicio_ctrl, #fecha_fin_ctrl')
+            .datepicker({
+                dateFormat: 'yy-mm-dd'
+            }).datepicker();
 
-        const loaderHTML = `
-            <div class="text-center" style="padding:24px;">
-                <i class="fa fa-spinner fa-spin"></i> Espere un momento...
-            </div>`;
+        // ===================== ACCIONES =====================
+        let dtAcciones = null;
 
-        const getAcciones = async () => {
-            // loader
-            if (typeof mostrarLoader === 'function') {
-                mostrarLoader('div_tabla_acciones', 'Espere un momento...');
-            } else {
-                $("#div_tabla_acciones").html(loaderHTML);
-            }
+        async function getAcciones() {
+            try {
+                // loader solo si no existe la tabla aún
+                if (!dtAcciones) {
+                    $("#div_tabla_acciones").html(`
+                        <div class="text-center" style="padding:24px;">
+                          <i class="fa fa-spinner fa-spin"></i> Espere un momento...
+                        </div>`);
+                }
 
-            const response = await fetch(`${base_url}/get/acciones/plan/{{ $plan->id }}`, {
-                method: 'get'
-            });
-            $("#div_tabla_acciones").html(
-                `<table class="table table-bordered table-striped compact" id="tabla_acciones"></table>`);
-            const data = await response.json();
-
-            if (data.code == 200) {
-                new DataTable('#tabla_acciones', {
-                    data: data.data,
-                    deferRender: true,
-                    searching: true,
-                    ordering: false,
-                    info: false,
-                    paging: true,
-                    autoWidth: false,
-                    scrollX: true,
-                    language: {
-                        url: base_url + '/js/Spanish.json'
-                    },
-                    layout: {
-                        topStart: 'pageLength',
-                        topEnd: 'search',
-                        bottomStart: 'info',
-                        bottomEnd: 'paging'
-                    },
-                    columns: [{
-                            title: "Acción",
-                            data: 'accion'
-                        },
-                        {
-                            title: "Resultado/Producto",
-                            data: 'producto_resultado'
-                        },
-                        {
-                            title: "Fecha inicio",
-                            data: 'fecha_inicio',
-                            className: 'text-center'
-                        },
-                        {
-                            title: "Fecha término",
-                            data: 'fecha_fin',
-                            className: 'text-center'
-                        },
-                        {
-                            title: "Responsable (nombre o puesto)",
-                            data: 'responsable'
-                        },
-                        {
-                            title: 'Evidencia',
-                            data: null,
-                            orderable: false,
-                            className: 'text-center',
-                            render: (_, __, o) => {
-                                if (o.evidencia) {
-                                    return `
-                                    <div>
-                                    <a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a>
-                                    <button class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})">
-                                        <i class="fa fa-remove"></i>
-                                    </button>
-                                    </div>`;
-                                }
-                                return `
-                                <div>
-                                    <button class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 'evidence')">
-                                    Subir evidencia <i class="fa fa-upload"></i>
-                                    </button>
-                                </div>`;
-                            }
-                        },
-                        {
-                            title: 'Acciones',
-                            data: null,
-                            orderable: false,
-                            className: 'text-center',
-                            render: (_, __, o) => `
-                            <div class="dt-actions__wrap">
-                             <button class="btn btn-primary btn-icon" title="Editar" onclick="modalEdita(${o.id}, 'edit')">
-                                <i class="fa fa-pencil"></i>
-                            </button>
-                              <button class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaAccion(${o.id})">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                            </div>`
-                        }
-                    ]
+                const response = await fetch(`${base_url}/get/acciones/plan/{{ $plan->id }}?t=${Date.now()}`, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
                 });
-            } else {
-                swal("¡Error!", data.mensaje, "error");
+
+                const data = await response.json().catch(() => ({}));
+                const rows = (response.ok && data.code === 200 && Array.isArray(data.data)) ? data.data : [];
+
+                if (!dtAcciones) {
+                    // Crear tabla e inicializar DataTable SOLO la primera vez
+                    $("#div_tabla_acciones").html(
+                        '<table class="table table-bordered table-striped compact" id="tabla_acciones" style="width:100%"></table>'
+                    );
+                    dtAcciones = $('#tabla_acciones').DataTable({
+                        data: rows,
+                        deferRender: true,
+                        searching: true,
+                        ordering: false,
+                        info: false,
+                        paging: true,
+                        autoWidth: false,
+                        scrollX: true,
+                        language: {
+                            url: base_url + '/js/Spanish.json'
+                        },
+                        columns: [{
+                                title: "Acción",
+                                data: 'accion'
+                            },
+                            {
+                                title: "Resultado/Producto",
+                                data: 'producto_resultado'
+                            },
+                            {
+                                title: "Fecha inicio",
+                                data: 'fecha_inicio',
+                                className: 'text-center'
+                            },
+                            {
+                                title: "Fecha término",
+                                data: 'fecha_fin',
+                                className: 'text-center'
+                            },
+                            {
+                                title: "Responsable (nombre o puesto)",
+                                data: 'responsable'
+                            },
+                            {
+                                title: 'Evidencia',
+                                data: null,
+                                orderable: false,
+                                className: 'text-center',
+                                render: (_, __, o) => {
+                                    if (o.evidencia) {
+                                        return `
+                                            <div class="dt-actions__wrap">
+                                                <a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})">
+                                                    <i class="fa fa-remove"></i>
+                                                </button>
+                                            </div>`;
+                                    }
+                                    return `
+                                        <button type="button" class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 'evidence')">
+                                            Subir evidencia <i class="fa fa-upload"></i>
+                                        </button>`;
+                                }
+                            },
+                            {
+                                title: 'Acciones',
+                                data: null,
+                                orderable: false,
+                                className: 'text-center',
+                                render: (_, __, o) => `
+                                    <div class="dt-actions__wrap">
+                                        <button type="button" class="btn btn-primary btn-icon" title="Editar" onclick="modalEdita(${o.id}, 'edit')">
+                                            <i class="fa fa-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaAccion(${o.id})">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>`
+                            }
+                        ]
+                    });
+                } else {
+                    // SOLO refrescamos data
+                    dtAcciones.clear().rows.add(rows).draw(false);
+                }
+
+                if (!(response.ok && data.code === 200)) {
+                    swal("¡Error!", (data && data.mensaje) || 'No se pudo cargar Acciones.', "error");
+                }
+            } catch (err) {
+                console.error('getAcciones error:', err);
+                swal("¡Error!", "No se pudo cargar Acciones.", "error");
             }
-        };
+        }
 
         const confirmaEliminaArchivo = (id) => {
             swal({
@@ -776,7 +849,7 @@
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar',
             }, async function(isConfirm) {
-                if (isConfirm) eliminaArchivo(id);
+                if (isConfirm) await eliminaArchivo(id);
             });
         };
 
@@ -787,16 +860,14 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            const data = await response.json();
-            setTimeout(() => {
-                if (data.code == 200) {
+            const data = await response.json().catch(() => ({}));
+            setTimeout(async () => {
+                if (response.ok && data.code == 200) {
                     swal("¡Correcto!", data.mensaje, "success");
-                    getAcciones();
-                } else swal("¡Error!", data.mensaje, "error");
+                    await getAcciones();
+                } else swal("¡Error!", (data && data.mensaje) || 'No se pudo eliminar.', "error");
             }, 200);
         };
-
-        const abreModal = () => $('#modal_agrega_accion').modal();
 
         const agregaAccion = async () => {
             const body = new FormData(document.getElementById('form_agrega_accion'));
@@ -808,18 +879,17 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            const data = await response.json();
-            if (data.code == 200) {
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.code == 200) {
                 $("#accion, #producto_resultado, #fecha_inicio, #fecha_fin").val("");
-                $("#evidencia").val(null);
-                getAcciones();
+                await getAcciones();
                 $('#modal_agrega_accion').modal('hide');
                 toastr.success(data.mensaje);
             } else if (data.code == 411) {
                 const first = Object.values(data.errors)[0][0];
                 swal("¡Error!", first, "error");
             } else {
-                swal("¡Error!", data.mensaje, "error");
+                swal("¡Error!", (data && data.mensaje) || 'No se pudo guardar.', "error");
             }
             $("#btn_agregaAccion").prop("disabled", false);
         };
@@ -845,21 +915,20 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            const data = await response.json();
-            if (data.code == 200) {
-                getAcciones();
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.code == 200) {
+                await getAcciones();
                 toastr.success(data.mensaje);
             } else {
-                swal("¡Error!", data.mensaje, "error");
+                swal("¡Error!", (data && data.mensaje) || 'No se pudo eliminar.', "error");
             }
         };
 
+        const abreModal = () => $('#modal_agrega_accion').modal();
 
         // 'edit' muestra campos de acción, 'evidence' solo el file input
         const modalEdita = async (id, mode = 'edit') => {
             const evidence = mode === 'evidence';
-
-            // limpia y habilita botón
             const form = document.getElementById('form_edita_accion');
             form.reset();
             evidenciaFile = null;
@@ -868,19 +937,17 @@
             setEditMode(evidence);
 
             const r = await fetch(`${base_url}/get/detalle/accion/${id}`);
-            const data = await r.json();
-            if (data.code !== 200) return swal("¡Error!", data.mensaje, "error");
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok || data.code !== 200) return swal("¡Error!", (data && data.mensaje) || 'No se pudo cargar.',
+                "error");
 
             id_accion = id;
 
-            // ⚠️ SIEMPRE rellenar los campos (aunque estén ocultos)
             $('#accion_edit').val(data.data.accion);
             $('#producto_resultado_edit').val(data.data.producto_resultado);
             $('#fecha_inicio_edit').val(data.data.fecha_inicio);
             $('#fecha_fin_edit').val(data.data.fecha_fin);
             $('#responsable_edit').val(data.data.responsable);
-
-            // limpia file input
             $('#evidencia_edit').val('');
 
             $('#modal_edita_accion').one('shown.bs.modal', function() {
@@ -897,7 +964,7 @@
 
             try {
                 const form = document.getElementById('form_edita_accion');
-                const body = new FormData(form); // incluye TODOS los campos (ocultos también)
+                const body = new FormData(form);
 
                 body.set('id_accion', id_accion);
                 body.set('id_plan', {{ $plan->id }});
@@ -906,7 +973,6 @@
                 if (EDIT_MODE === 'evidence') {
                     const inp = document.getElementById('evidencia_edit');
                     const file = evidenciaFile || (inp.files && inp.files[0] ? inp.files[0] : null);
-
                     if (!file) {
                         swal('Falta el archivo', 'Selecciona un PDF para subir.', 'warning');
                         return;
@@ -920,13 +986,8 @@
                         swal('Archivo muy grande', 'El PDF no debe exceder 6 MB.', 'warning');
                         return;
                     }
-
-                    // fuerza que el archivo viaje con la MISMA clave del input
                     body.set('evidencia_edit', file, file.name);
                 }
-
-                // (opcional) DEBUG: ver qué viaja
-                // for (const [k,v] of body.entries()) console.log(k, v instanceof File ? `File(${v.name}, ${v.size})` : v);
 
                 const resp = await fetch(`${base_url}/edita/accion`, {
                     method: 'post',
@@ -937,12 +998,8 @@
                     }
                 });
 
-                let data = null;
-                try {
-                    data = await resp.json();
-                } catch (_) {}
+                let data = await resp.json().catch(() => ({}));
 
-                // Manejo cuando el backend responde HTTP 411 (tus validaciones)
                 if (!resp.ok) {
                     if (resp.status === 411 && data && data.errors) {
                         const first = Object.values(data.errors)[0][0];
@@ -958,7 +1015,7 @@
                 }
 
                 if (data && data.code === 200) {
-                    getAcciones();
+                    await getAcciones();
                     evidenciaFile = null;
                     if (EDIT_MODE === 'evidence') $('#evidencia_edit').val('');
                     $('#modal_edita_accion').modal('hide');
@@ -978,17 +1035,16 @@
             }
         };
 
-        // Si el modal se cierra después de un warning, re-habilita el botón
         $('#modal_edita_accion').on('hidden.bs.modal', function() {
             $('#btn_editaAccion').prop('disabled', false);
         });
 
-        // opcional: habilita el botón al elegir archivo (mejora UX)
         $('#evidencia_edit').on('change', function() {
             if (this.files && this.files.length) $('#btn_editaAccion').prop('disabled', false);
+            evidenciaFile = this.files && this.files[0] ? this.files[0] : null;
         });
 
-
+        // Indicador clave
         const guardaIndicador = async () => {
             const body = new FormData();
             body.append('id_plan', {{ $plan->id }});
@@ -1000,84 +1056,36 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            const data = await response.json();
-            if (data.code == 200) toastr.success(data.mensaje);
-            else if (data.code == 411) {
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.code == 200) {
+                indicadorGuardado = true; // <-- ya quedó guardado
+                toastr.success(data.mensaje);
+            } else if (data.code == 411) {
                 const first = Object.values(data.errors)[0][0];
                 swal("¡Error!", first, "error");
-            } else swal("¡Error!", data.mensaje, "error");
+            } else swal("¡Error!", (data && data.mensaje) || 'No se pudo guardar.', "error");
         };
 
-        // Arranque
-        getAcciones();
-
-        // Contadores
-        function updateCount(id, max) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const hint = document.getElementById(id + '_count');
-            const m = max || parseInt(el.getAttribute('maxlength') || '500', 10);
-            if (hint) hint.textContent = `${el.value.length}/${m}`;
+        // === Evidencia complemento (UI inline) ===
+        function _toggleEvidenceUI(hasFile, path) {
+            const $pick = $('#btn_pick_evidencia');
+            const $view = $('#btn_ver_evidencia');
+            const $del = $('#btn_delete_evidencia');
+            if (hasFile) {
+                if (path) $view.attr('href', `${base_url}/storage/${path}`);
+                $pick.hide();
+                $view.show();
+                $del.show();
+            } else {
+                $view.hide().attr('href', '#');
+                $del.hide();
+                $pick.show();
+            }
         }
-
-        ['accion', 'producto_resultado', 'accion_edit', 'producto_resultado_edit'].forEach(k => {
-            document.addEventListener('input', e => {
-                if (e.target && e.target.id === k) updateCount(k);
-            });
-        });
-
-        $('#modal_agrega_accion').on('shown.bs.modal', function() {
-            setTimeout(() => document.getElementById('accion')?.focus(), 50);
-            updateCount('accion');
-            updateCount('producto_resultado');
-        });
-        $('#modal_edita_accion').on('shown.bs.modal', function() {
-            updateCount('accion_edit');
-            updateCount('producto_resultado_edit');
-        });
-
-        // Captura firme del archivo (primera vez incluido)
-        $(document).on('change', '#evidencia_edit', function() {
-            evidenciaFile = this.files && this.files[0] ? this.files[0] : null;
-            // re-habilita el botón por UX
-            if (evidenciaFile) $('#btn_editaAccion').prop('disabled', false);
-        });
-
-        $('#modal_edita_accion, #modal_agrega_accion')
-            .on('show.bs.modal', function() {
-                $(this).attr('aria-hidden', 'false');
-            })
-            .on('hidden.bs.modal', function() {
-                $(this).attr('aria-hidden', 'true');
-            });
-
-        // Abrir selector al hacer click en el botón
         $('#btn_pick_evidencia').on('click', function() {
             document.getElementById('evidencia').click();
         });
-        // Validación inmediata (tipo / tamaño) al elegir archivo
-        $('#evidencia').on('change', function() {
-            const file = this.files && this.files[0] ? this.files[0] : null;
-            if (!file) return;
 
-            const isPdfByExt = /\.pdf$/i.test(file.name || '');
-            const tooBig = file.size > 6 * 1024 * 1024;
-
-            if (!isPdfByExt) {
-                swal('Formato no válido', 'Solo se permite PDF.', 'warning');
-                this.value = '';
-                return;
-            }
-            if (tooBig) {
-                swal('Archivo muy grande', 'El PDF no debe exceder 6 MB.', 'warning');
-                this.value = '';
-                return;
-            }
-
-            // Si quieres dar feedback sin mostrar chip:
-            toastr.info('Archivo listo: ' + file.name);
-        });
-        // === Borrar archivo del complemento (mismo look/comportamiento que Acciones) ===
         const confirmaEliminaArchivoComplemento = (idPlan) => {
             swal({
                 title: '¿Está seguro?',
@@ -1088,7 +1096,7 @@
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar',
             }, async function(isConfirm) {
-                if (isConfirm) eliminaArchivoComplemento(idPlan);
+                if (isConfirm) await eliminaArchivoComplemento(idPlan);
             });
         };
 
@@ -1099,43 +1107,26 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            const data = await r.json().catch(() => ({}));
 
+            const data = await r.json().catch(() => ({}));
             if (r.ok && data.code === 200) {
                 swal('¡Correcto!', data.mensaje, 'success');
-                // Limpia UI
-                $('#archivo_com').empty();
+                _toggleEvidenceUI(false);
                 $('#evidencia').val('');
             } else {
                 swal('¡Error!', (data && data.mensaje) || 'No se pudo eliminar.', 'error');
             }
         };
 
-        // === Ajuste leve en guardaComplemento para refrescar la UI con los nuevos botones ===
-        // Dentro del éxito de guardaComplemento, cambia el fragmento que actualiza #archivo_com por este:
-        // (usa exactamente esto en tu función existente)
-        // Renderiza "Ver evidencia" + "Eliminar" abajo cuando exista archivo
-        function _renderArchivoComplemento(path) {
-            $('#archivo_com').html(`
-    <div class="dt-actions__wrap">
-      <a class="btn btn-default" href="${base_url}/storage/${path}" target="_blank">Ver evidencia</a>
-      <!-- Si no tienes endpoint para eliminar, quita este botón -->
-      <button type="button" class="btn btn-danger btn-icon"
-              onclick="confirmaEliminaArchivoComplemento(${/* id_plan */ {{ $plan->id }} })">
-        <i class="fa fa-remove"></i>
-      </button>
-    </div>
-  `);
-        }
+
 
         async function guardaComplemento(btn) {
             btn.disabled = true;
             try {
                 const form = document.getElementById('form_guarda_complemento');
                 const fd = new FormData(form);
-                fd.set('id_plan', {{ $plan->id }}); // <-- importante
+                fd.set('id_plan', {{ $plan->id }});
 
-                // Validación inmediata del PDF
                 const f = form.querySelector('#evidencia').files[0];
                 if (f) {
                     if (!/\.pdf$/i.test(f.name)) {
@@ -1149,7 +1140,6 @@
                     fd.set('evidencia', f, f.name);
                 }
 
-                // AQUÍ se define 'resp'
                 const resp = await fetch(`${base_url}/guarda/complemento/plan`, {
                     method: 'POST',
                     body: fd,
@@ -1165,8 +1155,8 @@
                 if (resp.ok && data.code === 200) {
                     toastr.success(data.mensaje);
                     if (data.archivo) {
-                        _renderArchivoComplemento(data.archivo);
-                        $('#evidencia').val(''); // limpiar input
+                        _toggleEvidenceUI(true, data.archivo);
+                        $('#evidencia').val('');
                     }
                 } else if (resp.status === 411 && data.errors) {
                     const first = Object.values(data.errors)[0][0];
@@ -1181,5 +1171,241 @@
                 btn.disabled = false;
             }
         }
+
+        $('#evidencia').on('change', async function() {
+            const file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file) return;
+
+            if (!/\.pdf$/i.test(file.name)) {
+                swal('Formato no válido', 'Solo se permite PDF.', 'warning');
+                this.value = '';
+                return;
+            }
+            if (file.size > 6 * 1024 * 1024) {
+                swal('Archivo muy grande', 'Máx. 6 MB.', 'warning');
+                this.value = '';
+                return;
+            }
+
+            const fd = new FormData();
+            fd.set('id_plan', {{ $plan->id }});
+            fd.set('evidencia', file, file.name);
+
+            const resp = await fetch(`${base_url}/sube/evidencia/complemento`, {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.code === 200) {
+                toastr.success(data.mensaje);
+                _toggleEvidenceUI(true, data.archivo);
+                this.value = '';
+            } else if (resp.status === 411 && data.errors) {
+                const first = Object.values(data.errors)[0][0];
+                swal('¡Error!', first, 'error');
+            } else {
+                swal('¡Error!', data.mensaje || 'No se pudo subir el archivo.', 'error');
+            }
+        });
+
+        // ===================== CONTROL =====================
+        let dtCtrl = null;
+
+        async function getActividadesControl() {
+            const r = await fetch(`${base_url}/get/actividades/control/{{ $plan->id }}?t=${Date.now()}`, {
+                cache: 'no-store'
+            });
+            const data = await r.json().catch(() => ({}));
+            const rows = (r.ok && data && Array.isArray(data.data)) ? data.data : [];
+
+            if (!dtCtrl) {
+                $("#div_tabla_control").html(
+                    '<table id="tabla_ctrl" class="table table-bordered table-striped" style="width:100%"></table>');
+                dtCtrl = $('#tabla_ctrl').DataTable({
+                    data: rows,
+                    deferRender: true,
+                    searching: true,
+                    ordering: false,
+                    info: false,
+                    paging: true,
+                    autoWidth: false,
+                    scrollX: true,
+                    language: {
+                        url: base_url + '/js/Spanish.json'
+                    },
+                    columns: [{
+                            title: 'Actividad',
+                            data: 'actividad'
+                        },
+                        {
+                            title: 'Resultado/Producto',
+                            data: 'producto_resultado'
+                        },
+                        {
+                            title: 'Fecha de inicio',
+                            data: 'fecha_inicio',
+                            className: 'text-center'
+                        },
+                        {
+                            title: 'Fecha de término',
+                            data: 'fecha_fin',
+                            className: 'text-center'
+                        },
+                        {
+                            title: 'Responsable (nombre o puesto)',
+                            data: 'responsable'
+                        },
+                        {
+                            title: 'Acciones',
+                            data: null,
+                            orderable: false,
+                            className: 'text-center',
+                            render: (_, __, o) => `
+                                <div class="dt-actions__wrap">
+                                    <button type="button" class="btn btn-primary btn-icon" onclick="modalEditaControl(${o.id})"><i class="fa fa-pencil"></i></button>
+                                    <button type="button" class="btn btn-danger btn-icon" onclick="eliminaActividadControl(${o.id})"><i class="fa fa-trash"></i></button>
+                                </div>`
+                        }
+                    ],
+                    autoWidth: false
+                });
+            } else {
+                dtCtrl.clear().rows.add(rows).draw(false);
+            }
+        }
+
+        function abreModalControl(e) {
+            if (e) e.preventDefault();
+            $('#titulo_modal_control').text('Agregar actividad de control');
+            $('#id_control').val('');
+            $('#actividad').val('');
+            $('#producto_resultado_ctrl').val('');
+            $('#fecha_inicio_ctrl').val('');
+            $('#fecha_fin_ctrl').val('');
+            $('#responsable_ctrl').val('');
+            $('#btn_guardar_control').text('Guardar');
+
+            $('#modal_control')
+                .one('shown.bs.modal', () => $('#actividad').trigger('focus'))
+                .modal('show');
+        }
+
+        async function guardarActividadControl() {
+            const id = $('#id_control').val();
+            const fd = new FormData();
+            fd.set('id_plan', {{ $plan->id }});
+            fd.set('actividad', $('#actividad').val());
+            fd.set('producto_resultado', $('#producto_resultado_ctrl').val());
+            fd.set('fecha_inicio', $('#fecha_inicio_ctrl').val());
+            fd.set('fecha_fin', $('#fecha_fin_ctrl').val());
+            fd.set('responsable', $('#responsable_ctrl').val());
+
+            const url = id ? `${base_url}/edita/actividad-control` : `${base_url}/guarda/actividad-control`;
+            if (id) fd.set('id', id);
+
+            const r = await fetch(url, {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d.code === 200) {
+                $('#modal_control').modal('hide');
+                await getActividadesControl();
+                toastr.success(d.mensaje);
+            } else if (d.code === 411) {
+                swal('¡Error!', Object.values(d.errors)[0][0], 'error');
+            } else {
+                swal('¡Error!', d.mensaje || 'No se pudo guardar', 'error');
+            }
+        }
+
+        // OJO: Ruta correcta solicitada: /get/detalle/actividad/{id}
+        async function modalEditaControl(id) {
+            const r = await fetch(`${base_url}/get/detalle/actividad/${id}`, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            if (!r.ok) {
+                swal('Error', 'No se encontró la actividad (404).', 'error');
+                return;
+            }
+            const d = await r.json().catch(() => ({}));
+            if (d.code !== 200) return swal('Error', d.mensaje || 'No se pudo cargar.', 'error');
+
+            $('#titulo_modal_control').text('Editar actividad de control');
+            $('#id_control').val(d.data.id);
+            $('#actividad').val(d.data.actividad);
+            $('#producto_resultado_ctrl').val(d.data.producto_resultado);
+            $('#fecha_inicio_ctrl').val(d.data.fecha_inicio);
+            $('#fecha_fin_ctrl').val(d.data.fecha_fin);
+            $('#responsable_ctrl').val(d.data.responsable);
+            $('#btn_guardar_control').text('Actualizar');
+            $('#modal_control').modal('show');
+        }
+
+        function eliminaActividadControl(id) {
+            swal({
+                title: '¿Eliminar?',
+                text: 'Esta acción no se puede deshacer',
+                type: 'warning',
+                showCancelButton: true
+            }, async (ok) => {
+                if (!ok) return;
+                const r = await fetch(`${base_url}/elimina/actividad-control/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+                const d = await r.json().catch(() => ({}));
+                if (r.ok && d.code === 200) {
+                    toastr.success(d.mensaje);
+                    await getActividadesControl();
+                } else {
+                    swal('¡Error!', d.mensaje || 'No se pudo eliminar', 'error');
+                }
+            });
+        }
+
+        // Contadores (texto)
+        function updateCount(id, max) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const hint = document.getElementById(id + '_count');
+            const m = max || parseInt(el.getAttribute('maxlength') || '500', 10);
+            if (hint) hint.textContent = `${el.value.length}/${m}`;
+        }
+        ['accion', 'producto_resultado', 'accion_edit', 'producto_resultado_edit', 'actividad', 'producto_resultado_ctrl']
+        .forEach(k => {
+            document.addEventListener('input', e => {
+                if (e.target && e.target.id === k) updateCount(k);
+            });
+        });
+
+        $('#modal_agrega_accion').on('shown.bs.modal', function() {
+            setTimeout(() => document.getElementById('accion')?.focus(), 50);
+            updateCount('accion');
+            updateCount('producto_resultado');
+        });
+        $('#modal_edita_accion').on('shown.bs.modal', function() {
+            updateCount('accion_edit');
+            updateCount('producto_resultado_edit');
+        });
+
+        // Arranque
+        (async function init() {
+            await getAcciones();
+            await getActividadesControl();
+        })();
     </script>
 @endsection

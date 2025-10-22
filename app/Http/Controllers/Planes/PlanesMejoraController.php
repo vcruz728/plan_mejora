@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Planes;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Mejoras\Planes;
-use App\Models\Catalogos\Procedencias;
+use App\Models\Mejoras\ActividadControl;
 use App\Models\Mejoras\Acciones;
 use App\Models\Mejoras\ComplementosPlan;
+use App\Models\Catalogos\Procedencias;
 use App\Models\Catalogos\EjesPDI;
 use App\Models\Catalogos\ObjetivosEspesificos;
 use App\Models\Catalogos\OdsPDI;
@@ -587,6 +588,92 @@ class PlanesMejoraController extends Controller
         return response()->json($msg, $msg['code']);
     }
 
+    public function getActividadesControl($idPlan)
+    {
+        try {
+            $rows = ActividadControl::where('id_plan', $idPlan)->orderBy('id')->get();
+            return response()->json(['code' => 200, 'mensaje' => 'Listado de actividades.', 'data' => $rows], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
+    public function saveActividadControl(Request $request)
+    {
+        try {
+            $mejora = Planes::findOrFail($request->id_plan);
+            $request->validate([
+                'id_plan'            => 'required|integer|exists:mejoras,id',
+                'actividad'          => 'required|string|min:2|max:500',
+                'producto_resultado' => 'required|string|min:2|max:500',
+                'fecha_inicio'       => 'required|date|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
+                'fecha_fin'          => 'required|date|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
+                'responsable'        => 'required|string|min:2|max:200',
+            ]);
+
+            ActividadControl::create([
+                'id_plan' => $request->id_plan,
+                'actividad' => $request->actividad,
+                'producto_resultado' => $request->producto_resultado,
+                'fecha_inicio' => $request->fecha_inicio,
+                'fecha_fin' => $request->fecha_fin,
+                'responsable' => $request->responsable,
+                'id_usuario' => \Auth::id(),
+            ]);
+
+            return response()->json(['code' => 200, 'mensaje' => 'Actividad agregada correctamente.'], 200);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['code' => 411, 'mensaje' => 'Error', 'errors' => $ve->errors()], 411);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
+    public function detalleActividadControl($id)
+    {
+        try {
+            $row = ActividadControl::findOrFail($id);
+            return response()->json(['code' => 200, 'mensaje' => 'Detalle.', 'data' => $row], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
+    public function editActividadControl(Request $request)
+    {
+        try {
+            $mejora = Planes::findOrFail($request->id_plan);
+            $request->validate([
+                'id'                 => 'required|integer|exists:actividades_control,id',
+                'id_plan'            => 'required|integer|exists:mejoras,id',
+                'actividad'          => 'required|string|min:2|max:500',
+                'producto_resultado' => 'required|string|min:2|max:500',
+                'fecha_inicio'       => 'required|date|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
+                'fecha_fin'          => 'required|date|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
+                'responsable'        => 'required|string|min:2|max:200',
+            ]);
+
+            $row = ActividadControl::findOrFail($request->id);
+            $row->update($request->only(['actividad', 'producto_resultado', 'fecha_inicio', 'fecha_fin', 'responsable']));
+
+            return response()->json(['code' => 200, 'mensaje' => 'Actividad actualizada correctamente.'], 200);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['code' => 411, 'mensaje' => 'Error', 'errors' => $ve->errors()], 411);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
+    public function delActividadControl($id)
+    {
+        try {
+            ActividadControl::findOrFail($id)->delete();
+            return response()->json(['code' => 200, 'mensaje' => 'Registro eliminado correctamente.'], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
     public function getinfoPrograma($id)
     {
         try {
@@ -623,13 +710,14 @@ class PlanesMejoraController extends Controller
             // si ya hay archivo, el nuevo es opcional; si no hay, es requerido
             $fileRule = ($bandera && $bandera->archivo) ? 'nullable' : 'required';
 
+
+
             $validate = \Validator::make($request->all(), [
-                'logros'                 => 'required|string|min:2|max:150',
-                'impactos'               => 'required|string|min:2|max:150',
-                'control_observaciones'  => 'required|string|min:2|max:600',
-                // Permite vacío real sin forzar min:2
-                'observaciones'          => 'nullable|string|max:600',
+                'logros' => 'required|string|min:2|max:150',
+                'impactos' => 'required|string|min:2|max:150',
                 'evidencia'              => $fileRule . '|file|mimes:pdf|max:6144',
+                'control_observaciones' => 'nullable|string|min:2|max:600', // <-- antes required
+                'observaciones' => 'nullable|string|min:2|max:600',
             ]);
 
             if ($validate->fails()) {
@@ -693,25 +781,49 @@ class PlanesMejoraController extends Controller
         }
     }
 
-    public function delArchivoComplemento($id_plan)
+    public function uploadComplementEvidence(Request $request)
     {
         try {
-            $comple = ComplementosPlan::where('id_plan', $id_plan)->first();
-            if (!$comple) {
-                return response()->json(['code' => 404, 'mensaje' => 'Complemento no encontrado.'], 404);
+            $request->validate([
+                'id_plan'   => 'required|integer|exists:mejoras,id',
+                'evidencia' => 'required|mimes:pdf|max:6144',
+            ]);
+
+            $bandera = ComplementosPlan::where('id_plan', $request->id_plan)->first();
+            if (!$bandera) {
+                $bandera = new ComplementosPlan();
+                $bandera->id_plan   = $request->id_plan;
+                $bandera->id_usuario = \Auth::id();
+                $bandera->id_ua      = \Auth::user()->usuario;
+            } else if ($bandera->archivo) {
+                Storage::disk('public')->delete($bandera->archivo);
             }
+
+            $archivo = 'evidencias/' . time() . "_archivo_{$request->id_plan}_file." . $request->evidencia->getClientOriginalExtension();
+            Storage::disk('public')->put($archivo, \File::get($request->evidencia));
+            $bandera->archivo = $archivo;
+            $bandera->save();
+
+            return response()->json(['code' => 200, 'mensaje' => 'Evidencia subida correctamente.', 'archivo' => $archivo], 200);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['code' => 411, 'mensaje' => 'Error', 'errors' => $ve->errors()], 411);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
+        }
+    }
+
+    public function delArchivoComplemento($idPlan)
+    {
+        try {
+            $comple = ComplementosPlan::where('id_plan', $idPlan)->firstOrFail();
             if ($comple->archivo) {
                 Storage::disk('public')->delete($comple->archivo);
                 $comple->archivo = null;
                 $comple->save();
             }
-            return response()->json(['code' => 200, 'mensaje' => 'Archivo eliminado correctamente.']);
+            return response()->json(['code' => 200, 'mensaje' => 'Archivo eliminado de manera correcta.'], 200);
         } catch (\Throwable $e) {
-            return response()->json([
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e->getMessage()
-            ], 400);
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
         }
     }
 

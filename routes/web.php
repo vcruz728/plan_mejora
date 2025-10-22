@@ -71,7 +71,7 @@ Route::middleware('auth')->group(function () {
 	Route::get('/admin/agregar/nueva', [PlanesMejoraController::class, 'viewAlta']);
 	Route::post('/admin/guarda/nuevo/plan/mejora', [PlanesMejoraController::class, 'addNuevo']);
 	Route::get('/admin/planes-mejora', function () {
-		$procedencias = \App\Models\Catalogos\Procedencias::orderBy('descripcion')->get();
+		$procedencias = Procedencias::orderBy('descripcion')->get();
 		return view('dashboard', compact('procedencias'));
 	})->middleware(['auth', 'verified']);
 
@@ -144,9 +144,17 @@ Route::middleware('auth')->group(function () {
 	Route::get('/get/detalle/accion/{id}', [PlanesMejoraController::class, 'detalleAccion']);
 	Route::post('/edita/accion', [PlanesMejoraController::class, 'editAccion']);
 	Route::post('/guarda/complemento/plan', [PlanesMejoraController::class, 'saveComplemento']);
+	Route::post('/sube/evidencia/complemento', [PlanesMejoraController::class, 'uploadComplementEvidence']);
 	Route::delete('elimina/archivo/complemento/{id_plan}', [PlanesMejoraController::class, 'delArchivoComplemento']);
 	Route::post('/guarda/indicador-clave/plan', [PlanesMejoraController::class, 'saveIndicador']);
 	Route::delete('/elimina/archivo/acciones/{id}', [PlanesMejoraController::class, 'delArcivo']);
+
+	//Actividades de control
+	Route::get('/get/actividades/control/{idPlan}', [PlanesMejoraController::class, 'getActividadesControl']);
+	Route::get('/get/detalle/actividad/{id}',     [PlanesMejoraController::class, 'detalleActividadControl']);
+	Route::post('/guarda/actividad-control',       [PlanesMejoraController::class, 'saveActividadControl']);
+	Route::post('/edita/actividad-control',        [PlanesMejoraController::class, 'editActividadControl']);
+	Route::delete('/elimina/actividad-control/{id}', [PlanesMejoraController::class, 'delActividadControl']);
 });
 
 
