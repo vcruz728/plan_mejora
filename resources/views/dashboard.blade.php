@@ -388,26 +388,43 @@
                             return $c.find('v').text();
                         }
 
+                        // === Fills (fondos) ===
                         var fillCount = parseInt($fills.attr('count'), 10);
+                        // En proceso → amarillo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="FFE98A"/><bgColor indexed="64"/></patternFill></fill>'
-                            );
+                        );
                         var yellowFillId = fillCount;
                         fillCount++;
+                        // Vencida → rojo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="DE4D3A"/><bgColor indexed="64"/></patternFill></fill>'
-                            );
+                        );
                         var redFillId = fillCount;
+                        fillCount++;
+                        // Concluida → verde (#21C05C)
+                        $fills.append(
+                            '<fill><patternFill patternType="solid"><fgColor rgb="21C05C"/><bgColor indexed="64"/></patternFill></fill>'
+                        );
+                        var greenFillId = fillCount;
                         fillCount++;
                         $fills.attr('count', fillCount);
 
+                        // === Estilos de celda que aplican esos fills ===
                         var xfCount = parseInt($cellXfs.attr('count'), 10);
+                        // Amarillo
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + yellowFillId +
                             '"/>');
                         var yellowStyleId = xfCount;
                         xfCount++;
+                        // Rojo
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + redFillId + '"/>');
                         var redStyleId = xfCount;
+                        xfCount++;
+                        // Verde
+                        $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + greenFillId +
+                        '"/>');
+                        var greenStyleId = xfCount;
                         xfCount++;
                         $cellXfs.attr('count', xfCount);
 
@@ -419,13 +436,17 @@
                             if (rowNum === 1) return;
 
                             var text = (cellText($c) || '').trim().toLowerCase();
-                            if (text.includes('vencida')) {
+                            // Prioridad: concluidas > vencidas > en proceso
+                            if (text.includes('concluida')) {
+                                $c.attr('s', greenStyleId);
+                            } else if (text.includes('vencida')) {
                                 $c.attr('s', redStyleId);
                             } else if (text.includes('en proceso')) {
                                 $c.attr('s', yellowStyleId);
                             }
                         });
                     }
+
                 }],
                 columns: cols
             });
