@@ -22,6 +22,7 @@ use App\Models\Catalogos\ProgramasEducativos;
 use App\Models\Catalogos\NivelesEstudio;
 use App\Models\Catalogos\Modalidad;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use DB;
 
 class PlanesMejoraController extends Controller
@@ -132,7 +133,7 @@ class PlanesMejoraController extends Controller
                 foreach ($acciones as $value) {
                     $elimina = Acciones::find($value->id);
                     if ($elimina->evidencia != '') {
-                        \Storage::disk('files')->delete($elimina->evidencia);
+                        Storage::disk('files')->delete($elimina->evidencia);
                     }
                     $elimina->delete();
                 }
@@ -401,7 +402,7 @@ class PlanesMejoraController extends Controller
                     'producto_resultado' => 'required|string|min:2|max:500',
                     'fecha_inicio' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
                     'fecha_fin' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'evidencia' => 'nullable|mimes:pdf|max:2048',
+                    'evidencia' => 'nullable|mimes:pdf|max:6144',
                     'responsable' => 'required|string|min:2|max:200',
                 ],
             );
@@ -420,7 +421,7 @@ class PlanesMejoraController extends Controller
 
             if ($request->file('evidencia')) {
                 $evidencia = 'acciones/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
-                $path = \Storage::disk('public')->put($evidencia, \File::get($request->evidencia));
+                $path = Storage::disk('public')->put($evidencia, \File::get($request->evidencia));
 
                 $accion->evidencia = $evidencia;
             }
@@ -463,7 +464,7 @@ class PlanesMejoraController extends Controller
         try {
             $acciones = Acciones::find($id);
             if ($acciones->evidencia != '' && $acciones->evidencia !== null) {
-                \Storage::disk('public')->delete($acciones->evidencia);
+                Storage::disk('public')->delete($acciones->evidencia);
             }
             $acciones->delete();
 
@@ -528,7 +529,7 @@ class PlanesMejoraController extends Controller
                     'producto_resultado_edit' => 'required|string|min:2|max:500',
                     'fecha_inicio_edit' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
                     'fecha_fin_edit' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'evidencia_edit' => 'nullable|mimes:pdf|max:2048',
+                    'evidencia_edit' => 'nullable|mimes:pdf|max:6144',
                     'responsable_edit' => 'required|string|min:2|max:200',
                 ],
             );
@@ -548,11 +549,11 @@ class PlanesMejoraController extends Controller
             if ($request->file('evidencia_edit')) {
 
                 if ($accion->evidencia != '' && $accion->evidencia !== null) {
-                    \Storage::disk('public')->delete($accion->evidencia);
+                    Storage::disk('public')->delete($accion->evidencia);
                 }
 
                 $evidencia = 'acciones/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia_edit->getClientOriginalExtension();
-                $path = \Storage::disk('public')->put($evidencia, \File::get($request->evidencia_edit));
+                $path = Storage::disk('public')->put($evidencia, \File::get($request->evidencia_edit));
 
                 $accion->evidencia = $evidencia;
             }
@@ -619,90 +620,99 @@ class PlanesMejoraController extends Controller
         try {
             $bandera = ComplementosPlan::where('id_plan', $request->input('id_plan'))->first();
 
-            $valida = "nullable";
-            if (empty($bandera)) {
-                $valida = "required";
-            } elseif (!empty($bandera) && $bandera->archivo == '') {
-                $valida = "required";
-            }
+            // si ya hay archivo, el nuevo es opcional; si no hay, es requerido
+            $fileRule = ($bandera && $bandera->archivo) ? 'nullable' : 'required';
 
-            $validate =  \Validator::make(
-                $request->all(),
-                [
-                    'logros' => 'required|string|min:2|max:150',
-                    'impactos' => 'required|string|min:2|max:150',
-                    'evidencia' => $valida . '|mimes:pdf|max:2048',
-                    'control_observaciones' => 'required|string|min:2|max:600',
-                    'observaciones' => 'nullable|string|min:2|max:600',
-
-                ],
-            );
+            $validate = \Validator::make($request->all(), [
+                'logros'                 => 'required|string|min:2|max:150',
+                'impactos'               => 'required|string|min:2|max:150',
+                'control_observaciones'  => 'required|string|min:2|max:600',
+                // Permite vacío real sin forzar min:2
+                'observaciones'          => 'nullable|string|max:600',
+                'evidencia'              => $fileRule . '|file|mimes:pdf|max:6144',
+            ]);
 
             if ($validate->fails()) {
-                $msg = [
-                    'code' => 411,
+                return response()->json([
+                    'code'    => 411,
                     'mensaje' => 'Error',
-                    'errors' => $validate->errors()
-                ];
-
-                return response()->json($msg, $msg['code']);
+                    'errors'  => $validate->errors()
+                ], 411);
             }
 
-            if (empty($bandera)) {
+            if (!$bandera) {
                 $comple = new ComplementosPlan();
-                $comple->id_plan = $request->input('id_plan');
-                $comple->id_usuario = \Auth::user()->id;
-                $comple->id_ua = \Auth::user()->usuario;
-
-                $archivo = 'evidencias/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
-                $path = \Storage::disk('public')->put($archivo, \File::get($request->evidencia));
-
-                $comple->archivo = $archivo;
+                $comple->id_plan    = (int) $request->input('id_plan');
+                $comple->id_usuario = \Auth::id();
+                // Usa el ID real de UA si existe; si no, déjalo null
+                $comple->id_ua      = optional(\Auth::user())->id_ua;
             } else {
                 $comple = ComplementosPlan::find($bandera->id);
+            }
 
-                if ($request->file('evidencia')) {
-                    if ($comple->archivo != '') {
-                        \Storage::disk('public')->delete($comple->archivo);
-                    }
+            // Guardar/actualizar archivo si viene en la petición
+            if ($request->hasFile('evidencia')) {
+                $file = $request->file('evidencia');
 
-                    $archivo = 'evidencias/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia->getClientOriginalExtension();
-                    $path = \Storage::disk('public')->put($archivo, \File::get($request->evidencia));
+                // Si había un archivo previo, elimínalo
+                if (!empty($comple->archivo)) {
+                    Storage::disk('public')->delete($comple->archivo);
+                }
 
-                    $comple->archivo = $archivo;
+                $filename = 'evidencias/' . time() . "_archivo_{$request->input('id_plan')}_file." . $file->getClientOriginalExtension();
+                Storage::disk('public')->put($filename, file_get_contents($file->getRealPath()));
+                $comple->archivo = $filename;
+            }
+
+            // Si tu tabla tiene la columna programa_educativo NO NULL y el form no lo manda,
+            // toma el valor desde el plan (ajusta el nombre si difiere)
+            if (is_null($comple->programa_educativo)) {
+                $plan = Planes::find($request->input('id_plan'));
+                if ($plan) {
+                    $comple->programa_educativo = $plan->id_programa_educativo ?? null;
                 }
             }
 
-            $comple->logros = $request->input('logros');
-            $comple->impactos = $request->input('impactos');
-            $comple->programa_educativo = $request->input('programa_educativo');
+            $comple->logros                = $request->input('logros');
+            $comple->impactos              = $request->input('impactos');
             $comple->control_observaciones = $request->input('control_observaciones');
-            $comple->observaciones = $request->input('observaciones');
+            // Guarda null si viene vacío
+            $comple->observaciones         = $request->filled('observaciones') ? $request->input('observaciones') : null;
+
             $comple->save();
 
-
-
-
-            $msg = [
-                'code' => 200,
+            return response()->json([
+                'code'    => 200,
                 'mensaje' => 'Complemento guardado correctamente.',
                 'archivo' => $comple->archivo
-            ];
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+            ], 200);
+        } catch (\Throwable $e) {
+            \Log::error('saveComplemento error', ['msg' => $e->getMessage()]);
+            // Manda el mensaje para depurar (puedes dejarlo genérico en producción)
+            return response()->json(['code' => 400, 'mensaje' => $e->getMessage()], 400);
         }
+    }
 
-        return response()->json($msg, $msg['code']);
+    public function delArchivoComplemento($id_plan)
+    {
+        try {
+            $comple = ComplementosPlan::where('id_plan', $id_plan)->first();
+            if (!$comple) {
+                return response()->json(['code' => 404, 'mensaje' => 'Complemento no encontrado.'], 404);
+            }
+            if ($comple->archivo) {
+                Storage::disk('public')->delete($comple->archivo);
+                $comple->archivo = null;
+                $comple->save();
+            }
+            return response()->json(['code' => 200, 'mensaje' => 'Archivo eliminado correctamente.']);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'code' => 400,
+                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
+                'data' => $e->getMessage()
+            ], 400);
+        }
     }
 
     public function saveIndicador(Request $request)
@@ -1208,7 +1218,7 @@ class PlanesMejoraController extends Controller
     {
         try {
             $elimina = Acciones::find($id);
-            \Storage::disk('public')->delete($elimina->evidencia);
+            Storage::disk('public')->delete($elimina->evidencia);
             $elimina->evidencia = null;
             $elimina->save();
 

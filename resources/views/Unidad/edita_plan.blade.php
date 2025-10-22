@@ -100,8 +100,6 @@
             margin: 0 .15rem;
         }
 
-        <link rel="stylesheet" href="{{ asset('bower_components/select2/css/select2.min.css') }}"><link rel="stylesheet" href="{{ asset('dist/css/forms-modern.css') }}?v={{ filemtime(public_path('dist/css/forms-modern.css')) }}"><style>
-
         /* Modal moderno */
         .modal-modern .modal-dialog {
             width: auto;
@@ -176,6 +174,16 @@
         .modal-modern .btn+.btn {
             margin-left: 6px;
         }
+
+        table.dataTable tbody td.dt-type-date {
+            text-align: center !important;
+        }
+
+        .evidence-actions {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
     </style>
 @endpush
 
@@ -240,8 +248,7 @@
                             <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Cantidad</label>
-                                    <input type="number" class="form-control w-120" value="{{ $plan->cantidad }}"
-                                        disabled>
+                                    <input type="number" class="form-control w-120" value="{{ $plan->cantidad }}" disabled>
                                 </div>
                             </div>
 
@@ -302,8 +309,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Modalidad <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->modalidad }}"
-                                            disabled>
+                                        <input type="text" class="form-control" value="{{ $plan->modalidad }}" disabled>
                                     </div>
                                 </div>
                             </div>
@@ -416,7 +422,7 @@
                     <div class="section-card">
                         <div class="section-card__title">Cierre del plan de mejora</div>
                         <div class="section-card__body gutters-sm">
-                            <form id="form_guarda_complemento">
+                            <form id="form_guarda_complemento" enctype="multipart/form-data">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Logros (internos) <small class="obligatorio">*</small></label>
@@ -436,17 +442,36 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Evidencia <small class="obligatorio">*</small></label>
-                                        <input type="file" name="evidencia" id="evidencia" class="form-control"
-                                            accept=".pdf">
+
+                                        {{-- input real oculto --}}
+                                        <input type="file" name="evidencia" id="evidencia" accept=".pdf"
+                                            style="display:none">
+
+                                        <div class="evidence-actions">
+                                            <button type="button" class="btn btn-success" id="btn_pick_evidencia">
+                                                Seleccionar PDF <i class="fa fa-upload"></i>
+                                            </button>
+                                        </div>
+
+                                        <small class="help">Solo PDF (máx. 6 MB).</small>
                                     </div>
+
                                     <div id="archivo_com">
                                         @if ($complemento?->archivo)
-                                            <a href="{{ asset('storage/' . $complemento?->archivo) }}"
-                                                target="_blank">Ver archivo</a>
+                                            <div class="dt-actions__wrap">
+                                                <a class="btn btn-default"
+                                                    href="{{ asset('storage/' . $complemento->archivo) }}"
+                                                    target="_blank">
+                                                    Ver evidencia
+                                                </a>
+                                                <button type="button" class="btn btn-danger btn-icon"
+                                                    onclick="confirmaEliminaArchivoComplemento({{ $plan->id }})">
+                                                    <i class="fa fa-remove"></i>
+                                                </button>
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
-
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>Control observaciones <small class="obligatorio">*</small></label>
@@ -464,10 +489,11 @@
                                 </div>
 
                                 <div class="col-md-12" style="display:flex;justify-content:flex-end;">
-                                    <button class="btn btn-success" id="btn_guardaComplemento"
-                                        onclick="guardaComplemento(); this.disabled=true;">
+                                    <button type="button" class="btn btn-success" id="btn_guardaComplemento"
+                                        onclick="guardaComplemento(this)">
                                         Guardar evidencia final
                                     </button>
+
                                 </div>
                             </form>
                         </div>
@@ -503,7 +529,7 @@
 
                         <!-- RESULTADO -->
                         <div class="field">
-                            <label>Resultado <span class="required">*</span></label>
+                            <label>Resultado/Producto <span class="required">*</span></label>
                             <textarea name="producto_resultado" id="producto_resultado" class="form-control" maxlength="500"
                                 placeholder="Máximo 500 caracteres"></textarea>
                             <div id="producto_resultado_count" class="count-hint">0/500</div>
@@ -523,7 +549,7 @@
                         </div>
 
                         <div class="field">
-                            <label>Responsable <span class="required">*</span></label>
+                            <label>Responsable (nombre o puesto) <span class="required">*</span></label>
                             <input type="text" name="responsable" id="responsable" class="form-control">
                         </div>
                     </form>
@@ -548,60 +574,59 @@
                 </div>
 
                 <div class="modal-body">
-                    <form id="form_edita_accion" class="form-compact">
+                    <form id="form_edita_accion" class="form-compact" enctype="multipart/form-data">
+
                         <div class="esconde">
                             <div class="field">
-                                <!-- ACCIÓN -->
-                                <div class="field">
-                                    <label>Acción</label>
-                                    <textarea name="accion_edit" id="accion_edit" class="form-control" maxlength="500"
-                                        placeholder="Máximo 500 caracteres"></textarea>
-                                    <div id="accion_edit_count" class="count-hint">0/500</div>
-                                </div>
+                                <label>Acción</label>
+                                <textarea name="accion_edit" id="accion_edit" class="form-control" maxlength="500"
+                                    placeholder="Máximo 500 caracteres"></textarea>
+                                <div id="accion_edit_count" class="count-hint">0/500</div>
+                            </div>
 
-                                <!-- RESULTADO -->
-                                <div class="field">
-                                    <label>Resultado</label>
-                                    <textarea name="producto_resultado_edit" id="producto_resultado_edit" class="form-control" maxlength="500"
-                                        placeholder="Máximo 500 caracteres"></textarea>
-                                    <div id="producto_resultado_edit_count" class="count-hint">0/500</div>
-                                </div>
+                            <div class="field">
+                                <label>Resultado/Producto</label>
+                                <textarea name="producto_resultado_edit" id="producto_resultado_edit" class="form-control" maxlength="500"
+                                    placeholder="Máximo 500 caracteres"></textarea>
+                                <div id="producto_resultado_edit_count" class="count-hint">0/500</div>
+                            </div>
 
-                                <div class="inline-2">
-                                    <div class="field">
-                                        <label>Fecha de inicio</label>
-                                        <input type="text" data-provide="datepicker" autocomplete="off"
-                                            name="fecha_inicio_edit" id="fecha_inicio_edit" class="form-control w-160">
-                                    </div>
-                                    <div class="field">
-                                        <label>Fecha de término</label>
-                                        <input type="text" data-provide="datepicker" autocomplete="off"
-                                            name="fecha_fin_edit" id="fecha_fin_edit" class="form-control w-160">
-                                    </div>
-                                </div>
-
+                            <div class="inline-2">
                                 <div class="field">
-                                    <label>Responsable</label>
-                                    <input type="text" name="responsable_edit" id="responsable_edit"
-                                        class="form-control">
+                                    <label>Fecha de inicio</label>
+                                    <input type="text" data-provide="datepicker" autocomplete="off"
+                                        name="fecha_inicio_edit" id="fecha_inicio_edit" class="form-control w-160">
+                                </div>
+                                <div class="field">
+                                    <label>Fecha de término</label>
+                                    <input type="text" data-provide="datepicker" autocomplete="off"
+                                        name="fecha_fin_edit" id="fecha_fin_edit" class="form-control w-160">
                                 </div>
                             </div>
 
-                            <div class="esconde_evidencia" hidden>
-                                <div class="field">
-                                    <label>Evidencia</label>
-                                    <input type="file" name="evidencia_edit" id="evidencia_edit" class="form-control"
-                                        accept=".pdf,.png,.jpg,.jpeg">
-                                    <small class="help">Formatos sugeridos: PDF o imagen.</small>
-                                </div>
+                            <div class="field">
+                                <label>Responsable (nombre o puesto)</label>
+                                <input type="text" name="responsable_edit" id="responsable_edit"
+                                    class="form-control">
                             </div>
+                        </div>
+                        <!-- Bloque SOLO para subir evidencia -->
+                        <div class="esconde_evidencia" hidden>
+                            <div class="field">
+                                <label for="evidencia_edit">Evidencia <span class="required">*</span></label>
+                                <input type="file" name="evidencia_edit" id="evidencia_edit" class="form-control"
+                                    accept=".pdf">
+                                <small class="help">Solo PDF (máx. 6 MB).</small>
+                            </div>
+                        </div>
                     </form>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btn_editaAccion"
-                        onclick="editaAccion(); this.disabled=true;">Actualizar acción</button>
+                        onclick="editaAccion()">Actualizar acción</button>
+
                 </div>
             </div>
         </div>
@@ -612,7 +637,23 @@
     <script src="{{ asset('bower_components/select2/js/select2.min.js') }}"></script>
     <script>
         var base_url = $("input[name='base_url']").val();
-        var id_accion;
+        let id_accion;
+        let EDIT_MODE = 'full'; // 'full' | 'evidence'
+        let evidenciaFile = null; // <-- NUEVO
+
+        function setEditMode(evidence) {
+            const $m = $('#modal_edita_accion');
+
+            // quita atributos hidden y luego toggle
+            $m.find('.esconde, .esconde_evidencia').removeAttr('hidden');
+            $m.find('.esconde').toggle(!evidence);
+            $m.find('.esconde_evidencia').toggle(!!evidence);
+
+            $m.find('.modal-title').text(evidence ? 'Subir evidencia' : 'Edita acción de mejora');
+            $m.find('#btn_editaAccion').text(evidence ? 'Subir evidencia' : 'Actualizar acción');
+
+            EDIT_MODE = evidence ? 'evidence' : 'full';
+        }
 
         // Datepickers compactos
         $('#fecha_inicio, #fecha_fin, #fecha_inicio_edit, #fecha_fin_edit').datepicker({
@@ -688,15 +729,19 @@
                             render: (_, __, o) => {
                                 if (o.evidencia) {
                                     return `
-                                      <div>
-                                        <a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a>
-                                        <button class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})"><i class="fa fa-remove"></i></button>
-                                      </div>`;
+                                    <div>
+                                    <a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a>
+                                    <button class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})">
+                                        <i class="fa fa-remove"></i>
+                                    </button>
+                                    </div>`;
                                 }
                                 return `
-                                      <div>
-                                        <button class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 1)">Subir evidencia <i class="fa fa-upload"></i></button>
-                                      </div>`;
+                                <div>
+                                    <button class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 'evidence')">
+                                    Subir evidencia <i class="fa fa-upload"></i>
+                                    </button>
+                                </div>`;
                             }
                         },
                         {
@@ -705,11 +750,15 @@
                             orderable: false,
                             className: 'text-center',
                             render: (_, __, o) => `
-                                <div class="dt-actions__wrap">
-                                    <button class="btn btn-sm btn-warning" onclick="modalEdita(${o.id}, 0)"><i class="fa fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="eliminaAccion(${o.id})"><i class="fa fa-trash"></i></button>
-                                </div>`
-                        },
+                            <div class="dt-actions__wrap">
+                             <button class="btn btn-primary btn-icon" title="Editar" onclick="modalEdita(${o.id}, 'edit')">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                              <button class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaAccion(${o.id})">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                            </div>`
+                        }
                     ]
                 });
             } else {
@@ -805,84 +854,140 @@
             }
         };
 
-        const modalEdita = async (id, valor) => {
-            if (valor == 0) {
-                $(".esconde").removeAttr('hidden');
-                $(".esconde_evidencia").attr('hidden', true);
-            } else {
-                $(".esconde_evidencia").removeAttr('hidden');
-                $(".esconde").attr('hidden', true);
-            }
 
-            const response = await fetch(`${base_url}/get/detalle/accion/${id}`, {
-                method: 'get'
-            });
-            const data = await response.json();
+        // 'edit' muestra campos de acción, 'evidence' solo el file input
+        const modalEdita = async (id, mode = 'edit') => {
+            const evidence = mode === 'evidence';
 
-            if (data.code == 200) {
-                id_accion = id;
-                $("#accion_edit").val(data.data.accion);
-                $("#producto_resultado_edit").val(data.data.producto_resultado);
-                $("#fecha_inicio_edit").val(data.data.fecha_inicio);
-                $("#fecha_fin_edit").val(data.data.fecha_fin);
-                $("#responsable_edit").val(data.data.responsable);
-                $("#modal_edita_accion").modal();
-            } else {
-                swal("¡Error!", data.mensaje, "error");
-            }
+            // limpia y habilita botón
+            const form = document.getElementById('form_edita_accion');
+            form.reset();
+            evidenciaFile = null;
+            $('#btn_editaAccion').prop('disabled', false);
+
+            setEditMode(evidence);
+
+            const r = await fetch(`${base_url}/get/detalle/accion/${id}`);
+            const data = await r.json();
+            if (data.code !== 200) return swal("¡Error!", data.mensaje, "error");
+
+            id_accion = id;
+
+            // ⚠️ SIEMPRE rellenar los campos (aunque estén ocultos)
+            $('#accion_edit').val(data.data.accion);
+            $('#producto_resultado_edit').val(data.data.producto_resultado);
+            $('#fecha_inicio_edit').val(data.data.fecha_inicio);
+            $('#fecha_fin_edit').val(data.data.fecha_fin);
+            $('#responsable_edit').val(data.data.responsable);
+
+            // limpia file input
+            $('#evidencia_edit').val('');
+
+            $('#modal_edita_accion').one('shown.bs.modal', function() {
+                if (evidence) $('#evidencia_edit').trigger('focus');
+            }).modal('show');
         };
+
+        let _enviandoEdit = false;
 
         const editaAccion = async () => {
-            const body = new FormData(document.getElementById('form_edita_accion'));
-            body.append('id_accion', id_accion);
-            body.append('id_plan', {{ $plan->id }});
-            const response = await fetch(`${base_url}/edita/accion`, {
-                method: 'post',
-                body,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            if (_enviandoEdit) return;
+            _enviandoEdit = true;
+            $('#btn_editaAccion').prop('disabled', true);
+
+            try {
+                const form = document.getElementById('form_edita_accion');
+                const body = new FormData(form); // incluye TODOS los campos (ocultos también)
+
+                body.set('id_accion', id_accion);
+                body.set('id_plan', {{ $plan->id }});
+                body.set('solo_evidencia', EDIT_MODE === 'evidence' ? 1 : 0);
+
+                if (EDIT_MODE === 'evidence') {
+                    const inp = document.getElementById('evidencia_edit');
+                    const file = evidenciaFile || (inp.files && inp.files[0] ? inp.files[0] : null);
+
+                    if (!file) {
+                        swal('Falta el archivo', 'Selecciona un PDF para subir.', 'warning');
+                        return;
+                    }
+                    const name = (file.name || '').toLowerCase();
+                    if (!name.endsWith('.pdf')) {
+                        swal('Formato no válido', 'Solo se permite PDF.', 'warning');
+                        return;
+                    }
+                    if (file.size > 6 * 1024 * 1024) {
+                        swal('Archivo muy grande', 'El PDF no debe exceder 6 MB.', 'warning');
+                        return;
+                    }
+
+                    // fuerza que el archivo viaje con la MISMA clave del input
+                    body.set('evidencia_edit', file, file.name);
                 }
-            });
-            const data = await response.json();
-            if (data.code == 200) {
-                getAcciones();
-                $("#evidencia_edit").val(null);
-                $('#modal_edita_accion').modal('hide');
-                toastr.success(data.mensaje);
-            } else if (data.code == 411) {
-                const first = Object.values(data.errors)[0][0];
-                swal("¡Error!", first, "error");
-            } else {
-                swal("¡Error!", data.mensaje, "error");
+
+                // (opcional) DEBUG: ver qué viaja
+                // for (const [k,v] of body.entries()) console.log(k, v instanceof File ? `File(${v.name}, ${v.size})` : v);
+
+                const resp = await fetch(`${base_url}/edita/accion`, {
+                    method: 'post',
+                    body,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                let data = null;
+                try {
+                    data = await resp.json();
+                } catch (_) {}
+
+                // Manejo cuando el backend responde HTTP 411 (tus validaciones)
+                if (!resp.ok) {
+                    if (resp.status === 411 && data && data.errors) {
+                        const first = Object.values(data.errors)[0][0];
+                        swal('¡Error!', first, 'error');
+                    } else if (resp.status === 413) {
+                        swal('¡Error!', 'El servidor rechazó el archivo (muy grande).', 'error');
+                    } else if (resp.status === 419) {
+                        swal('¡Error!', 'Sesión expirada. Recarga la página.', 'error');
+                    } else {
+                        swal('¡Error!', 'No se pudo guardar.', 'error');
+                    }
+                    return;
+                }
+
+                if (data && data.code === 200) {
+                    getAcciones();
+                    evidenciaFile = null;
+                    if (EDIT_MODE === 'evidence') $('#evidencia_edit').val('');
+                    $('#modal_edita_accion').modal('hide');
+                    toastr.success(data.mensaje);
+                } else if (data && data.code === 411) {
+                    const first = Object.values(data.errors)[0][0];
+                    swal('¡Error!', first, 'error');
+                } else {
+                    swal('¡Error!', (data && data.mensaje) || 'No se pudo guardar.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                swal('¡Error!', 'Ocurrió un problema al enviar la solicitud.', 'error');
+            } finally {
+                _enviandoEdit = false;
+                $('#btn_editaAccion').prop('disabled', false);
             }
-            $("#btn_editaAccion").prop("disabled", false);
         };
 
-        const guardaComplemento = async () => {
-            const body = new FormData(document.getElementById('form_guarda_complemento'));
-            body.append('id_plan', {{ $plan->id }});
-            const response = await fetch(`${base_url}/guarda/complemento/plan`, {
-                method: 'post',
-                body,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-            const data = await response.json();
-            if (data.code == 200) {
-                toastr.success(data.mensaje);
-                if (data.archivo) {
-                    $("#archivo_com").html(
-                        `<a href="${base_url}/storage/${data.archivo}" target="_blank">Ver archivo</a>`);
-                }
-            } else if (data.code == 411) {
-                const first = Object.values(data.errors)[0][0];
-                swal("¡Error!", first, "error");
-            } else {
-                swal("¡Error!", data.mensaje, "error");
-            }
-            $("#btn_guardaComplemento").prop("disabled", false);
-        };
+        // Si el modal se cierra después de un warning, re-habilita el botón
+        $('#modal_edita_accion').on('hidden.bs.modal', function() {
+            $('#btn_editaAccion').prop('disabled', false);
+        });
+
+        // opcional: habilita el botón al elegir archivo (mejora UX)
+        $('#evidencia_edit').on('change', function() {
+            if (this.files && this.files.length) $('#btn_editaAccion').prop('disabled', false);
+        });
+
 
         const guardaIndicador = async () => {
             const body = new FormData();
@@ -914,13 +1019,13 @@
             const m = max || parseInt(el.getAttribute('maxlength') || '500', 10);
             if (hint) hint.textContent = `${el.value.length}/${m}`;
         }
+
         ['accion', 'producto_resultado', 'accion_edit', 'producto_resultado_edit'].forEach(k => {
             document.addEventListener('input', e => {
                 if (e.target && e.target.id === k) updateCount(k);
             });
         });
 
-        // Enfocar y actualizar contadores al abrir
         $('#modal_agrega_accion').on('shown.bs.modal', function() {
             setTimeout(() => document.getElementById('accion')?.focus(), 50);
             updateCount('accion');
@@ -930,5 +1035,151 @@
             updateCount('accion_edit');
             updateCount('producto_resultado_edit');
         });
+
+        // Captura firme del archivo (primera vez incluido)
+        $(document).on('change', '#evidencia_edit', function() {
+            evidenciaFile = this.files && this.files[0] ? this.files[0] : null;
+            // re-habilita el botón por UX
+            if (evidenciaFile) $('#btn_editaAccion').prop('disabled', false);
+        });
+
+        $('#modal_edita_accion, #modal_agrega_accion')
+            .on('show.bs.modal', function() {
+                $(this).attr('aria-hidden', 'false');
+            })
+            .on('hidden.bs.modal', function() {
+                $(this).attr('aria-hidden', 'true');
+            });
+
+        // Abrir selector al hacer click en el botón
+        $('#btn_pick_evidencia').on('click', function() {
+            document.getElementById('evidencia').click();
+        });
+        // Validación inmediata (tipo / tamaño) al elegir archivo
+        $('#evidencia').on('change', function() {
+            const file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file) return;
+
+            const isPdfByExt = /\.pdf$/i.test(file.name || '');
+            const tooBig = file.size > 6 * 1024 * 1024;
+
+            if (!isPdfByExt) {
+                swal('Formato no válido', 'Solo se permite PDF.', 'warning');
+                this.value = '';
+                return;
+            }
+            if (tooBig) {
+                swal('Archivo muy grande', 'El PDF no debe exceder 6 MB.', 'warning');
+                this.value = '';
+                return;
+            }
+
+            // Si quieres dar feedback sin mostrar chip:
+            toastr.info('Archivo listo: ' + file.name);
+        });
+        // === Borrar archivo del complemento (mismo look/comportamiento que Acciones) ===
+        const confirmaEliminaArchivoComplemento = (idPlan) => {
+            swal({
+                title: '¿Está seguro?',
+                text: 'El archivo se eliminará de forma permanente.',
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dd4b39',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+            }, async function(isConfirm) {
+                if (isConfirm) eliminaArchivoComplemento(idPlan);
+            });
+        };
+
+        const eliminaArchivoComplemento = async (idPlan) => {
+            const r = await fetch(`${base_url}/elimina/archivo/complemento/${idPlan}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            const data = await r.json().catch(() => ({}));
+
+            if (r.ok && data.code === 200) {
+                swal('¡Correcto!', data.mensaje, 'success');
+                // Limpia UI
+                $('#archivo_com').empty();
+                $('#evidencia').val('');
+            } else {
+                swal('¡Error!', (data && data.mensaje) || 'No se pudo eliminar.', 'error');
+            }
+        };
+
+        // === Ajuste leve en guardaComplemento para refrescar la UI con los nuevos botones ===
+        // Dentro del éxito de guardaComplemento, cambia el fragmento que actualiza #archivo_com por este:
+        // (usa exactamente esto en tu función existente)
+        // Renderiza "Ver evidencia" + "Eliminar" abajo cuando exista archivo
+        function _renderArchivoComplemento(path) {
+            $('#archivo_com').html(`
+    <div class="dt-actions__wrap">
+      <a class="btn btn-default" href="${base_url}/storage/${path}" target="_blank">Ver evidencia</a>
+      <!-- Si no tienes endpoint para eliminar, quita este botón -->
+      <button type="button" class="btn btn-danger btn-icon"
+              onclick="confirmaEliminaArchivoComplemento(${/* id_plan */ {{ $plan->id }} })">
+        <i class="fa fa-remove"></i>
+      </button>
+    </div>
+  `);
+        }
+
+        async function guardaComplemento(btn) {
+            btn.disabled = true;
+            try {
+                const form = document.getElementById('form_guarda_complemento');
+                const fd = new FormData(form);
+                fd.set('id_plan', {{ $plan->id }}); // <-- importante
+
+                // Validación inmediata del PDF
+                const f = form.querySelector('#evidencia').files[0];
+                if (f) {
+                    if (!/\.pdf$/i.test(f.name)) {
+                        swal('Formato no válido', 'Solo PDF.', 'warning');
+                        return;
+                    }
+                    if (f.size > 6 * 1024 * 1024) {
+                        swal('Archivo muy grande', 'Máx. 6 MB.', 'warning');
+                        return;
+                    }
+                    fd.set('evidencia', f, f.name);
+                }
+
+                // AQUÍ se define 'resp'
+                const resp = await fetch(`${base_url}/guarda/complemento/plan`, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await resp.json().catch(() => ({}));
+
+                if (resp.ok && data.code === 200) {
+                    toastr.success(data.mensaje);
+                    if (data.archivo) {
+                        _renderArchivoComplemento(data.archivo);
+                        $('#evidencia').val(''); // limpiar input
+                    }
+                } else if (resp.status === 411 && data.errors) {
+                    const first = Object.values(data.errors)[0][0];
+                    swal('¡Error!', first, 'error');
+                } else {
+                    swal('¡Error!', data.mensaje || 'No se pudo guardar.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                swal('¡Error!', 'Ocurrió un problema al enviar la solicitud.', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
     </script>
 @endsection

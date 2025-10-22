@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
 	Route::get('/get/detalle/accion/{id}', [PlanesMejoraController::class, 'detalleAccion']);
 	Route::post('/edita/accion', [PlanesMejoraController::class, 'editAccion']);
 	Route::post('/guarda/complemento/plan', [PlanesMejoraController::class, 'saveComplemento']);
+	Route::delete('elimina/archivo/complemento/{id_plan}', [PlanesMejoraController::class, 'delArchivoComplemento']);
 	Route::post('/guarda/indicador-clave/plan', [PlanesMejoraController::class, 'saveIndicador']);
 	Route::delete('/elimina/archivo/acciones/{id}', [PlanesMejoraController::class, 'delArcivo']);
 });
