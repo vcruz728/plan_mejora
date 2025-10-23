@@ -193,14 +193,72 @@
                 return;
             }
 
+            function parseFecha(s) {
+                if (!s) return null;
+                // ISO: 2025-10-23 o 2025-10-23 14:00:00
+                let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+                if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+                // dd/mm/yyyy
+                m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
+                if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+                const d = new Date(s);
+                return isNaN(d) ? null : d;
+            }
+
+
             // helper: estatus como badge (igual que tenías)
             function renderEstatus(row) {
                 const cerrada = row.cerrado !== null && row.cerrado !== undefined;
                 if (cerrada) return '<span class="dt-badge success">Concluida</span>';
-                const vencida = (row.fecha_hoy || '') > (row.fecha_vencimiento || '');
+
+                const fin = parseFecha(row.fecha_vencimiento);
+                const hoy = new Date();
+                // Comparar por día (corte a medianoche local)
+                hoy.setHours(0, 0, 0, 0);
+                if (fin) fin.setHours(0, 0, 0, 0);
+
+                const vencida = !!fin && fin.getTime() < hoy.getTime();
                 if (vencida) return '<span class="dt-badge danger">Vencida</span>';
                 return '<span class="dt-badge warn">En proceso</span>';
             }
+
+            // Evita duplicar timers si vuelves a llamar getPlanes()
+            let REDRAW_TIMER = null;
+            $(function() {
+                if (!REDRAW_TIMER) {
+                    REDRAW_TIMER = setInterval(() => {
+                        if (dt) dt.rows().invalidate().draw(false);
+                    }, 60 * 1000); // cada 1 min
+                }
+            });
+
+
+            let DATA_REFRESH_TIMER = null;
+            $(function() {
+                if (!DATA_REFRESH_TIMER) {
+                    DATA_REFRESH_TIMER = setInterval(async () => {
+                        try {
+                            const resp = await fetch(`${base_url}/get/planes-mejora`);
+                            const json = await resp.json();
+                            if (json.code === 200 && dt) {
+                                const prevFilter = $('#filtro_procedencia').val();
+
+                                // Actualiza la fuente de datos sin destruir la tabla
+                                dt.clear().rows.add(json.data).draw(false);
+
+                                // Recalcula opciones del filtro manteniendo selección si aplica
+                                refreshProcedenciaOptionsFromRows(json.data);
+                                if (prevFilter) {
+                                    dt.column(0).search('^' + escapeRegex(String(prevFilter)) + '$',
+                                        true, false).draw(false);
+                                }
+                            }
+                        } catch (e) {
+                            // opcional: console.warn('auto-refresh error', e);
+                        }
+                    }, 5 * 60 * 1000); // cada 5 min (ajústalo a tu gusto)
+                }
+            });
 
             // Destruye instancia previa
             if (dt && typeof dt.destroy === 'function') {
@@ -423,7 +481,7 @@
                         xfCount++;
                         // Verde
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + greenFillId +
-                        '"/>');
+                            '"/>');
                         var greenStyleId = xfCount;
                         xfCount++;
                         $cellXfs.attr('count', xfCount);
@@ -517,5 +575,14 @@
                 }, 150);
             });
         })();
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) redrawNow();
+        });
+
+        $('#tabla_planes').on('page.dt order.dt search.dt length.dt', () => {
+            // El propio evento ya dispara un draw, pero si tu renderer usa "now", aseguras el recálculo
+            redrawNow();
+        });
     </script>
 @endsection

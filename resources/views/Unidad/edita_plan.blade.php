@@ -191,6 +191,178 @@
             height: 34px;
             padding: 0;
         }
+
+        /* ===== Confirm Modal Moderno — Alto Contraste ===== */
+        .confirm-modern .modal-content {
+            background: #fff;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, .22);
+        }
+
+        .confirm-modern .modal-header {
+            border: 0;
+            padding: 18px 22px 10px;
+        }
+
+        .confirm-modern .cm-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .confirm-modern .cm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fee2e2;
+            color: #b91c1c;
+            /* por defecto usamos 'danger soft' */
+        }
+
+        .confirm-modern .cm-icon i {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .confirm-modern .modal-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            color: #111827 !important;
+            /* título oscuro SIEMPRE */
+            letter-spacing: .2px;
+        }
+
+        .confirm-modern .cm-subtitle {
+            margin-top: 2px;
+            color: #4b5563;
+            /* más oscuro que antes */
+        }
+
+        .confirm-modern .modal-body {
+            padding: 6px 22px 0;
+        }
+
+        .confirm-modern .cm-text {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.5;
+            color: #374151;
+            /* texto más legible */
+        }
+
+        .confirm-modern .modal-footer {
+            border: 0;
+            padding: 16px 22px 22px;
+        }
+
+        .confirm-modern .btn {
+            border-radius: 10px;
+            padding: 9px 16px;
+            font-weight: 600;
+        }
+
+        .confirm-modern .btn:focus {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+            box-shadow: none;
+        }
+
+        /* Cancel (que no parezca deshabilitado) */
+        .confirm-modern .btn-cancel {
+            background: #ffffff;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .confirm-modern .btn-cancel:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+            color: #111827;
+        }
+
+        /* Afirmar — danger con muy buen contraste */
+        .confirm-modern .btn-ok.btn-danger {
+            background: #dc2626;
+            border-color: #b91c1c;
+            color: #fff;
+        }
+
+        .confirm-modern .btn-ok.btn-danger:hover {
+            background: #b91c1c;
+            border-color: #991b1b;
+        }
+
+        .confirm-modern .btn-ok.btn-primary {
+            background: #2563eb;
+            border-color: #1d4ed8;
+        }
+
+        .confirm-modern .btn-ok.btn-primary:hover {
+            background: #1d4ed8;
+            border-color: #1e40af;
+        }
+
+        /* Variantes del icono (si usas otras) */
+        .confirm-modern.confirm--warn .cm-icon {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .confirm-modern.confirm--info .cm-icon {
+            background: #e0f2fe;
+            color: #075985;
+        }
+
+        .confirm-modern.confirm--success .cm-icon {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Backdrop un poco más oscuro para contraste del cuadro */
+        .modal-backdrop.in,
+        .modal-backdrop.show {
+            opacity: .45;
+        }
+
+        /* Modo oscuro del SO (por si el navegador lo activa) */
+        @media (prefers-color-scheme: dark) {
+            .confirm-modern .modal-content {
+                background: #0f172a;
+                box-shadow: 0 24px 48px rgba(0, 0, 0, .6);
+            }
+
+            .confirm-modern .modal-title {
+                color: #e5e7eb !important;
+            }
+
+            .confirm-modern .cm-subtitle {
+                color: #9ca3af;
+            }
+
+            .confirm-modern .cm-text {
+                color: #d1d5db;
+            }
+
+            .confirm-modern .btn-cancel {
+                background: #111827;
+                border-color: #374151;
+                color: #e5e7eb;
+            }
+
+            .confirm-modern .btn-cancel:hover {
+                background: #0b1220;
+            }
+
+            .confirm-modern .btn-ok.btn-primary {
+                background: #3b82f6;
+                border-color: #2563eb;
+            }
+        }
     </style>
 @endpush
 
@@ -679,6 +851,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de confirmación moderno y reutilizable -->
+    <div class="modal fade confirm-modern" id="confirm_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document" style="max-width:440px">
+            <div class="modal-content">
+                <div class="modal-header" style="border:0;">
+                    <button type="button" class="close modal-close" data-dismiss="modal"
+                        aria-label="Close"><span>&times;</span></button>
+                    <div class="cm-head">
+                        <div class="cm-icon"><i class="fa fa-question"></i></div>
+                        <div class="cm-titles">
+                            <h4 class="modal-title">Confirmar</h4>
+                            <small class="cm-subtitle"></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <p class="cm-text">¿Está seguro?</p>
+                </div>
+                <div class="modal-footer" style="border:0;">
+                    <button type="button" class="btn btn-default btn-cancel" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-ok">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('localscripts')
@@ -688,6 +886,112 @@
         let id_accion;
         let EDIT_MODE = 'full'; // 'full' | 'evidence'
         let evidenciaFile = null;
+
+
+        // Evita warnings y locks de foco/aria
+        function blurActive() {
+            try {
+                document.activeElement && document.activeElement.blur();
+            } catch (e) {}
+        }
+
+        // Limpia scroll-lock/backdrops si quedara algo
+        function fixScrollLock() {
+            const anyModal = $('.modal.show:visible, .modal.in:visible').length > 0;
+            if (!anyModal) {
+                $('body,html').css('overflow', '').removeClass('modal-open stop-scrolling');
+                $('.modal-backdrop').removeClass('modal-stack').remove();
+            }
+        }
+        $(document).on('hidden.bs.modal', fixScrollLock);
+
+
+        // Confirmación moderna (Bootstrap) con variantes e ícono
+        function confirmBS({
+            title = 'Confirmar',
+            text = '¿Está seguro?',
+            subtitle = '',
+            confirmText = 'Aceptar',
+            cancelText = 'Cancelar',
+            variant = 'info',
+            icon = 'question',
+            danger = false,
+            focus = 'ok'
+        } = {}) {
+            return new Promise(resolve => {
+                const $m = $('#confirm_modal');
+                const $ok = $m.find('.btn-ok');
+                const $can = $m.find('.btn-cancel');
+
+                $m.find('.modal-title').text(title);
+                $m.find('.cm-text').text(text);
+                $m.find('.cm-subtitle').text(subtitle || '').toggle(!!subtitle);
+
+                if (danger) variant = 'danger';
+                $m.removeClass('confirm--danger confirm--warn confirm--info confirm--success').addClass(
+                    'confirm--' + variant);
+
+                $m.find('.cm-icon i').attr('class', 'fa fa-' + (icon || 'question'));
+
+                // <-- aquí forzamos la clase visual del botón según variante
+                $ok.text(confirmText)
+                    .removeClass('btn-primary btn-danger')
+                    .addClass(variant === 'danger' ? 'btn-danger' : 'btn-primary');
+                $can.text(cancelText);
+
+                const cleanup = () => {
+                    $m.off('hidden.bs.modal', onCancel);
+                    $ok.off('click', onOk);
+                    $can.off('click', onCancel);
+                };
+                const onOk = () => {
+                    resolve(true);
+                    $m.modal('hide');
+                    cleanup();
+                };
+                const onCancel = () => {
+                    resolve(false);
+                    cleanup();
+                };
+
+                $m.on('hidden.bs.modal', onCancel);
+                $ok.on('click', onOk);
+                $can.on('click', onCancel);
+
+                const zIndex = 1040 + (10 * $('.modal:visible').length);
+                $m.css('z-index', zIndex);
+                setTimeout(() => {
+                    $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass(
+                        'modal-stack');
+                }, 0);
+
+                (document.activeElement && document.activeElement.blur && document.activeElement.blur());
+                $m.modal({
+                    backdrop: true,
+                    keyboard: true,
+                    show: true
+                });
+                setTimeout(() => (focus === 'cancel' ? $can : $ok).trigger('focus'), 90);
+            });
+        }
+
+        /* --- Fix: SweetAlert v1 + Bootstrap scroll-lock --- */
+        function fixScrollLock() {
+            const $body = $('body');
+            const anyModalOpen = $('.modal.show:visible, .modal.in:visible').length > 0;
+            const anySwalOpen = $('.sweet-alert:visible, .swal2-container:visible').length > 0;
+            if (!anyModalOpen && !anySwalOpen) {
+                $body.removeClass('modal-open stop-scrolling').css('overflow', '');
+                $('html').css('overflow', '');
+                $('.modal-backdrop').remove();
+                $('.sweet-overlay').remove();
+            }
+        }
+        $(document).on('hidden.bs.modal', fixScrollLock);
+        $(document).on('click', '.sweet-alert .confirm, .sweet-alert .cancel', () => setTimeout(fixScrollLock, 50));
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' || e.keyCode === 27) setTimeout(fixScrollLock, 50);
+        });
 
         // === Indicador clave guardado? (inicializa desde servidor)
         let indicadorGuardado = {{ $complemento && $complemento->indicador_clave ? 'true' : 'false' }};
@@ -839,19 +1143,17 @@
             }
         }
 
-        const confirmaEliminaArchivo = (id) => {
-            swal({
-                title: "¿Está seguro?",
-                text: "El archivo se eliminará de forma permanente.",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: '#dd4b39',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar',
-            }, async function(isConfirm) {
-                if (isConfirm) await eliminaArchivo(id);
+        const confirmaEliminaArchivo = async (id) => {
+            const ok = await confirmBS({
+                title: 'Eliminar evidencia',
+                text: 'El archivo se eliminará de forma permanente.',
+                confirmText: 'Sí, eliminar',
+                variant: 'danger',
+                icon: 'trash'
             });
+            if (ok) await eliminaArchivo(id);
         };
+
 
         const eliminaArchivo = async (id) => {
             const response = await fetch(`${base_url}/elimina/archivo/acciones/${id}`, {
@@ -861,11 +1163,15 @@
                 }
             });
             const data = await response.json().catch(() => ({}));
+
             setTimeout(async () => {
                 if (response.ok && data.code == 200) {
-                    swal("¡Correcto!", data.mensaje, "success");
+                    toastr.success(data.mensaje);
                     await getAcciones();
-                } else swal("¡Error!", (data && data.mensaje) || 'No se pudo eliminar.', "error");
+                } else {
+                    toastr.error((data && data.mensaje) || 'No se pudo eliminar.');
+                }
+                fixScrollLock(); // asegura que no quede bloqueado
             }, 200);
         };
 
@@ -894,19 +1200,17 @@
             $("#btn_agregaAccion").prop("disabled", false);
         };
 
-        const eliminaAccion = (id) => {
-            swal({
-                title: "¿Está seguro?",
-                text: "El registro se eliminará de forma permanente.",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: '#ff0000',
-                confirmButtonText: 'Sí, seguro',
-                cancelButtonText: 'Cancelar',
-            }, function(isConfirm) {
-                if (isConfirm) confirmaElimina(id);
+        const eliminaAccion = async (id) => {
+            const ok = await confirmBS({
+                title: '¿Eliminar acción?',
+                text: 'Esta acción no se puede deshacer.',
+                confirmText: 'Sí, eliminar',
+                variant: 'danger',
+                icon: 'exclamation-triangle'
             });
+            if (ok) await confirmaElimina(id);
         };
+
 
         const confirmaElimina = async (id) => {
             const response = await fetch(`${base_url}/elimina/accion/${id}`, {
@@ -1085,19 +1389,17 @@
         $('#btn_pick_evidencia').on('click', function() {
             document.getElementById('evidencia').click();
         });
-
-        const confirmaEliminaArchivoComplemento = (idPlan) => {
-            swal({
-                title: '¿Está seguro?',
+        const confirmaEliminaArchivoComplemento = async (idPlan) => {
+            const ok = await confirmBS({
+                title: 'Eliminar evidencia',
                 text: 'El archivo se eliminará de forma permanente.',
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dd4b39',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar',
-            }, async function(isConfirm) {
-                if (isConfirm) await eliminaArchivoComplemento(idPlan);
+                subtitle: 'Esta acción no se puede deshacer.',
+                confirmText: 'Sí, eliminar',
+                cancelText: 'Cancelar',
+                variant: 'danger',
+                icon: 'trash'
             });
+            if (ok) await eliminaArchivoComplemento(idPlan);
         };
 
         const eliminaArchivoComplemento = async (idPlan) => {
@@ -1110,14 +1412,14 @@
 
             const data = await r.json().catch(() => ({}));
             if (r.ok && data.code === 200) {
-                swal('¡Correcto!', data.mensaje, 'success');
+                toastr.success(data.mensaje);
                 _toggleEvidenceUI(false);
                 $('#evidencia').val('');
             } else {
-                swal('¡Error!', (data && data.mensaje) || 'No se pudo eliminar.', 'error');
+                toastr.error((data && data.mensaje) || 'No se pudo eliminar.');
             }
+            fixScrollLock(); // por si acaso
         };
-
 
 
         async function guardaComplemento(btn) {
@@ -1354,13 +1656,15 @@
         }
 
         function eliminaActividadControl(id) {
-            swal({
-                title: '¿Eliminar?',
-                text: 'Esta acción no se puede deshacer',
-                type: 'warning',
-                showCancelButton: true
-            }, async (ok) => {
+            (async () => {
+                const ok = await confirmBS({
+                    title: '¿Eliminar?',
+                    text: 'Esta acción no se puede deshacer.',
+                    confirmText: 'Sí, eliminar',
+                    danger: true
+                });
                 if (!ok) return;
+
                 const r = await fetch(`${base_url}/elimina/actividad-control/${id}`, {
                     method: 'DELETE',
                     headers: {
@@ -1372,9 +1676,10 @@
                     toastr.success(d.mensaje);
                     await getActividadesControl();
                 } else {
-                    swal('¡Error!', d.mensaje || 'No se pudo eliminar', 'error');
+                    toastr.error(d.mensaje || 'No se pudo eliminar');
                 }
-            });
+                fixScrollLock();
+            })();
         }
 
         // Contadores (texto)

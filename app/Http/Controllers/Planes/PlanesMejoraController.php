@@ -716,7 +716,6 @@ class PlanesMejoraController extends Controller
                 'logros' => 'required|string|min:2|max:150',
                 'impactos' => 'required|string|min:2|max:150',
                 'evidencia'              => $fileRule . '|file|mimes:pdf|max:6144',
-                'control_observaciones' => 'nullable|string|min:2|max:600', // <-- antes required
                 'observaciones' => 'nullable|string|min:2|max:600',
             ]);
 
@@ -763,7 +762,6 @@ class PlanesMejoraController extends Controller
 
             $comple->logros                = $request->input('logros');
             $comple->impactos              = $request->input('impactos');
-            $comple->control_observaciones = $request->input('control_observaciones');
             // Guarda null si viene vacío
             $comple->observaciones         = $request->filled('observaciones') ? $request->input('observaciones') : null;
 
