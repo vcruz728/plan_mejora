@@ -155,6 +155,9 @@ Route::middleware('auth')->group(function () {
 	Route::post('/guarda/actividad-control',       [PlanesMejoraController::class, 'saveActividadControl']);
 	Route::post('/edita/actividad-control',        [PlanesMejoraController::class, 'editActividadControl']);
 	Route::delete('/elimina/actividad-control/{id}', [PlanesMejoraController::class, 'delActividadControl']);
+
+	Route::get('/reportes/mejoras/export', [\App\Http\Controllers\ReporteController::class, 'exportMejoras'])
+		->name('reportes.mejoras.export');
 });
 
 
