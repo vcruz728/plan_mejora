@@ -147,7 +147,7 @@ Route::middleware('auth')->group(function () {
 	Route::post('/sube/evidencia/complemento', [PlanesMejoraController::class, 'uploadComplementEvidence']);
 	Route::delete('elimina/archivo/complemento/{id_plan}', [PlanesMejoraController::class, 'delArchivoComplemento']);
 	Route::post('/guarda/indicador-clave/plan', [PlanesMejoraController::class, 'saveIndicador']);
-	Route::delete('/elimina/archivo/acciones/{id}', [PlanesMejoraController::class, 'delArcivo']);
+	Route::delete('/elimina/archivo/acciones/{id}', [PlanesMejoraController::class, 'delArchivo']);
 
 	//Actividades de control
 	Route::get('/get/actividades/control/{idPlan}', [PlanesMejoraController::class, 'getActividadesControl']);

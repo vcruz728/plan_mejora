@@ -14,7 +14,7 @@ use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordBase;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
-
+    use Notifiable;
     /**
      * The attributes that are mass assignable.
      *
@@ -55,5 +55,35 @@ class User extends Authenticatable
         ], false));
 
         $this->notify(new ResetPasswordNotification($url));
+    }
+
+    public function des()
+    {
+        return $this->belongsTo(Catalogos\Des::class, 'id_des');
+    }
+    public function unidadAcademica()
+    {
+        return $this->belongsTo(Catalogos\UnidadesAcademicas::class, 'id_ua');
+    }
+    public function sede()
+    {
+        return $this->belongsTo(Catalogos\Sedes::class, 'id_sede');
+    }
+    public function programa()
+    {
+        return $this->belongsTo(Catalogos\ProgramasEducativos::class, 'id_programa');
+    }
+    public function nivel()
+    {
+        return $this->belongsTo(Catalogos\NivelesEstudio::class, 'id_nivel');
+    }
+    public function modalidad()
+    {
+        return $this->belongsTo(Catalogos\Modalidad::class, 'id_modalidad');
+    }
+
+    public function complementosCapturados()
+    {
+        return $this->hasMany(ComplementoPlan::class, 'id_usuario');
     }
 }
