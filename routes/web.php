@@ -42,8 +42,6 @@ Route::get('/', function () {
 	return redirect()->route('login');
 });
 
-Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-	->name('password.request');
 
 Route::get('/dashboard', function () {
 	$procedencias = \App\Models\Catalogos\Procedencias::orderBy('descripcion')->get();

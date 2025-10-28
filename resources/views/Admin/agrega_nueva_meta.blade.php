@@ -334,11 +334,13 @@
     <script>
         var base_url = $("input[name='base_url']").val();
 
-        // Datepicker compacto
-        $('#fecha_vencimiento').datepicker({
-            dateFormat: 'yy-mm-dd'
-        }).datepicker();
-
+        // Ajusta donde inicializas datepicker
+        $('.datepicker, [data-provide="datepicker"]').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            language: 'es'
+        });
         // Select2
         $('#ods_pdi_select').select2();
         $('#objetivo_pdi').select2();

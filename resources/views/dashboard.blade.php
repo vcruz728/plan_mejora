@@ -80,40 +80,47 @@
 @section('localscripts')
     <script>
         var base_url = $("input[name='base_url']").val();
+
+        // ===== Estado global =====
         let dt = null;
+        let REDRAW_TIMER = null;
+        let DATA_REFRESH_TIMER = null;
+        let _redrawPending = false;
 
         // Flags rol
         const IS_ADMIN = @json($isAdmin);
         const CAN_DELETE = @json($canDelete);
-        const HAS_RESP = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
+        const HAS_RESP_ROLE = {{ (int) Auth::user()->rol === 1 ? 'true' : 'false' }};
 
-        // Mapa id => texto desde Blade para etiquetar las opciones
+        // Mapa id => texto desde Blade para etiquetar select
         const PROC_MAP = @json($procMap);
 
-        // ======================= Helpers filtro =======================
+        // ===== Helpers =====
+        function redrawNow() {
+            if (!dt || _redrawPending) return;
+            _redrawPending = true;
+            requestAnimationFrame(() => {
+                try {
+                    dt.rows().invalidate().draw(false);
+                } finally {
+                    _redrawPending = false;
+                }
+            });
+        }
+
         function escapeRegex(s) {
             return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
-        /**
-         * Rellena el select #filtro_procedencia únicamente con los IDs de procedencia
-         * presentes en 'rows'. Si hay solo una, se auto-selecciona.
-         * Devuelve el valor seleccionado (o '' si no hay).
-         */
         function refreshProcedenciaOptionsFromRows(rows) {
             const $proc = $('#filtro_procedencia');
             const prev = $proc.val();
-
-            // IDs únicos presentes en la data (ajusta 'procedencia' si tu campo se llama distinto)
-            const ids = Array.from(new Set(
-                (rows || [])
+            const ids = Array.from(new Set((rows || [])
                 .map(r => r?.procedencia)
                 .filter(v => v !== null && v !== undefined && v !== '')
             )).map(String);
 
-            // id + texto usando PROC_MAP; fallback si falta
-            const pairs = ids
-                .map(id => ({
+            const pairs = ids.map(id => ({
                     id,
                     text: PROC_MAP[id] ?? `Procedencia ${id}`
                 }))
@@ -121,67 +128,72 @@
                     sensitivity: 'base'
                 }));
 
-            // Reconstruir opciones del select
             $proc.find('option').remove();
-            $proc.append(new Option('', '', false, false)); // opción vacía = todas
+            $proc.append(new Option('', '', false, false));
+            for (const p of pairs) $proc.append(new Option(p.text, p.id, false, false));
 
-            for (const p of pairs) {
-                $proc.append(new Option(p.text, p.id, false, false));
-            }
-
-            // Auto-selecciona si hay 1; si no, restaura si sigue; si no, vacío
-            const newVal = (ids.length === 1) ?
-                ids[0] :
-                (ids.includes(prev) ? prev : '');
-
-            $proc.val(newVal).trigger('change.select2'); // refresca UI de select2
+            const newVal = (ids.length === 1) ? ids[0] : (ids.includes(prev) ? prev : '');
+            $proc.val(newVal).trigger('change.select2');
             return newVal;
         }
 
-        // ======================= Init =======================
+        function parseFecha(s) {
+            if (!s) return null;
+            let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+            if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+            m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
+            if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+            const d = new Date(s);
+            return isNaN(d) ? null : d;
+        }
+
+        function renderEstatus(row) {
+            const cerrada = row.cerrado !== null && row.cerrado !== undefined;
+            if (cerrada) return '<span class="dt-badge success">Concluida</span>';
+            const fin = parseFecha(row.fecha_vencimiento);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            if (fin) fin.setHours(0, 0, 0, 0);
+            const vencida = !!fin && fin.getTime() < hoy.getTime();
+            if (vencida) return '<span class="dt-badge danger">Vencida</span>';
+            return '<span class="dt-badge warn">En proceso</span>';
+        }
+
+        function numToCol(n) {
+            let s = '';
+            while (n > 0) {
+                let m = (n - 1) % 26;
+                s = String.fromCharCode(65 + m) + s;
+                n = Math.floor((n - 1) / 26);
+            }
+            return s;
+        }
+
+        // ===== Init =====
         $(function() {
             const $proc = $('#filtro_procedencia');
-
-            // Select2
             $proc.select2({
                 width: 'resolve',
                 placeholder: $proc.data('placeholder'),
                 allowClear: true
             });
 
-            // Limpiar filtro
             $('#btn_limpiar_filtro').on('click', function() {
                 $proc.val(null).trigger('change');
-                if (dt) dt.column(0).search('').draw(); // columna 0 = procedencia (oculta)
+                if (dt) dt.column(0).search('').draw();
             });
 
-            // Cargar tabla y enganchar filtro
-            getPlanes().then(() => {
-                $proc.off('change.pm').on('change.pm', function() {
-                    const v = $(this).val();
-                    if (!dt) return;
-                    if (!v) {
-                        dt.column(0).search('').draw();
-                    } else {
-                        // filtro exacto por ID en col oculta
-                        dt.column(0).search('^' + escapeRegex(v) + '$', true, false).draw();
-                    }
-                });
-            });
+            getPlanes();
         });
 
-        // ======================= Tabla =======================
+        // ===== Core =====
         async function getPlanes() {
-            // mini loader
             $("#div_tabla").html(`
-                <div class="text-center" style="padding:24px;">
-                    <i class="fa fa-spinner fa-spin"></i> Espere un momento...
-                </div>
-            `);
+            <div class="text-center" style="padding:24px;">
+                <i class="fa fa-spinner fa-spin"></i> Espere un momento...
+            </div>`);
 
-            const resp = await fetch(`${base_url}/get/planes-mejora`, {
-                method: 'get'
-            });
+            const resp = await fetch(`${base_url}/get/planes-mejora`);
             const data = await resp.json();
 
             $("#div_tabla").html(
@@ -193,174 +205,127 @@
                 return;
             }
 
-            function parseFecha(s) {
-                if (!s) return null;
-                // ISO: 2025-10-23 o 2025-10-23 14:00:00
-                let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-                if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-                // dd/mm/yyyy
-                m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
-                if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-                const d = new Date(s);
-                return isNaN(d) ? null : d;
+            // Detectar si VIENE una llave de responsable en el dataset
+            const firstRow = Array.isArray(data.data) && data.data.length ? data.data[0] : null;
+            const HAS_RESP_COL = HAS_RESP_ROLE && firstRow && (
+                ('name' in firstRow) || ('responsable' in firstRow) ||
+                ('responsable_nombre' in firstRow) || ('usuario' in firstRow)
+            );
+
+            // Timers (crear SOLO una vez, usando globales)
+            if (!REDRAW_TIMER) {
+                REDRAW_TIMER = setInterval(() => redrawNow(), 60 * 1000);
             }
+            if (!DATA_REFRESH_TIMER) {
+                DATA_REFRESH_TIMER = setInterval(async () => {
+                    try {
+                        const r = await fetch(`${base_url}/get/planes-mejora`);
+                        const json = await r.json();
+                        if (json.code === 200 && dt) {
+                            const prevFilter = $('#filtro_procedencia').val();
+                            dt.clear().rows.add(json.data).draw(false);
 
-
-            // helper: estatus como badge (igual que tenías)
-            function renderEstatus(row) {
-                const cerrada = row.cerrado !== null && row.cerrado !== undefined;
-                if (cerrada) return '<span class="dt-badge success">Concluida</span>';
-
-                const fin = parseFecha(row.fecha_vencimiento);
-                const hoy = new Date();
-                // Comparar por día (corte a medianoche local)
-                hoy.setHours(0, 0, 0, 0);
-                if (fin) fin.setHours(0, 0, 0, 0);
-
-                const vencida = !!fin && fin.getTime() < hoy.getTime();
-                if (vencida) return '<span class="dt-badge danger">Vencida</span>';
-                return '<span class="dt-badge warn">En proceso</span>';
-            }
-
-            // Evita duplicar timers si vuelves a llamar getPlanes()
-            let REDRAW_TIMER = null;
-            $(function() {
-                if (!REDRAW_TIMER) {
-                    REDRAW_TIMER = setInterval(() => {
-                        if (dt) dt.rows().invalidate().draw(false);
-                    }, 60 * 1000); // cada 1 min
-                }
-            });
-
-
-            let DATA_REFRESH_TIMER = null;
-            $(function() {
-                if (!DATA_REFRESH_TIMER) {
-                    DATA_REFRESH_TIMER = setInterval(async () => {
-                        try {
-                            const resp = await fetch(`${base_url}/get/planes-mejora`);
-                            const json = await resp.json();
-                            if (json.code === 200 && dt) {
-                                const prevFilter = $('#filtro_procedencia').val();
-
-                                // Actualiza la fuente de datos sin destruir la tabla
-                                dt.clear().rows.add(json.data).draw(false);
-
-                                // Recalcula opciones del filtro manteniendo selección si aplica
-                                refreshProcedenciaOptionsFromRows(json.data);
-                                if (prevFilter) {
-                                    dt.column(0).search('^' + escapeRegex(String(prevFilter)) + '$',
-                                        true, false).draw(false);
-                                }
-                            }
-                        } catch (e) {
-                            // opcional: console.warn('auto-refresh error', e);
+                            const selected = refreshProcedenciaOptionsFromRows(json.data);
+                            const useVal = prevFilter || selected || '';
+                            dt.column(0).search(useVal ? '^' + escapeRegex(String(useVal)) + '$' : '', true,
+                                false).draw(false);
                         }
-                    }, 5 * 60 * 1000); // cada 5 min (ajústalo a tu gusto)
-                }
-            });
+                    } catch (e) {
+                        /* opcional: console.warn(e) */
+                    }
+                }, 5 * 60 * 1000);
+            }
 
-            // Destruye instancia previa
+            // Destruir DT previo si existía
             if (dt && typeof dt.destroy === 'function') {
                 dt.destroy();
                 dt = null;
             }
 
-            const excelBtnHTML = `
-                <span class="excel-badge">X</span>
-                <span class="excel-text">Exportar a Excel</span>
-            `;
+            const excelBtnHTML = `<span class="excel-badge">X</span><span class="excel-text">Exportar a Excel</span>`;
 
-            // Columnas base (índice 0 = procedencia oculta para filtrar)
-            const cols = [{
-                title: 'procedencia',
-                data: 'procedencia',
-                visible: false,
-                searchable: true
-            }];
+            // ===== Columnas =====
+            const cols = [
+                // Col 0 oculta para filtrar por procedencia
+                {
+                    title: 'procedencia',
+                    data: null,
+                    visible: false,
+                    searchable: true,
+                    render: (d, t, row) => row?.procedencia ?? ''
+                }
+            ];
 
-            if (HAS_RESP) {
+            if (HAS_RESP_COL) {
                 cols.push({
                     title: "Responsable",
-                    data: 'name',
+                    data: null,
+                    render: (d, t, row) => row?.responsable ?? '',
                     className: 'dt-center dt-vmiddle'
                 });
             }
 
             cols.push({
                 title: "Tipo",
-                data: 'tipo',
-                className: 'dt-center dt-vmiddle'
+                data: null,
+                className: 'dt-center dt-vmiddle',
+                render: (d, t, row) => row?.tipo ?? ''
             }, {
                 title: "Plan",
-                data: 'plan_no',
-                className: 'dt-center dt-vmiddle text-nowrap'
+                data: null,
+                className: 'dt-center dt-vmiddle text-nowrap',
+                render: (d, t, row) => row?.plan_no ?? ''
             }, {
                 title: "Recomendación/Meta",
-                data: 'recomendacion_meta',
-                className: 'dt-justify dt-vmiddle'
-            }, {
-                title: 'Estatus',
                 data: null,
-                render: (data, type, row) => renderEstatus(row),
-                orderable: true
+                className: 'dt-justify dt-vmiddle',
+                render: (d, t, row) => row?.recomendacion_meta ?? ''
             }, {
-                title: 'Acciones',
+                title: "Estatus",
                 data: null,
-                className: 'dt-actions',
+                orderable: true,
+                render: (d, t, row) => renderEstatus(row)
+            }, {
+                title: "Acciones",
+                data: null,
                 orderable: false,
-                render: o => {
+                className: 'dt-actions',
+                render: (d, t, o) => {
                     let html = `<div class="dt-actions__wrap">`;
-
                     if (IS_ADMIN) {
-                        // Admin: Editar (admin), Ver (admin) y Eliminar
                         html += `
-                                <button class="btn btn-primary btn-icon" title="Editar"
-                                    onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
-                                    <i class="fa fa-pencil"></i>
-                                </button>
-                                <button class="btn btn-success btn-icon" title="Ver plan de mejora"
-                                    onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                            `;
+                        <button class="btn btn-primary btn-icon" title="Editar"
+                            onclick="location.href='${base_url}/admin/edita/plan-mejora/${o.id}'">
+                            <i class="fa fa-pencil"></i>
+                        </button>
+                        <button class="btn btn-success btn-icon" title="Ver plan de mejora"
+                            onclick="location.href='${base_url}/admin/ver/plan-mejora/${o.id}'">
+                            <i class="fa fa-eye"></i>
+                        </button>`;
                         if (CAN_DELETE) {
                             html += `
-                                    <button class="btn btn-danger btn-icon" title="Eliminar"
-                                        onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                `;
+                            <button class="btn btn-danger btn-icon" title="Eliminar"
+                                onclick="confirmaElimina(${o.id}, ${o.acciones||0})">
+                                <i class="fa fa-trash"></i>
+                            </button>`;
                         }
                     } else {
-                        // Rol 2: solo Editar (sin Ver, sin Eliminar)
                         html += `
-                                <button class="btn btn-primary btn-icon" title="Editar"
-                                    onclick="location.href='${base_url}/edita/plan-mejora/${o.id}'">
-                                    <i class="fa fa-pencil"></i>
-                                </button>
-                            `;
+                        <button class="btn btn-primary btn-icon" title="Editar"
+                            onclick="location.href='${base_url}/edita/plan-mejora/${o.id}'">
+                            <i class="fa fa-pencil"></i>
+                        </button>`;
                     }
-
                     html += `</div>`;
                     return html;
                 }
             });
 
-            // Columnas para exportar (excluye procedencia oculta y Acciones)
-            const EXPORT_COLS = HAS_RESP ? [1, 2, 3, 4, 5] : [1, 2, 3, 4];
+            // Columnas para exportar (omite procedencia oculta y Acciones)
+            const EXPORT_COLS = HAS_RESP_COL ? [1, 2, 3, 4, 5] : [1, 2, 3, 4];
+            const estatusExportPos = HAS_RESP_COL ? 5 : 4; // 1-based para Excel
 
-            function numToCol(n) {
-                let s = '';
-                while (n > 0) {
-                    let m = (n - 1) % 26;
-                    s = String.fromCharCode(65 + m) + s;
-                    n = Math.floor((n - 1) / 26);
-                }
-                return s;
-            }
-            const estatusExportPos = HAS_RESP ? 5 : 4;
-
+            // ===== DataTable =====
             dt = new DataTable('#tabla_planes', {
                 data: data.data,
                 deferRender: true,
@@ -407,19 +372,7 @@
                         }
                     },
                     customize: function(xlsx) {
-                        function numToCol(n) {
-                            let s = '';
-                            while (n > 0) {
-                                let m = (n - 1) % 26;
-                                s = String.fromCharCode(65 + m) + s;
-                                n = Math.floor((n - 1) / 26);
-                            }
-                            return s;
-                        }
-                        var HAS_RESP_LOCAL = {{ Auth::user()->rol == 1 ? 'true' : 'false' }};
-                        var estatusExportPos = HAS_RESP_LOCAL ? 5 : 4;
-                        var estatusColLetter = numToCol(estatusExportPos);
-
+                        const estatusColLetter = numToCol(estatusExportPos);
                         var $ = window.jQuery;
                         var sheet = xlsx.xl.worksheets['sheet1.xml'];
                         var styles = xlsx.xl['styles.xml'];
@@ -446,21 +399,17 @@
                             return $c.find('v').text();
                         }
 
-                        // === Fills (fondos) ===
                         var fillCount = parseInt($fills.attr('count'), 10);
-                        // En proceso → amarillo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="FFE98A"/><bgColor indexed="64"/></patternFill></fill>'
                         );
                         var yellowFillId = fillCount;
                         fillCount++;
-                        // Vencida → rojo
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="DE4D3A"/><bgColor indexed="64"/></patternFill></fill>'
                         );
                         var redFillId = fillCount;
                         fillCount++;
-                        // Concluida → verde (#21C05C)
                         $fills.append(
                             '<fill><patternFill patternType="solid"><fgColor rgb="21C05C"/><bgColor indexed="64"/></patternFill></fill>'
                         );
@@ -468,18 +417,14 @@
                         fillCount++;
                         $fills.attr('count', fillCount);
 
-                        // === Estilos de celda que aplican esos fills ===
                         var xfCount = parseInt($cellXfs.attr('count'), 10);
-                        // Amarillo
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + yellowFillId +
                             '"/>');
                         var yellowStyleId = xfCount;
                         xfCount++;
-                        // Rojo
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + redFillId + '"/>');
                         var redStyleId = xfCount;
                         xfCount++;
-                        // Verde
                         $cellXfs.append('<xf xfId="0" applyFill="1" fillId="' + greenFillId +
                             '"/>');
                         var greenStyleId = xfCount;
@@ -489,48 +434,42 @@
                         var selector = 'row c[r^="' + estatusColLetter + '"]';
                         $(selector, $sheet).each(function() {
                             var $c = $(this);
-                            var rAttr = $c.attr('r');
-                            var rowNum = parseInt(rAttr.replace(/^[A-Z]+/, ''), 10);
+                            var rowNum = parseInt($c.attr('r').replace(/^[A-Z]+/, ''), 10);
                             if (rowNum === 1) return;
-
                             var text = (cellText($c) || '').trim().toLowerCase();
-                            // Prioridad: concluidas > vencidas > en proceso
-                            if (text.includes('concluida')) {
-                                $c.attr('s', greenStyleId);
-                            } else if (text.includes('vencida')) {
-                                $c.attr('s', redStyleId);
-                            } else if (text.includes('en proceso')) {
-                                $c.attr('s', yellowStyleId);
-                            }
+                            if (text.includes('concluida')) $c.attr('s', greenStyleId);
+                            else if (text.includes('vencida')) $c.attr('s', redStyleId);
+                            else if (text.includes('en proceso')) $c.attr('s',
+                                yellowStyleId);
                         });
                     }
-
                 }],
                 columns: cols
             });
 
-            // === Rellenar el filtro según lo que trae la data y auto-seleccionar si aplica
+            // Filtro por procedencia
+            const $proc = $('#filtro_procedencia');
             const selected = refreshProcedenciaOptionsFromRows(data.data);
+            if (selected) dt.column(0).search('^' + escapeRegex(selected) + '$', true, false).draw();
 
-            // Aplicar el filtro inicial si hay selección (regex exacto)
-            if (selected) {
-                dt.column(0).search('^' + escapeRegex(selected) + '$', true, false).draw();
-            }
+            $proc.off('change.pm').on('change.pm', function() {
+                const v = $(this).val();
+                if (!dt) return;
+                dt.column(0).search(v ? '^' + escapeRegex(v) + '$' : '', true, false).draw();
+            });
         }
 
-        // ======================= Eliminar (protegido por rol) =======================
+        // ===== Acciones =====
         function confirmaElimina(id, accion) {
             if (!CAN_DELETE) {
                 swal("Acción no permitida", "No cuentas con permisos para eliminar.", "warning");
                 return;
             }
-
-            let mensaje = '¿Está seguro?';
-            let sub = 'El registro se eliminará de forma permanente.';
-            if (accion > 0) sub =
-                'El registro cuenta con acciones registradas, si elimina el registro también eliminará las acciones.';
+            let sub = (accion > 0) ?
+                'El registro cuenta con acciones registradas, si elimina el registro también eliminará las acciones.' :
+                'El registro se eliminará de forma permanente.';
             swal({
-                title: mensaje,
+                title: '¿Está seguro?',
                 text: sub,
                 type: "warning",
                 showCancelButton: true,
@@ -541,7 +480,6 @@
                 if (isConfirm) eliminaLinea(id);
             });
         }
-
         async function eliminaLinea(id) {
             const response = await fetch(`${base_url}/admin/elimina-meta/${id}`, {
                 method: 'delete',
@@ -560,12 +498,13 @@
             }, 200);
         }
 
-        // Recalcular columnas tras expandir/colapsar el menú lateral (animación ~300ms)
+        // Ajuste columnas tras expandir/cerrar menú
         $(document).on('expanded.pushMenu collapsed.pushMenu', function() {
             setTimeout(function() {
                 if (dt) dt.columns.adjust();
             }, 320);
         });
+        // Resize debounced
         (function() {
             let tm = null;
             $(window).on('resize.dt', function() {
@@ -575,14 +514,9 @@
                 }, 150);
             });
         })();
-
+        // Redibuja al volver a la pestaña
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) redrawNow();
-        });
-
-        $('#tabla_planes').on('page.dt order.dt search.dt length.dt', () => {
-            // El propio evento ya dispara un draw, pero si tu renderer usa "now", aseguras el recálculo
-            redrawNow();
         });
     </script>
 @endsection

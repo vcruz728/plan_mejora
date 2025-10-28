@@ -407,9 +407,12 @@
     <script src="{{ asset('bower_components/select2/js/select2.min.js') }}"></script>
     <script>
         // ====== Pickers / select2 existentes ======
-        $('#fecha_vencimiento').datepicker({
-            dateFormat: 'yy-mm-dd'
-        }).datepicker();
+        $('.datepicker, [data-provide="datepicker"]').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            language: 'es'
+        });
         $('#ods_pdi_select').select2();
         $('#objetivo_pdi').select2();
 

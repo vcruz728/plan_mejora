@@ -1022,11 +1022,13 @@
             EDIT_MODE = evidence ? 'evidence' : 'full';
         }
 
-        // Datepickers compactos
-        $('#fecha_inicio, #fecha_fin, #fecha_inicio_edit, #fecha_fin_edit, #fecha_inicio_ctrl, #fecha_fin_ctrl')
-            .datepicker({
-                dateFormat: 'yy-mm-dd'
-            }).datepicker();
+        // Ajusta donde inicializas datepicker
+        $('.datepicker, [data-provide="datepicker"]').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            language: 'es'
+        });
 
         // ===================== ACCIONES =====================
         let dtAcciones = null;

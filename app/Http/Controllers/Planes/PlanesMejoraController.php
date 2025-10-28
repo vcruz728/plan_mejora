@@ -30,131 +30,91 @@ class PlanesMejoraController extends Controller
 {
     public function getPlanes()
     {
-        $hoy = now()->timezone(config('app.timezone'))->toDateString();
-
+        $hoySql = "CONVERT(varchar(10), GETDATE(), 23)"; // YYYY-MM-DD
         try {
             $u = \Auth::user();
 
-            if ($u->rol == 1) {
-                $planes = Mejora::query()
-                    ->select(
-                        'tipo',
-                        'recomendacion_meta',
-                        'mejoras.procedencia as procedencia',
-                        'mejoras.id',
-                        'plan_no',
-                        'complemento_plan.archivo as cerrado',
-                        'fecha_vencimiento',
-                    )
-                    ->selectRaw('? as fecha_hoy', [$hoy])
-                    ->addSelect('users.name')
-                    ->addSelect(DB::raw('COALESCE(acc.cnt, 0) as acciones'))
-                    ->leftJoin('users', function ($join) {
-                        $join->on('users.nivel', '=', 'mejoras.nivel');
-                        $join->on('users.id_des', '=', 'mejoras.id_des');
-                        $join->on(DB::raw('COALESCE(users.id_ua,0)'), '=', DB::raw('COALESCE(mejoras.id_ua,0)'));
-                        $join->on(DB::raw('COALESCE(users.id_sede,0)'), '=', DB::raw('COALESCE(mejoras.id_sede,0)'));
-                        $join->on(DB::raw('COALESCE(users.id_programa,0)'), '=', DB::raw('COALESCE(mejoras.id_programa_educativo,0)'));
-                        $join->on(DB::raw('COALESCE(users.id_nivel,0)'), '=', DB::raw('COALESCE(mejoras.id_nivel_estudio,0)'));
-                        $join->on(DB::raw('COALESCE(users.id_modalidad,0)'), '=', DB::raw('COALESCE(mejoras.id_modalidad_estudio,0)'));
-                    })
-                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id')
-                    ->leftJoin(
-                        DB::raw('(SELECT id_plan, COUNT(*) AS cnt FROM acciones GROUP BY id_plan) acc'),
-                        'acc.id_plan',
-                        'mejoras.id'
-                    )
-                    ->where('activo', 1)
-                    ->orderBy('orden')
-                    ->get();
-            } elseif ($u->rol == 4) {
-                $planes = Mejora::query()
-                    ->select(
-                        'tipo',
-                        'recomendacion_meta',
-                        'mejoras.procedencia as procedencia',
-                        'mejoras.id',
-                        'plan_no',
-                        'complemento_plan.archivo as cerrado',
-                        'fecha_vencimiento',
-                    )
-                    ->selectRaw('? as fecha_hoy', [$hoy])
-                    ->addSelect(DB::raw('COALESCE(acc.cnt, 0) as acciones'))
-                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id')
-                    ->leftJoin(
-                        DB::raw('(SELECT id_plan, COUNT(*) AS cnt FROM acciones GROUP BY id_plan) acc'),
-                        'acc.id_plan',
-                        'mejoras.id'
-                    )
-                    ->where('procedencia', $u->procedencia)
-                    ->where('activo', 1)
-                    ->orderBy('orden')
-                    ->get();
+            $base = \App\Models\Mejora::query()
+                // match del responsable por ámbito
+                ->leftJoin('users as u_scope', function ($join) {
+                    $join->on('u_scope.nivel', '=', 'mejoras.nivel');
+                    $join->on('u_scope.id_des', '=', 'mejoras.id_des');
+                    $join->on(DB::raw('COALESCE(u_scope.id_ua,0)'), '=', DB::raw('COALESCE(mejoras.id_ua,0)'));
+                    $join->on(DB::raw('COALESCE(u_scope.id_sede,0)'), '=', DB::raw('COALESCE(mejoras.id_sede,0)'));
+                    $join->on(DB::raw('COALESCE(u_scope.id_programa,0)'), '=', DB::raw('COALESCE(mejoras.id_programa_educativo,0)'));
+                    $join->on(DB::raw('COALESCE(u_scope.id_nivel,0)'), '=', DB::raw('COALESCE(mejoras.id_nivel_estudio,0)'));
+                    $join->on(DB::raw('COALESCE(u_scope.id_modalidad,0)'), '=', DB::raw('COALESCE(mejoras.id_modalidad_estudio,0)'));
+                })
+                // (opcional) quién “verificó”, por si lo necesitas en otras vistas
+                ->leftJoin('users as u_veri', function ($join) {
+                    $join->on('u_veri.id', '=', DB::raw('TRY_CONVERT(int, mejoras.verifico)'));
+                })
+                ->leftJoin('complemento_plan as cp', 'cp.id_plan', '=', 'mejoras.id')
+                ->select([
+                    'mejoras.id',
+                    'mejoras.tipo',
+                    'mejoras.recomendacion_meta',
+                    'mejoras.procedencia',
+                    'mejoras.plan_no',
+                    'mejoras.fecha_vencimiento',
+                    DB::raw("$hoySql AS fecha_hoy"),
+                    DB::raw('cp.archivo AS cerrado'),
+                    // Responsable SOLO desde el match del ámbito
+                    DB::raw('u_scope.name AS responsable'),
+                ])
+                // mantiene el alias "acciones" como antes
+                ->withCount(['acciones as acciones'])
+                ->where('mejoras.activo', 1);
+
+
+            // filtros por rol/ámbito (mismo comportamiento de antes)
+            if ((int) $u->rol === 1) {
+                $base->orderBy('mejoras.orden');
+            } elseif ((int) $u->rol === 4) {
+                $base->where('mejoras.procedencia', $u->procedencia)
+                    ->orderBy('mejoras.orden')
+                    ->distinct();
             } else {
-                $where = '';
-                switch ($u->nivel) {
+                $base->where('mejoras.nivel', (int) $u->nivel);
+                switch ((int) $u->nivel) {
                     case 1:
-                        $where = ' AND id_des = ' . (int) $u->id_des;
+                        $base->where('mejoras.id_des', (int) $u->id_des);
                         break;
                     case 2:
-                        $where = ' AND id_ua = ' . (int) $u->id_ua;
+                        $base->where('mejoras.id_ua', (int) $u->id_ua);
                         break;
                     case 3:
-                        $where = ' AND id_sede = ' . (int) $u->id_sede;
+                        $base->where('mejoras.id_sede', (int) $u->id_sede);
                         break;
                     case 4:
-                        $where = ' AND id_programa_educativo = ' . (int) $u->id_programa;
+                        $base->where('mejoras.id_programa_educativo', (int) $u->id_programa);
                         break;
                     case 5:
-                        $where = ' AND id_nivel_estudio = ' . (int) $u->id_nivel;
+                        $base->where('mejoras.id_nivel_estudio', (int) $u->id_nivel);
                         break;
                     case 6:
-                        $where = ' AND id_modalidad_estudio = ' . (int) $u->id_modalidad;
+                        $base->where('mejoras.id_modalidad_estudio', (int) $u->id_modalidad);
                         break;
                 }
-
-                $planes = Mejora::query()
-                    ->select(
-                        'tipo',
-                        'recomendacion_meta',
-                        'mejoras.procedencia as procedencia',
-                        'mejoras.id',
-                        'plan_no',
-                        'complemento_plan.archivo as cerrado',
-                        'fecha_vencimiento',
-                    )
-                    ->selectRaw('? as fecha_hoy', [$hoy])
-                    ->addSelect(DB::raw('COALESCE(acc.cnt, 0) as acciones'))
-                    ->leftJoin('complemento_plan', 'complemento_plan.id_plan', 'mejoras.id')
-                    ->leftJoin(
-                        DB::raw('(SELECT id_plan, COUNT(*) AS cnt FROM acciones GROUP BY id_plan) acc'),
-                        'acc.id_plan',
-                        'mejoras.id'
-                    )
-                    ->where('activo', 1)
-                    ->where('mejoras.nivel', $u->nivel)
-                    ->whereRaw("1=1 $where")
-                    ->orderBy('orden')
-                    ->get();
+                $base->orderBy('mejoras.orden');
             }
 
-            $msg = [
-                'code' => 200,
+            $planes = $base->get();
+
+            return response()->json([
+                'code'    => 200,
                 'mensaje' => 'Listado de planes de mejora.',
-                'data' => $planes,
-                'rol' => $u->rol
-            ];
-        } catch (\Exception $e) {
-            $msg = [
-                'code' => 400,
+                'data'    => $planes,
+                'rol'     => $u->rol,
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'code'    => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e
-            ];
+                'data'    => $e->getMessage(),
+            ], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
-
 
     public function delMejora($id)
     {
@@ -181,27 +141,58 @@ class PlanesMejoraController extends Controller
     }
 
 
+    // 2) ADMIN: editar (carga el plan con relaciones + catálogos dependientes)
     public function adminEdita($id)
     {
-        $plan = Mejora::find($id);
-        $procedencias = Procedencias::orderBy('descripcion')->get();
-        $des = Des::where('tipo', $plan->tipo_mejora)->orderBy('nombre')->get();
-        $ejes = EjesPDI::all();
-        $ambitos = AmbitosSiemec::all();
-        $criterios = CriteriosSiemec::all();
-        $verificadores = User::where('rol', 3)->get();
-        $unidades = UnidadesAcademicas::where('id_des', $plan->id_des)->orderBy('nombre')->get();
-        $sedes = Sedes::where('id_ua', $plan->id_ua)->orderBy('nombre')->get();
-        $programasEducativos = ProgramasEducativos::where('id_sede', $plan->id_sede)->orderBy('nombre')->get();
-        $nivelesEstudio = NivelesEstudio::where('id_programa_estudio', $plan->id_programa_educativo)->orderBy('nombre')->get();
-        $modalidad = Modalidad::where('id_nivel_estudio', $plan->id_nivel_estudio)->orderBy('nombre')->get();
+        $plan = Mejora::with([
+            'des:id,nombre',
+            'unidadAcademica:id,nombre',
+            'sede:id,nombre',
+            'programaEducativo:id,nombre',
+            'nivelEstudio:id,nombre',
+            'modalidad:id,nombre',
+            'odsPdi:id,descripcion',
+            'estrategia:id,descripcion',
+            'meta:id,descripcion',
+            'complemento:id,id_plan,archivo,indicador_clave,logros,impactos,observaciones',
+        ])->findOrFail($id);
 
-        $ods = OdsPDI::where('id_eje', $plan->eje_pdi)->orderBy('descripcion')->get();
-        $objetivos = ObjetivosEspesificos::where('id_ods', $plan->id_ods_pdi)->orderBy('descripcion')->get();
-        $estategias = Estrategias::where('id_objetivo', $plan->objetivo_pdi)->orderBy('descripcion')->get();
-        $metas = Metas::where('id_estrategia', $plan->id_estrategia)->get();
+        $procedencias         = Procedencias::orderBy('descripcion')->get();
+        $des                  = Des::where('tipo', $plan->tipo_mejora)->orderBy('nombre')->get();
+        $ejes                 = EjesPDI::all();
+        $ambitos              = AmbitosSiemec::all();
+        $criterios            = CriteriosSiemec::all();
+        $verificadores        = User::where('rol', 3)->get();
 
-        return view('Admin.edita_plan', compact('plan', 'procedencias', 'verificadores', 'des', 'ejes', 'ambitos', 'criterios', 'unidades', 'sedes', 'programasEducativos', 'nivelesEstudio', 'modalidad', 'ods', 'objetivos', 'estategias', 'metas'));
+        $unidades             = UnidadesAcademicas::where('id_des', $plan->id_des)->orderBy('nombre')->get();
+        $sedes                = Sedes::where('id_ua', $plan->id_ua)->orderBy('nombre')->get();
+        $programasEducativos  = ProgramasEducativos::where('id_sede', $plan->id_sede)->orderBy('nombre')->get();
+        $nivelesEstudio       = NivelesEstudio::where('id_programa_estudio', $plan->id_programa_educativo)->orderBy('nombre')->get();
+        $modalidad            = Modalidad::where('id_nivel_estudio', $plan->id_nivel_estudio)->orderBy('nombre')->get();
+
+        $ods                  = OdsPDI::where('id_eje', $plan->eje_pdi)->orderBy('descripcion')->get();
+        $objetivos            = ObjetivosEspesificos::where('id_ods', $plan->id_ods_pdi)->orderBy('descripcion')->get();
+        $estategias           = Estrategias::where('id_objetivo', $plan->objetivo_pdi)->orderBy('descripcion')->get(); // (mantengo el nombre $estategias)
+        $metas                = Metas::where('id_estrategia', $plan->id_estrategia)->get();
+
+        return view('Admin.edita_plan', compact(
+            'plan',
+            'procedencias',
+            'verificadores',
+            'des',
+            'ejes',
+            'ambitos',
+            'criterios',
+            'unidades',
+            'sedes',
+            'programasEducativos',
+            'nivelesEstudio',
+            'modalidad',
+            'ods',
+            'objetivos',
+            'estategias',
+            'metas'
+        ));
     }
 
     public function editPlan(Request $request)
@@ -297,55 +288,25 @@ class PlanesMejoraController extends Controller
 
 
 
+    // 2) UNIDAD: editar (detalle) — simplificado con relaciones
     public function edita($id)
     {
-        $plan = Mejora::select(
-            'mejoras.id',
-            'mejoras.tipo',
-            'mejoras.verifico',
-            'mejoras.tipo_mejora',
-            'mejoras.procedencia',
-            'mejoras.plan_no',
-            'mejoras.fecha_creacion',
-            'mejoras.cantidad',
-            'mejoras.orden',
-            'mejoras.fecha_vencimiento',
-            'mejoras.recomendacion_meta',
-            'mejoras.ods_pdi',
-            'mejoras.indicador_pdi',
-            'cat_ejes_pdi.descripcion as eje_pdi',
-            'cat_objetivos_espesifico.descripcion as objetivo_pdi',
-            'cat_ambitos_siemec.descripcion as ambito_siemec',
-            'cat_criterios_siemec.descripcion as criterio_siemec',
-            'cat_des.nombre as des',
-            'cat_unidades_academicas.nombre as unidad_academica',
-            'cat_sedes.nombre as sede',
-            'cat_programas_educativos_dos.nombre as programa_educativo',
-            'cat_niveles_estudio.nombre as nivel',
-            'cat_modalidades_estudio.nombre as modalidad',
-            'cat_ods_pdi.descripcion as ods',
-            'cat_estrategias.descripcion as estrategia',
-            'cat_metas.descripcion as meta',
-        )
-            ->join('cat_ejes_pdi', 'cat_ejes_pdi.id', 'mejoras.eje_pdi')
-            ->join('cat_objetivos_espesifico', 'cat_objetivos_espesifico.id', 'mejoras.objetivo_pdi')
-            ->join('cat_ambitos_siemec', 'cat_ambitos_siemec.id', 'mejoras.ambito_siemec')
-            ->join('cat_criterios_siemec', 'cat_criterios_siemec.id', 'mejoras.criterio_siemec')
-            ->join('cat_des', 'cat_des.id', 'mejoras.id_des')
-            ->join('cat_ods_pdi', 'cat_ods_pdi.id', 'mejoras.id_ods_pdi')
-            ->join('cat_estrategias', 'cat_estrategias.id', 'mejoras.id_estrategia')
-            ->join('cat_metas', 'cat_metas.id', 'mejoras.id_meta')
-            ->leftJoin('cat_unidades_academicas', 'cat_unidades_academicas.id', 'mejoras.id_ua')
-            ->leftJoin('cat_sedes', 'cat_sedes.id', 'mejoras.id_sede')
-            ->leftJoin('cat_programas_educativos_dos', 'cat_programas_educativos_dos.id', 'mejoras.id_programa_educativo')
-            ->leftJoin('cat_niveles_estudio', 'cat_niveles_estudio.id', 'mejoras.id_nivel_estudio')
-            ->leftJoin('cat_modalidades_estudio', 'cat_modalidades_estudio.id', 'mejoras.id_modalidad_estudio')
-            ->where('mejoras.id', $id)
-            ->first();
+        $plan = Mejora::with([
+            'des:id,nombre',
+            'unidadAcademica:id,nombre',
+            'sede:id,nombre',
+            'programaEducativo:id,nombre',
+            'nivelEstudio:id,nombre',
+            'modalidad:id,nombre',
+            'odsPdi:id,descripcion',
+            'estrategia:id,descripcion',
+            'meta:id,descripcion',
+            'complemento:id,id_plan,archivo,indicador_clave,logros,impactos,observaciones',
+        ])->findOrFail($id);
 
         $procedencias = Procedencias::orderBy('descripcion')->get();
-        $programas = ProgramasEducativos::all();
-        $complemento = ComplementoPlan::where('id_plan', $id)->first();
+        $programas    = ProgramasEducativos::all();
+        $complemento  = $plan->complemento; // ya viene por relación
 
         return view('Unidad.edita_plan', compact('plan', 'procedencias', 'programas', 'complemento'));
     }
@@ -625,28 +586,33 @@ class PlanesMejoraController extends Controller
         }
     }
 
+    // 3) FIX: editar Actividad de Control — corrige validación y mapeo de campos
     public function editActividadControl(Request $request)
     {
         try {
             $mejora = Mejora::findOrFail($request->id_plan);
 
             $request->validate([
-                'id'                  => 'required|integer|exists:actividades_control,id',
-                'id_plan'             => 'required|integer|exists:mejoras,id',
-                'actividad'           => 'required|string|min:2|max:500',
-                'producto_resultado'  => 'required|string|min:2|max:500',
-                'fecha_inicio_edit'   => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
-                'fecha_fin_edit'      => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio_edit|before_or_equal:' . $mejora->fecha_vencimiento,
-                'responsable'         => 'required|string|min:2|max:200',
+                'id'                 => 'required|integer|exists:actividades_control,id',
+                'id_plan'            => 'required|integer|exists:mejoras,id',
+                'actividad'          => 'required|string|min:2|max:500',
+                'producto_resultado' => 'required|string|min:2|max:500',
+                'fecha_inicio_edit'  => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
+                'fecha_fin_edit'     => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio_edit|before_or_equal:' . $mejora->fecha_vencimiento,
+                'responsable'        => 'required|string|min:2|max:200',
+                'evidencia_edit'     => 'nullable|mimes:pdf|max:6144', // por si en el futuro agregas evidencia a Actividad
             ]);
 
             $row = ActividadControl::findOrFail($request->id);
 
+            // Si llegaras a manejar archivo en ActividadControl, aquí iría la lógica de reemplazo
+            // (similar a Accion). Ahora mismo se omite porque tu tabla no tiene 'evidencia'.
+
             $row->update([
                 'actividad'          => $request->actividad,
                 'producto_resultado' => $request->producto_resultado,
-                'fecha_inicio'       => $request->fecha_inicio_edit, // ← mapeo correcto
-                'fecha_fin'          => $request->fecha_fin_edit,    // ← mapeo correcto
+                'fecha_inicio'       => $request->fecha_inicio_edit,  // mapeo correcto
+                'fecha_fin'          => $request->fecha_fin_edit,     // mapeo correcto
                 'responsable'        => $request->responsable,
             ]);
 
@@ -657,7 +623,6 @@ class PlanesMejoraController extends Controller
             return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
         }
     }
-
 
     public function delActividadControl($id)
     {
@@ -865,56 +830,25 @@ class PlanesMejoraController extends Controller
         return response()->json($msg, $msg['code']);
     }
 
+    // 2) ADMIN: ver (solo lectura) — también por relaciones
     public function adminVer($id)
     {
-        $plan = Mejora::select(
-            'mejoras.id',
-            'mejoras.tipo',
-            'mejoras.verifico',
-            'mejoras.tipo_mejora',
-            'mejoras.procedencia',
-            'mejoras.plan_no',
-            'mejoras.fecha_creacion',
-            'mejoras.cantidad',
-            'mejoras.orden',
-            'mejoras.fecha_vencimiento',
-            'mejoras.recomendacion_meta',
-            'mejoras.ods_pdi',
-            'mejoras.indicador_pdi',
-            'cat_ejes_pdi.descripcion as eje_pdi',
-            'cat_objetivos_espesifico.descripcion as objetivo_pdi',
-            'cat_ambitos_siemec.descripcion as ambito_siemec',
-            'cat_criterios_siemec.descripcion as criterio_siemec',
-            'cat_des.nombre as des',
-            'cat_unidades_academicas.nombre as unidad_academica',
-            'cat_sedes.nombre as sede',
-            'cat_programas_educativos_dos.nombre as programa_educativo',
-            'cat_niveles_estudio.nombre as nivel',
-            'cat_modalidades_estudio.nombre as modalidad',
-            'cat_ods_pdi.descripcion as ods',
-            'cat_estrategias.descripcion as estrategia',
-            'cat_metas.descripcion as meta',
-        )
-            ->join('cat_ejes_pdi', 'cat_ejes_pdi.id', 'mejoras.eje_pdi')
-            ->join('cat_objetivos_espesifico', 'cat_objetivos_espesifico.id', 'mejoras.objetivo_pdi')
-            ->join('cat_ambitos_siemec', 'cat_ambitos_siemec.id', 'mejoras.ambito_siemec')
-            ->join('cat_criterios_siemec', 'cat_criterios_siemec.id', 'mejoras.criterio_siemec')
-            ->join('cat_des', 'cat_des.id', 'mejoras.id_des')
-            ->join('cat_ods_pdi', 'cat_ods_pdi.id', 'mejoras.id_ods_pdi')
-            ->join('cat_estrategias', 'cat_estrategias.id', 'mejoras.id_estrategia')
-            ->join('cat_metas', 'cat_metas.id', 'mejoras.id_meta')
-            ->leftJoin('cat_unidades_academicas', 'cat_unidades_academicas.id', 'mejoras.id_ua')
-            ->leftJoin('cat_sedes', 'cat_sedes.id', 'mejoras.id_sede')
-            ->leftJoin('cat_programas_educativos_dos', 'cat_programas_educativos_dos.id', 'mejoras.id_programa_educativo')
-            ->leftJoin('cat_niveles_estudio', 'cat_niveles_estudio.id', 'mejoras.id_nivel_estudio')
-            ->leftJoin('cat_modalidades_estudio', 'cat_modalidades_estudio.id', 'mejoras.id_modalidad_estudio')
-            ->where('mejoras.id', $id)
-            ->first();
+        $plan = Mejora::with([
+            'des:id,nombre',
+            'unidadAcademica:id,nombre',
+            'sede:id,nombre',
+            'programaEducativo:id,nombre',
+            'nivelEstudio:id,nombre',
+            'modalidad:id,nombre',
+            'odsPdi:id,descripcion',
+            'estrategia:id,descripcion',
+            'meta:id,descripcion',
+            'complemento:id,id_plan,archivo,indicador_clave,logros,impactos,observaciones',
+        ])->findOrFail($id);
 
-
-        $procedencias = Procedencias::orderBy('descripcion')->get();
-        $programas = ProgramasEducativos::all();
-        $complemento = ComplementoPlan::where('id_plan', $id)->first();
+        $procedencias  = Procedencias::orderBy('descripcion')->get();
+        $programas     = ProgramasEducativos::all();
+        $complemento   = $plan->complemento;
         $verificadores = User::where('rol', 3)->get();
 
         return view('Admin.ver_plan', compact('plan', 'procedencias', 'programas', 'complemento', 'verificadores'));
@@ -1249,6 +1183,7 @@ class PlanesMejoraController extends Controller
         return response()->json($msg, $msg['code']);
     }
 
+
     public function delArchivo($id)
     {
         try {
@@ -1257,18 +1192,16 @@ class PlanesMejoraController extends Controller
             $elimina->evidencia = null;
             $elimina->save();
 
-            $msg = [
+            return response()->json([
                 'code' => 200,
                 'mensaje' => 'Archivo eliminado de manera correcta.'
-            ];
-        } catch (Exception $e) {
-            $msg = [
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
                 'code' => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema',
                 'data' => $e
-            ];
+            ], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
 }
