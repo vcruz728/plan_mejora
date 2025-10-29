@@ -82,7 +82,8 @@ Route::middleware('auth')->group(function () {
 	Route::get('/admin/get/informacion/usuario/{id}', [UsuariosController::class, 'getInfoUser']);
 	// EDITAR (vista + post)
 	Route::get('/edita/usuario/{id}', [UsuariosController::class, 'viewEdit']);
-	Route::post('/admin/edita/usuario', [UsuariosController::class, 'editUser']); // ya la tienes
+	//Route::post('/admin/edita/usuario', [UsuariosController::class, 'editUser']); // ya la tienes
+	Route::post('/admin/edita/usuario/{id}', [UsuariosController::class, 'editUser']);
 
 	// NUEVO (vista + post)
 	Route::get('/admin/nuevo/usuario', [UsuariosController::class, 'viewAlta']);

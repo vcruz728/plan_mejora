@@ -3,6 +3,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+    {{-- Opcional: tema bootstrap para combinar con AdminLTE/Bootstrap --}}
 
     <link rel="stylesheet"
         href="{{ asset('dist/css/forms-modern.css') }}?v={{ filemtime(public_path('dist/css/forms-modern.css')) }}">
@@ -22,13 +23,13 @@
     </style>
 @endpush
 
-@section('htmlheader_title', 'Listar consultores')
+@section('htmlheader_title', 'Listar usuarios')
 
 @section('main-content')
     <section class="content-header">
-        <h1 style="text-align: center; margin: 15px 0;">Lista de consultores</h1>
+        <h1 style="text-align: center; margin: 15px 0;">Lista de usuarios</h1>
     </section>
-    <div class="col-xs-12 list-narrow page-consultores">
+    <div class="col-xs-12 list-narrow page-usuarios">
         <div class="box box-success">
             <div class="box-header with-border">
 
@@ -50,7 +51,7 @@
                 <button class="btn
                 btn-primary btn-sm" data-toggle="modal" data-target="#modal_nuevo"
                     style="margin: 15px 0;">
-                    <i class="fa fa-plus-circle"></i> Nuevo consultor
+                    <i class="fa fa-plus-circle"></i> Nuevo usuario
                 </button>
             </div>
 
@@ -68,7 +69,7 @@
         <div class="modal-dialog" role="document">
             <form id="form_nuevo" class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">Agregar consultor</h3>
+                    <h3 class="modal-title">Agregar usuario</h3>
                     <button type="button" class="close" data-dismiss="modal"
                         aria-label="Cerrar"><span>&times;</span></button>
                 </div>
@@ -126,13 +127,13 @@
         <div class="modal-dialog" role="document">
             <form id="form_editar" class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">Editar consultor</h3>
+                    <h3 class="modal-title">Editar usuario</h3>
                     <button type="button" class="close" data-dismiss="modal"
                         aria-label="Cerrar"><span>&times;</span></button>
                 </div>
 
                 <div class="modal-body">
-                    <input type="hidden" id="consultor_id">
+                    <input type="hidden" id="usuario_id">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -159,7 +160,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="procedencia_edit">Procedencia</label>
-                                <select name="procedencia_edit" id="procedencia_edit" class="form-control select2"
+                                <select name="procedencia" id="procedencia_edit" class="form-control select2"
                                     style="width:100%" required>
                                     <option value="">Seleccione una opción</option>
                                     @foreach ($procedencias as $value)
@@ -296,60 +297,34 @@
 
         function initTabla() {
             $("#div_tabla").html(`
-      <table class="table table-bordered table-striped compact" id="tabla_consultores" style="width:100%">
-        <thead>
-          <tr>
-            <th>Usuario</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Procedencia</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-      </table>
-    `);
+            <table class="table table-bordered table-striped compact" id="tabla_usuarios" style="width:100%">
+            <thead>
+                <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Procedencia</th>
+                <th>Acciones</th>
+                </tr>
+            </thead>
+            </table>
+        `);
 
-            tabla = $('#tabla_consultores').DataTable({
+            const URL_USUARIOS = `${base_url}/admin/get/usuarios/sistema`;
+
+            tabla = $('#tabla_usuarios').DataTable({
                 rowId: (row) => `row_${row.id}`,
                 processing: true,
                 serverSide: false,
                 deferRender: true,
                 ajax: {
-                    url: `${base_url}/admin/get/usuarios/sistema/consultores`,
-                    type: 'GET',
-                    dataSrc: function(json) {
-                        // si tu API devuelve { code, mensaje, data }
-                        if (json && typeof json === 'object') {
-                            if (json.code !== undefined && json.code !== 200) {
-                                swal("¡Error!", json.mensaje || 'No se pudo cargar la tabla.', "error");
-                                return [];
-                            }
-                            return json.data || [];
-                        }
-                        // si no es JSON válido
-                        swal("¡Error!", "La respuesta no es JSON. ¿La sesión expiró?", "error");
-                        return [];
-                    },
-                    error: function(xhr) {
-                        let msg = 'No se pudo cargar la tabla.';
-                        if (xhr.status === 419) msg = 'Sesión expirada (419). Vuelve a iniciar sesión.';
-                        if (xhr.status === 401) msg = 'No autorizado (401).';
-                        $('#div_tabla').prepend(`<div class="alert alert-danger">${escapeHtml(msg)}</div>`);
-                    }
-                },
-                ajax: {
-                    url: `${base_url}/admin/get/usuarios/sistema/consultores`,
+                    url: URL_USUARIOS,
                     type: 'GET',
                     data: d => {
                         d.procedencia = $('#filtro_procedencia').val() || '';
                     },
-                    dataSrc: function(json) {
-
-                        // 1) Toma el array correcto
-                        let rows = Array.isArray(json) ? json :
-                            (Array.isArray(json?.data) ? json.data : []);
-
-                        // 2) Devuelve SIEMPRE objetos con las llaves que tus columnas esperan
+                    dataSrc: (json) => {
+                        const rows = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
                         return rows.map(r => ({
                             id: r.id,
                             usuario: r.usuario || r.username || '',
@@ -357,9 +332,16 @@
                             email: r.email || '',
                             procedencia: r.procedencia || r?.cat_procedencias?.descripcion || ''
                         }));
+                    },
+                    error: function(xhr, textStatus /*, errorThrown*/ ) {
+                        if (textStatus === 'abort') return; // <<-- clave
+                        $('#div_tabla .alert').remove(); // quita duplicados
+                        let msg = 'No se pudo cargar la tabla.';
+                        if (xhr.status === 419) msg = 'Sesión expirada (419). Vuelve a iniciar sesión.';
+                        if (xhr.status === 401) msg = 'No autorizado (401).';
+                        $('#div_tabla').prepend(`<div class="alert alert-danger">${msg}</div>`);
                     }
                 },
-
                 columns: [{
                         data: 'usuario',
                         title: 'Usuario'
@@ -380,15 +362,15 @@
                         data: null,
                         orderable: false,
                         className: 'text-center dt-actions',
-                        render: o => {
+                        render: (o) => {
                             const id = o.id ?? '';
                             const nombre = (o.name ?? '').replace(/"/g, '&quot;');
                             return `
-             <div class="btn-actions">
-            <button class="btn btn-primary btn-icon" title="Editar" onclick="abrirEdicion('${id}')"><i class="fa fa-pencil"></i></button>
-            <button class="btn btn-info btn-icon" title="Resetear contraseña" onclick="abrirReset('${id}')"><i class="fa fa-key"></i></button>
-            <button class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaConsultor('${id}')"><i class="fa fa-trash"></i></button>
-          </div>`;
+                        <div class="btn-actions">
+                        <button class="btn btn-primary btn-icon" title="Editar" onclick="abrirEdicion('${id}')"><i class="fa fa-pencil"></i></button>
+                        <button class="btn btn-info btn-icon" title="Resetear contraseña" onclick="abrirReset('${id}')"><i class="fa fa-key"></i></button>
+                        <button class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaUsuario('${id}')"><i class="fa fa-trash"></i></button>
+                        </div>`;
                         }
                     }
                 ],
@@ -406,9 +388,7 @@
                 ],
                 autoWidth: false,
                 responsive: true,
-                drawCallback: function() {
-                    $('[data-toggle="tooltip"]').tooltip();
-                }
+                drawCallback: () => $('[data-toggle="tooltip"]').tooltip()
             });
         }
 
@@ -417,7 +397,7 @@
             disable('#btn_guardar_nuevo');
             try {
                 const body = new FormData(document.getElementById('form_nuevo'));
-                const resp = await fetch(`${base_url}/admin/guarda/nuevo/consultor`, {
+                const resp = await fetch(`${base_url}/admin/guarda/nuevo/usuario`, {
                     method: 'POST',
                     body,
                     headers: {
@@ -471,7 +451,7 @@
             disable('#btn_guardar_edicion');
             try {
                 const body = new FormData(document.getElementById('form_editar'));
-                const resp = await fetch(`${base_url}/admin/edita/consultor/${idEnEdicion}`, {
+                const resp = await fetch(`${base_url}/admin/edita/usuario/${idEnEdicion}`, {
                     method: 'POST',
                     body,
                     headers: {
@@ -596,9 +576,9 @@
 
         // ======================= Eliminar =======================
 
-        const eliminaConsultor = async (userId) => {
+        const eliminaUsuario = async (userId) => {
             swal({
-                title: '¿Eliminar consultor?',
+                title: '¿Eliminar usuario?',
                 text: 'Esta acción no se puede deshacer.',
                 type: 'warning',
                 showCancelButton: true,
@@ -613,7 +593,7 @@
                     return;
                 }
                 try {
-                    const resp = await fetch(`${base_url}/admin/consultor/${userId}`, {
+                    const resp = await fetch(`${base_url}/admin/usuario/${userId}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -656,7 +636,7 @@
 
         function confirmarEliminacion(id, nombre = '') {
             swal({
-                title: '¿Eliminar consultor?',
+                title: '¿Eliminar usuario?',
                 text: nombre ? `Esto eliminará a ${nombre} permanentemente.` :
                     'Esto eliminará el registro permanentemente.',
                 type: 'warning',
@@ -671,7 +651,7 @@
 
         async function eliminar(id) {
             try {
-                const resp = await fetch(`${base_url}/admin/elimina/consultor/${id}`, {
+                const resp = await fetch(`${base_url}/admin/elimina/usuario/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -696,16 +676,16 @@
             allowClear: true,
             width: 'resolve'
         });
-
+        // change: recarga una sola vez
         $('#filtro_procedencia').on('change', function() {
-            tabla.ajax.reload(null, false);
+            if (tabla) tabla.ajax.reload(null, false);
         });
 
-        // quitar filtro
+        // quitar filtro: solo limpia y dispara change (sin reload extra)
         $('#btn_limpiar_filtro').on('click', function() {
-            $('#filtro_procedencia').val(null).trigger('change'); // vuelve el placeholder
-            tabla.ajax.reload(null, false);
+            $('#filtro_procedencia').val('').trigger('change'); // usa '' en vez de null
         });
+
         // ======================= Init =======================
         $(function() {
             $('.select2').not('#procedencia, #procedencia_edit').select2({

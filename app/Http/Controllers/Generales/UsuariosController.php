@@ -31,80 +31,68 @@ class UsuariosController extends Controller
     public function addNuevo(Request $request)
     {
         try {
-            $validate =  \Validator::make(
+            $validate = \Validator::make(
                 $request->all(),
                 [
-                    'des' => 'required',
-                    'name' => 'required',
-                    'email' => 'required|email:rfc,dns|unique:users,email',
-                    'usuario' => 'alpha_dash|' . utf8_encode('regex:/^[áéíóúÁÉÍÓÚñÑa-zA-Z-0-9$#.() ]*$/') . '|min:4|max:20|unique:users,usuario|regex:/^[-áéíóúÁÉÍÓÚñÑa-zA-Z0-9$#.() ]*$/',
-                    'tipo_mejora' => 'required'
+                    'name'       => 'required',
+                    'email'      => 'required|email:rfc,dns|unique:users,email',
+                    'usuario'    => 'required|alpha_dash|min:4|max:20|unique:users,usuario|regex:/^[-áéíóúÁÉÍÓÚñÑa-zA-Z0-9$#.() ]*$/',
+                    'procedencia' => 'required|exists:cat_procedencias,id',
                 ],
-                [
-                    'email.unique' => 'El correo electrónico ingresado ya se encuentra registrado en el sistema.'
-                ],
+                ['email.unique' => 'El correo electrónico ingresado ya se encuentra registrado en el sistema.']
             );
 
             if ($validate->fails()) {
-                $msg = [
+                return response()->json([
                     'code' => 411,
                     'mensaje' => 'Error',
                     'errors' => $validate->errors()
-                ];
-
-                return response()->json($msg, $msg['code']);
+                ], 411);
             }
 
-            if ($request->input('unidad_academica') == '') {
-                $nivel = 1;
-            } else if ($request->input('sede') == "") {
-                $nivel = 2;
-            } else if ($request->input('programa_educativo') == "") {
-                $nivel = 3;
-            } else if ($request->input('nivel') == "") {
-                $nivel = 4;
-            } else if ($request->input('modalidad') == "") {
-                $nivel = 5;
-            } else if ($request->input('modalidad') != "") {
-                $nivel = 6;
+            $cp = \DB::table('cat_procedencias')->where('id', $request->procedencia)->first();
+            if (!$cp) {
+                return response()->json(['code' => 404, 'mensaje' => 'Procedencia no encontrada.'], 404);
             }
+
+            // Derivados desde cat_procedencias
+            $tipo_mejora = $cp->tipo_mejora ?? null;
+            $id_des      = $cp->id_des      ?? null;
+            $id_ua       = $cp->id_ua       ?? null;
+            $id_sede     = $cp->id_sede     ?? null;
+            $id_programa = $cp->id_programa ?? null;
+            $id_nivel    = $cp->id_nivel    ?? null;
+            $id_modalidad = $cp->id_modalidad ?? null;
+
+            // Calcula nivel (igual a tu lógica anterior)
+            $nivel = 1;
+            if (!empty($id_ua))       $nivel = 2;
+            if (!empty($id_sede))     $nivel = 3;
+            if (!empty($id_programa)) $nivel = 4;
+            if (!empty($id_nivel))    $nivel = 5;
+            if (!empty($id_modalidad)) $nivel = 6;
 
             $usuario = new User();
-            $usuario->usuario = $request->input('usuario');
-            $usuario->name = $request->input('name');
-            $usuario->email = $request->input('email');
-            $usuario->tipo_mejora = $request->input('tipo_mejora');
-            $usuario->id_des = $request->input('des');
-            $usuario->id_ua = $request->input('unidad_academica');
-            $usuario->id_sede = $request->input('sede');
-            $usuario->id_programa = $request->input('programa_educativo');
-            $usuario->id_nivel = $request->input('nivel');
-            $usuario->id_modalidad = $request->input('modalidad');
-            $usuario->password = Hash::make($request->input('usuario'));
-            $usuario->rol = 2;
-            $usuario->nivel = $nivel;
+            $usuario->usuario      = $request->usuario;
+            $usuario->name         = $request->name;
+            $usuario->email        = $request->email;
+            $usuario->procedencia  = (int)$request->procedencia; // ← clave foránea
+            $usuario->tipo_mejora  = $tipo_mejora;
+            $usuario->id_des       = $id_des;
+            $usuario->id_ua        = $id_ua;
+            $usuario->id_sede      = $id_sede;
+            $usuario->id_programa  = $id_programa;
+            $usuario->id_nivel     = $id_nivel;
+            $usuario->id_modalidad = $id_modalidad;
+            $usuario->password     = Hash::make($request->usuario);
+            $usuario->rol          = 2;
+            $usuario->nivel        = $nivel;
             $usuario->save();
 
-
-            $msg = [
-                'code' => 200,
-                'mensaje' => 'Usuario actualizado correctamente.',
-            ];
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+            return response()->json(['code' => 200, 'mensaje' => 'Usuario agregado correctamente.'], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
 
     public function viewEdit($id)
@@ -140,7 +128,62 @@ class UsuariosController extends Controller
         return view('Usuarios.editar', compact('des', 'usuario', 'ua', 'sedes', 'programas', 'nivel_estudios', 'modalidades'));
     }
 
-    public function editUser(Request $request)
+    public function editUser(Request $request, $id)
+    {
+        try {
+            $validate =  \Validator::make(
+                $request->all(),
+                [
+                    'name_edit' => 'required',
+                    'email_edit' => ['required', 'email:rfc,dns', Rule::unique('users', 'email')->ignore($id)],
+                    'usuario_edit' => ['required', 'alpha_dash', 'min:4', 'max:20', 'regex:/^[-áéíóúÁÉÍÓÚñÑa-zA-Z0-9$#.() ]*$/', Rule::unique('users', 'usuario')->ignore($id)],
+                    'procedencia' => 'required',
+                ],
+                [
+                    'email.unique' => 'El correo electrónico ingresado ya se encuentra registrado en el sistema.'
+                ],
+            );
+
+            if ($validate->fails()) {
+                $msg = [
+                    'code' => 411,
+                    'mensaje' => 'Error',
+                    'errors' => $validate->errors()
+                ];
+
+                return response()->json($msg, $msg['code']);
+            }
+
+            $usuario = User::find($id);
+            $usuario->name = $request->input('name_edit');
+            $usuario->email = $request->input('email_edit');
+            $usuario->usuario = $request->input('usuario_edit');
+            $usuario->procedencia = $request->input('procedencia');
+            $usuario->save();
+
+
+            $msg = [
+                'code' => 200,
+                'mensaje' => 'Usuario actualizado correctamente.',
+            ];
+        } catch (\Illuminate\Database\QueryException $ex) {
+            $msg = [
+                'code' => 400,
+                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
+                'data' => $ex,
+            ];
+        } catch (Exception $e) {
+            $msg = [
+                'code' => 400,
+                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
+                'data' => $e,
+            ];
+        }
+
+        return response()->json($msg, $msg['code']);
+    }
+
+    /*  public function editUser(Request $request)
     {
         try {
             $id_usuario = $request->input('id_usuario');
@@ -212,12 +255,16 @@ class UsuariosController extends Controller
         }
 
         return response()->json($msg, $msg['code']);
-    }
+    } */
 
     public function listaUsuarios()
     {
-        return view('Usuarios.lista');
+        $procedencias = Procedencias::orderBy('descripcion')->get();
+        return view('Usuarios.usuarios', compact('procedencias'));
     }
+
+
+
 
     public function getUsuarios(Request $request)
     {
@@ -228,24 +275,14 @@ class UsuariosController extends Controller
                     'users.name',
                     'users.email',
                     'users.usuario',
-                    'ua.nombre as unidad',
+                    'cp.descripcion as procedencia', // ← texto para la tabla
                 ])
                 ->leftJoin('cat_procedencias as cp', 'cp.id', '=', 'users.procedencia')
-                ->leftJoin('cat_unidades_academicas as ua', 'ua.id', '=', 'cp.id_ua')
                 ->where('users.rol', 2);
 
-            // Filtros pasan a cp.*
-            if ($request->filled('tipo_mejora')) {
-                $q->where('cp.tipo_mejora', $request->tipo_mejora);
-            }
-            if ($request->filled('des')) {
-                $q->where('cp.id_des', $request->des);
-            }
-            if ($request->filled('ua')) {
-                $q->where('cp.id_ua', $request->ua);
-            }
-            if ($request->filled('sede')) {
-                $q->where('cp.id_sede', $request->sede);
+            // Filtro directo por procedencia (id)
+            if ($request->filled('procedencia')) {
+                $q->where('users.procedencia', (int) $request->procedencia);
             }
 
             $usuarios = $q->orderBy('users.name')->get();
@@ -314,56 +351,68 @@ class UsuariosController extends Controller
     public function editUsuario(Request $request, $id)
     {
         try {
-            $validate =  \Validator::make(
+            $validate = \Validator::make(
                 $request->all(),
                 [
-                    'name' => 'required',
-                    'email' => ['required', 'email:rfc,dns', Rule::unique('users', 'email')->ignore($id)],
-                    'usuario' => ['required', 'alpha_dash', 'min:4', 'max:20', 'regex:/^[-áéíóúÁÉÍÓÚñÑa-zA-Z0-9$#.() ]*$/', Rule::unique('users', 'usuario')->ignore($id)],
+                    'name'       => 'required',
+                    'email'      => ['required', 'email:rfc,dns', Rule::unique('users', 'email')->ignore($id)],
+                    'usuario'    => ['required', 'alpha_dash', 'min:4', 'max:20', 'regex:/^[-áéíóúÁÉÍÓÚñÑa-zA-Z0-9$#.() ]*$/', Rule::unique('users', 'usuario')->ignore($id)],
+                    'procedencia' => 'required|exists:cat_procedencias,id',
                 ],
-                [
-                    'email.unique' => 'El correo electrónico ingresado ya se encuentra registrado en el sistema.'
-                ],
+                ['email.unique' => 'El correo electrónico ingresado ya se encuentra registrado en el sistema.']
             );
 
             if ($validate->fails()) {
-                $msg = [
+                return response()->json([
                     'code' => 411,
                     'mensaje' => 'Error',
                     'errors' => $validate->errors()
-                ];
-
-                return response()->json($msg, $msg['code']);
+                ], 411);
             }
 
-            $usuario = User::find($id);
-            $usuario->name = $request->input('name');
-            $usuario->email = $request->input('email');
-            $usuario->usuario = $request->input('usuario');
-            $usuario->save();
+            $user = User::findOrFail($id);
 
+            $cp = \DB::table('cat_procedencias')->where('id', $request->procedencia)->first();
+            if (!$cp) {
+                return response()->json(['code' => 404, 'mensaje' => 'Procedencia no encontrada.'], 404);
+            }
 
-            $msg = [
-                'code' => 200,
-                'mensaje' => 'Usuario actualizado correctamente.',
-            ];
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $ex,
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+            $tipo_mejora = $cp->tipo_mejora ?? null;
+            $id_des      = $cp->id_des      ?? null;
+            $id_ua       = $cp->id_ua       ?? null;
+            $id_sede     = $cp->id_sede     ?? null;
+            $id_programa = $cp->id_programa ?? null;
+            $id_nivel    = $cp->id_nivel    ?? null;
+            $id_modalidad = $cp->id_modalidad ?? null;
+
+            $nivel = 1;
+            if (!empty($id_ua))       $nivel = 2;
+            if (!empty($id_sede))     $nivel = 3;
+            if (!empty($id_programa)) $nivel = 4;
+            if (!empty($id_nivel))    $nivel = 5;
+            if (!empty($id_modalidad)) $nivel = 6;
+
+            $user->name         = $request->name;
+            $user->email        = $request->email;
+            $user->usuario      = $request->usuario;
+            $user->procedencia  = (int)$request->procedencia;
+            $user->tipo_mejora  = $tipo_mejora;
+            $user->id_des       = $id_des;
+            $user->id_ua        = $id_ua;
+            $user->id_sede      = $id_sede;
+            $user->id_programa  = $id_programa;
+            $user->id_nivel     = $id_nivel;
+            $user->id_modalidad = $id_modalidad;
+            $user->nivel        = $nivel;
+            $user->save();
+
+            return response()->json(['code' => 200, 'mensaje' => 'Usuario actualizado correctamente.'], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['code' => 404, 'mensaje' => 'Usuario no encontrado.'], 404);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
-
     public function resetPassword(Request $request, $id)
     {
         try {
