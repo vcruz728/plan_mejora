@@ -57,37 +57,9 @@ class User extends Authenticatable
         $this->notify(new ResetPasswordNotification($url));
     }
 
-    public function des()
-    {
-        return $this->belongsTo(Catalogos\Des::class, 'id_des');
-    }
-    public function unidadAcademica()
-    {
-        return $this->belongsTo(Catalogos\UnidadesAcademicas::class, 'id_ua');
-    }
-    public function sede()
-    {
-        return $this->belongsTo(Catalogos\Sedes::class, 'id_sede');
-    }
-    public function programa()
-    {
-        return $this->belongsTo(Catalogos\ProgramasEducativos::class, 'id_programa');
-    }
-    public function nivel()
-    {
-        return $this->belongsTo(Catalogos\NivelesEstudio::class, 'id_nivel');
-    }
-    public function modalidad()
-    {
-        return $this->belongsTo(Catalogos\Modalidad::class, 'id_modalidad');
-    }
 
-    public function complementosCapturados()
+    public function procedenciaCat()
     {
-        return $this->hasMany(ComplementoPlan::class, 'id_usuario');
-    }
-    public function procedenciaRef()
-    {
-        return $this->belongsTo(\App\Models\Catalogos\Procedencias::class, 'procedencia', 'id');
+        return $this->belongsTo(\App\Models\Catalogos\Procedencias::class, 'procedencia');
     }
 }

@@ -83,7 +83,8 @@
                                     <div class="form-group">
                                         <label for="siglas_edit">Siglas</label>
                                         <input type="text" name="siglas_edit" id="siglas_edit" class="form-control"
-                                            placeholder="Máximo 100 caracteres...">
+                                            placeholder="Máximo 20 caracteres..."
+                                            oninput="this.value=this.value.toUpperCase()">
                                     </div>
                                 </div>
                             </form>
@@ -123,7 +124,8 @@
                                     <div class="form-group">
                                         <label for="siglas">Siglas</label>
                                         <input type="text" name="siglas" id="siglas" class="form-control"
-                                            placeholder="Máximo 100 caracteres...">
+                                            placeholder="Máximo 20 caracteres..."
+                                            oninput="this.value=this.value.toUpperCase()">
                                     </div>
                                 </div>
                             </form>
@@ -173,6 +175,13 @@
             const response = await fetch(`${base_url}/admin/get/catalogo/procedencia`, {
                 method: 'GET'
             });
+
+            if (!response.ok) {
+                const html = await response.text(); // ver el HTML del error en consola
+                console.error('Error', response.status, html);
+                swal("¡Error!", "No se pudo cargar el catálogo (HTTP " + response.status + ").", "error");
+                return; // evita intentar parsear JSON
+            }
             const {
                 data = []
             } = await response.json();
@@ -192,8 +201,7 @@
                     data: null,
                     orderable: false,
                     visible: false,
-                    className: "text-center",
-                    render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
+                    render: (d, t, row, meta) => meta.row + meta.settings._iDisplayStart + 1
                 },
                 {
                     title: "Procedencia",
@@ -205,6 +213,12 @@
                     data: 'siglas',
                     className: 'text-nowrap',
                     defaultContent: ''
+                },
+                {
+                    title: "Ruta",
+                    data: 'ruta',
+                    defaultContent: '',
+                    render: v => v || '<span class="text-muted">—</span>'
                 }
             ];
 
@@ -215,16 +229,16 @@
                     orderable: false,
                     className: 'text-center dt-actions',
                     render: (_, __, o) => `
-                        <div class="btn-actions" style="display:flex;gap:6px;justify-content:center;">
-                          <button class="btn btn-primary btn-icon" title="Editar"
-                            onclick="abreModal('${o.id}', '${safe(o.descripcion)}', '${safe(o.siglas)}')">
-                            <i class="fa fa-pencil"></i>
-                          </button>
-                          <button class="btn btn-danger btn-icon" title="Eliminar"
-                            onclick="confirmaElimina('${o.id}')">
-                            <i class="fa fa-trash"></i>
-                          </button>
-                        </div>`
+                    <div class="btn-actions" style="display:flex;gap:6px;justify-content:center;">
+                        <button class="btn btn-primary btn-icon" title="Editar"
+                        onclick="abreModal('${o.id}', '${safe(o.descripcion)}', '${safe(o.siglas)}')">
+                        <i class="fa fa-pencil"></i>
+                        </button>
+                        <button class="btn btn-danger btn-icon" title="Eliminar"
+                        onclick="confirmaElimina('${o.id}')">
+                        <i class="fa fa-trash"></i>
+                        </button>
+                    </div>`
                 });
             }
 
@@ -242,11 +256,7 @@
                     [10, 25, 50, 100, 'Todos']
                 ],
                 language: {
-                    url: base_url + '/js/Spanish.json',
-
-                },
-                search: {
-                    placeholder: 'Buscar…'
+                    url: base_url + '/js/Spanish.json'
                 },
                 order: [
                     [1, 'asc']
@@ -261,11 +271,10 @@
                     extend: 'excelHtml5',
                     name: 'excel',
                     className: 'btn btn-outline-excel',
-                    titleAttr: 'Exportar a Excel',
-                    text: excelBtnHTML,
+                    text: `<span class="excel-badge">X</span><span class="excel-text">Exportar a Excel</span>`,
                     title: 'Catalogo_Procedencias',
                     exportOptions: {
-                        columns: [1, 2],
+                        columns: CAN_MANAGE ? [1, 2, 3] : [1, 2, 3],
                         modifier: {
                             search: 'applied',
                             page: 'all'
@@ -275,8 +284,6 @@
                 columns
             });
 
-            const btn = document.getElementById('btn_export_xlsx');
-            if (btn) btn.onclick = () => dt.button('excel:name').trigger();
         };
 
         // CRUD (sólo se dispara si CAN_MANAGE = true)

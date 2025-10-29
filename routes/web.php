@@ -102,11 +102,16 @@ Route::middleware('auth')->group(function () {
 	Route::delete('/admin/consultor/{id}', [UsuariosController::class, 'destroyConsultor']);
 
 
-	Route::get('/admin/catalogo/procedencias', [CatalogosController::class, 'viewProcedencias']);
-	Route::get('/admin/get/catalogo/procedencia', [CatalogosController::class, 'getProcedencias']);
+	Route::get('/admin/catalogo/procedencias', [CatalogosController::class, 'viewProcedencias'])->name('catalogo.procedencias');
+	/*Route::get('/admin/get/catalogo/procedencia', [CatalogosController::class, 'getProcedencias']);
 	Route::post('/admin/edita/catalogo/procedencia/{id}', [CatalogosController::class, 'editProcedencia']);
 	Route::post('/admin/catalogo/nueva/procedencia', [CatalogosController::class, 'addProcedencia']);
-	Route::delete('/admin/catalogo/elimina/procedencia/{id}', [CatalogosController::class, 'delProcedencia']);
+	Route::delete('/admin/catalogo/elimina/procedencia/{id}', [CatalogosController::class, 'delProcedencia']); */
+	Route::get('/admin/get/catalogo/procedencia',  [CatalogosController::class, 'listProcedencias']);
+	Route::post('/admin/catalogo/nueva/procedencia', [CatalogosController::class, 'storeProcedencia']);
+	Route::post('/admin/edita/catalogo/procedencia/{id}', [CatalogosController::class, 'updateProcedencia']);
+	Route::delete('/admin/catalogo/elimina/procedencia/{id}', [CatalogosController::class, 'destroyProcedencia']);
+
 	Route::get('/admin/get/objetivos-pdi/{id}', [PlanesMejoraController::class, 'getObjetivosPdi']);
 	Route::get('/admin/get/estrategias-pdi/{id}', [PlanesMejoraController::class, 'getEstrategiasPdi']);
 	Route::get('/admin/get/metas-pdi/{id}', [PlanesMejoraController::class, 'getMetasPdi']);
