@@ -9,7 +9,7 @@
     <link rel="stylesheet"
         href="{{ asset('dist/css/forms-modern.css') }}?v={{ filemtime(public_path('dist/css/forms-modern.css')) }}">
     <style>
-        /* Ajustes finos para esta vista */
+        /* ===== Ajustes finos para esta vista ===== */
         .form-narrow {
             max-width: 1200px;
         }
@@ -40,6 +40,7 @@
             font-size: .85rem;
         }
 
+        /* ===== Segmented control ===== */
         .seg-control input[type="radio"] {
             position: absolute;
             opacity: 0;
@@ -75,6 +76,7 @@
             text-align: center;
         }
 
+        /* Chips solo lectura */
         .readonly-chip {
             display: inline-block;
             padding: .25rem .5rem;
@@ -100,7 +102,7 @@
             margin: 0 .15rem;
         }
 
-        /* Modal moderno */
+        /* ===== Modal moderno ===== */
         .modal-modern .modal-dialog {
             width: auto;
             max-width: 880px;
@@ -180,7 +182,6 @@
             gap: .5rem;
             align-items: center;
             flex-wrap: wrap;
-            /* para que no se desborde en pantallas chicas */
         }
 
         .btn-icon {
@@ -220,7 +221,6 @@
             justify-content: center;
             background: #fee2e2;
             color: #b91c1c;
-            /* por defecto usamos 'danger soft' */
         }
 
         .confirm-modern .cm-icon i {
@@ -233,14 +233,12 @@
             font-size: 20px;
             font-weight: 800;
             color: #111827 !important;
-            /* título oscuro SIEMPRE */
             letter-spacing: .2px;
         }
 
         .confirm-modern .cm-subtitle {
             margin-top: 2px;
             color: #4b5563;
-            /* más oscuro que antes */
         }
 
         .confirm-modern .modal-body {
@@ -252,7 +250,6 @@
             font-size: 15px;
             line-height: 1.5;
             color: #374151;
-            /* texto más legible */
         }
 
         .confirm-modern .modal-footer {
@@ -272,7 +269,6 @@
             box-shadow: none;
         }
 
-        /* Cancel (que no parezca deshabilitado) */
         .confirm-modern .btn-cancel {
             background: #ffffff;
             color: #374151;
@@ -285,7 +281,6 @@
             color: #111827;
         }
 
-        /* Afirmar — danger con muy buen contraste */
         .confirm-modern .btn-ok.btn-danger {
             background: #dc2626;
             border-color: #b91c1c;
@@ -307,7 +302,6 @@
             border-color: #1e40af;
         }
 
-        /* Variantes del icono (si usas otras) */
         .confirm-modern.confirm--warn .cm-icon {
             background: #fef3c7;
             color: #b45309;
@@ -323,13 +317,12 @@
             color: #166534;
         }
 
-        /* Backdrop un poco más oscuro para contraste del cuadro */
         .modal-backdrop.in,
         .modal-backdrop.show {
             opacity: .45;
         }
 
-        /* Modo oscuro del SO (por si el navegador lo activa) */
+        /* Modo oscuro */
         @media (prefers-color-scheme: dark) {
             .confirm-modern .modal-content {
                 background: #0f172a;
@@ -362,6 +355,12 @@
                 background: #3b82f6;
                 border-color: #2563eb;
             }
+        }
+
+        .modal-modern .field-error {
+            color: #e11d48;
+            font-size: .85rem;
+            margin-top: 2px;
         }
     </style>
 @endpush
@@ -433,23 +432,23 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>Fecha de creación</label>
-                                    <input type="text" class="form-control w-200" value="{{ $plan->fecha_creacion }}"
-                                        disabled>
+                                    <input type="text" class="form-control w-200"
+                                        value="{{ $plan->fecha_creacion->format('d/m/Y') }}" disabled>
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>Fecha de vencimiento</label>
-                                    <input type="text" class="form-control w-200" value="{{ $plan->fecha_vencimiento }}"
-                                        disabled>
+                                    <input type="text" class="form-control w-200"
+                                        value="{{ $plan->fecha_vencimiento->format('d/m/Y') }}" disabled>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>AC <small class="obligatorio">*</small></label>
-                                    <input type="text" class="form-control" value="{{ $plan->des }}" disabled>
+                                    <input type="text" class="form-control" value="{{ $plan->des->nombre }}" disabled>
                                 </div>
                             </div>
 
@@ -457,37 +456,40 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Unidad académica <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->unidad_academica }}"
-                                            disabled>
+                                        <input type="text" class="form-control"
+                                            value="{{ $plan->unidadAcademica->nombre }}" disabled>
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Sede <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->sede }}" disabled>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Programa educativo <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->programa_educativo }}"
+                                        <input type="text" class="form-control" value="{{ $plan->sede->nombre }}"
                                             disabled>
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
+                                        <label>Programa educativo <small class="obligatorio">*</small></label>
+                                        <input type="text" class="form-control"
+                                            value="{{ $plan->programaEducativo->nombre }}" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
                                         <label>Nivel <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->nivel }}" disabled>
+                                        <input type="text" class="form-control"
+                                            value="{{ $plan->nivelEstudio->nombre }}" disabled>
                                     </div>
                                 </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Modalidad <small class="obligatorio">*</small></label>
-                                        <input type="text" class="form-control" value="{{ $plan->modalidad }}" disabled>
+                                        <input type="text" class="form-control" value="{{ $plan->modalidad->nombre }}"
+                                            disabled>
                                     </div>
                                 </div>
                             </div>
@@ -509,14 +511,16 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Eje PDI</label>
-                                    <input type="text" class="form-control" value="{{ $plan->eje_pdi }}" disabled>
+                                    <input type="text" class="form-control" value="{{ $plan->ejePdi->descripcion }}"
+                                        disabled>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>ODS PDI</label>
-                                    <input type="text" class="form-control" value="{{ $plan->ods }}" disabled>
+                                    <input type="text" class="form-control" value="{{ $plan->odsPdi->descripcion }}"
+                                        disabled>
                                 </div>
                             </div>
 
@@ -525,21 +529,21 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Objetivo PDI</label>
-                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->objetivo_pdi }}</textarea>
+                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->objetivoPdi->descripcion }}</textarea>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Estrategias</label>
-                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->estrategia }}</textarea>
+                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->estrategia->descripcion }}</textarea>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Meta</label>
-                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->meta }}</textarea>
+                                    <textarea class="form-control" style="min-height:115px;" disabled>{{ $plan->meta->descripcion }}</textarea>
                                 </div>
                             </div>
 
@@ -553,16 +557,16 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Ámbito SEAES</label>
-                                    <input type="text" class="form-control" value="{{ $plan->ambito_siemec }}"
-                                        disabled>
+                                    <input type="text" class="form-control"
+                                        value="{{ $plan->ambitoSiemec->descripcion }}" disabled>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Criterio SEAES</label>
-                                    <input type="text" class="form-control" value="{{ $plan->criterio_siemec }}"
-                                        disabled>
+                                    <input type="text" class="form-control"
+                                        value="{{ $plan->criterioSiemec->descripcion }}" disabled>
                                 </div>
                             </div>
                         </div>
@@ -618,27 +622,23 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Evidencia <small class="obligatorio">*</small></label>
-                                        <!-- input real oculto -->
                                         <input type="file" name="evidencia" id="evidencia" accept=".pdf"
                                             style="display:none">
                                         @php $tieneArchivo = !empty($complemento?->archivo); @endphp
                                         <div class="evidence-actions">
                                             <button type="button" class="btn btn-success" id="btn_pick_evidencia"
-                                                @if ($tieneArchivo) style="display:none" @endif>
-                                                Seleccionar PDF <i class="fa fa-upload"></i>
-                                            </button>
+                                                @if ($tieneArchivo) style="display:none" @endif>Seleccionar
+                                                PDF <i class="fa fa-upload"></i></button>
                                             <a class="btn btn-default" id="btn_ver_evidencia"
                                                 href="{{ $tieneArchivo ? asset('storage/' . $complemento->archivo) : '#' }}"
                                                 target="_blank"
-                                                @unless ($tieneArchivo) style="display:none" @endunless>
-                                                Ver evidencia
-                                            </a>
+                                                @unless ($tieneArchivo) style="display:none" @endunless>Ver
+                                                evidencia</a>
                                             <button type="button" class="btn btn-danger btn-icon"
                                                 id="btn_delete_evidencia"
                                                 onclick="confirmaEliminaArchivoComplemento({{ $plan->id }})"
-                                                @unless ($tieneArchivo) style="display:none" @endunless>
-                                                <i class="fa fa-remove"></i>
-                                            </button>
+                                                @unless ($tieneArchivo) style="display:none" @endunless><i
+                                                    class="fa fa-remove"></i></button>
                                         </div>
                                         <small class="help">Solo PDF (máx. 6 MB).</small>
                                     </div>
@@ -663,9 +663,7 @@
 
                                 <div class="col-md-12" style="display:flex;justify-content:flex-end;">
                                     <button type="button" class="btn btn-success" id="btn_guardaComplemento"
-                                        onclick="guardaComplemento(this)">
-                                        Guardar evidencia final
-                                    </button>
+                                        onclick="guardaComplemento(this)">Guardar evidencia final</button>
                                 </div>
                             </form>
                         </div>
@@ -731,15 +729,11 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">
-                        Agregar acción de mejora
-                        <small class="help"><span class="required">*</span> campos obligatorios</small>
-                    </h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <h3 class="modal-title">Agregar acción de mejora <small class="help"><span
+                                class="required">*</span> campos obligatorios</small></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
-
                 <div class="modal-body">
                     <form id="form_agrega_accion" class="form-compact">
                         <div class="field">
@@ -747,14 +741,12 @@
                             <textarea name="accion" id="accion" class="form-control" maxlength="500" placeholder="Máximo 500 caracteres"></textarea>
                             <div id="accion_count" class="count-hint">0/500</div>
                         </div>
-
                         <div class="field">
                             <label>Resultado/Producto <span class="required">*</span></label>
                             <textarea name="producto_resultado" id="producto_resultado" class="form-control" maxlength="500"
                                 placeholder="Máximo 500 caracteres"></textarea>
                             <div id="producto_resultado_count" class="count-hint">0/500</div>
                         </div>
-
                         <div class="inline-2">
                             <div class="field">
                                 <label>Fecha de inicio <span class="required">*</span></label>
@@ -767,14 +759,12 @@
                                     id="fecha_fin" class="form-control w-160">
                             </div>
                         </div>
-
                         <div class="field">
                             <label>Responsable (nombre o puesto) <span class="required">*</span></label>
                             <input type="text" name="responsable" id="responsable" class="form-control">
                         </div>
                     </form>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btn_agregaAccion"
@@ -790,11 +780,9 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 class="modal-title">Edita acción de mejora</h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
-
                 <div class="modal-body">
                     <form id="form_edita_accion" class="form-compact" enctype="multipart/form-data">
                         <div class="esconde">
@@ -804,14 +792,12 @@
                                     placeholder="Máximo 500 caracteres"></textarea>
                                 <div id="accion_edit_count" class="count-hint">0/500</div>
                             </div>
-
                             <div class="field">
                                 <label>Resultado/Producto</label>
                                 <textarea name="producto_resultado_edit" id="producto_resultado_edit" class="form-control" maxlength="500"
                                     placeholder="Máximo 500 caracteres"></textarea>
                                 <div id="producto_resultado_edit_count" class="count-hint">0/500</div>
                             </div>
-
                             <div class="inline-2">
                                 <div class="field">
                                     <label>Fecha de inicio</label>
@@ -824,14 +810,12 @@
                                         name="fecha_fin_edit" id="fecha_fin_edit" class="form-control w-160">
                                 </div>
                             </div>
-
                             <div class="field">
                                 <label>Responsable (nombre o puesto)</label>
                                 <input type="text" name="responsable_edit" id="responsable_edit"
                                     class="form-control">
                             </div>
                         </div>
-
                         <div class="esconde_evidencia" hidden>
                             <div class="field">
                                 <label for="evidencia_edit">Evidencia <span class="required">*</span></label>
@@ -842,7 +826,6 @@
                         </div>
                     </form>
                 </div>
-
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btn_editaAccion"
@@ -882,11 +865,12 @@
 @section('localscripts')
     <script src="{{ asset('bower_components/select2/js/select2.min.js') }}"></script>
     <script>
-        var base_url = $("input[name='base_url']").val();
+        // ===== Ajuste base_url (evita depender de input oculto) =====
+        var base_url = "{{ url('') }}";
+
         let id_accion;
         let EDIT_MODE = 'full'; // 'full' | 'evidence'
         let evidenciaFile = null;
-
 
         // Evita warnings y locks de foco/aria
         function blurActive() {
@@ -895,16 +879,20 @@
             } catch (e) {}
         }
 
-        // Limpia scroll-lock/backdrops si quedara algo
-        function fixScrollLock() {
-            const anyModal = $('.modal.show:visible, .modal.in:visible').length > 0;
-            if (!anyModal) {
+        // Limpia scroll-lock/backdrops si quedara algo (Bootstrap + SweetAlert v1/v2)
+        function fixOverlays() {
+            const anyModalOpen = $('.modal.show:visible, .modal.in:visible').length > 0;
+            const anySwalOpen = $('.sweet-alert:visible, .swal2-container:visible').length > 0;
+            if (!anyModalOpen && !anySwalOpen) {
                 $('body,html').css('overflow', '').removeClass('modal-open stop-scrolling');
-                $('.modal-backdrop').removeClass('modal-stack').remove();
+                $('.modal-backdrop, .sweet-overlay').remove();
             }
         }
-        $(document).on('hidden.bs.modal', fixScrollLock);
-
+        $(document).on('hidden.bs.modal', fixOverlays);
+        $(document).on('click', '.sweet-alert .confirm, .sweet-alert .cancel', () => setTimeout(fixOverlays, 50));
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' || e.keyCode === 27) setTimeout(fixOverlays, 50);
+        });
 
         // Confirmación moderna (Bootstrap) con variantes e ícono
         function confirmBS({
@@ -930,13 +918,10 @@
                 if (danger) variant = 'danger';
                 $m.removeClass('confirm--danger confirm--warn confirm--info confirm--success').addClass(
                     'confirm--' + variant);
-
                 $m.find('.cm-icon i').attr('class', 'fa fa-' + (icon || 'question'));
 
-                // <-- aquí forzamos la clase visual del botón según variante
-                $ok.text(confirmText)
-                    .removeClass('btn-primary btn-danger')
-                    .addClass(variant === 'danger' ? 'btn-danger' : 'btn-primary');
+                $ok.text(confirmText).removeClass('btn-primary btn-danger').addClass(variant === 'danger' ?
+                    'btn-danger' : 'btn-primary');
                 $can.text(cancelText);
 
                 const cleanup = () => {
@@ -965,7 +950,7 @@
                         'modal-stack');
                 }, 0);
 
-                (document.activeElement && document.activeElement.blur && document.activeElement.blur());
+                blurActive();
                 $m.modal({
                     backdrop: true,
                     keyboard: true,
@@ -975,27 +960,8 @@
             });
         }
 
-        /* --- Fix: SweetAlert v1 + Bootstrap scroll-lock --- */
-        function fixScrollLock() {
-            const $body = $('body');
-            const anyModalOpen = $('.modal.show:visible, .modal.in:visible').length > 0;
-            const anySwalOpen = $('.sweet-alert:visible, .swal2-container:visible').length > 0;
-            if (!anyModalOpen && !anySwalOpen) {
-                $body.removeClass('modal-open stop-scrolling').css('overflow', '');
-                $('html').css('overflow', '');
-                $('.modal-backdrop').remove();
-                $('.sweet-overlay').remove();
-            }
-        }
-        $(document).on('hidden.bs.modal', fixScrollLock);
-        $(document).on('click', '.sweet-alert .confirm, .sweet-alert .cancel', () => setTimeout(fixScrollLock, 50));
-        $(document).on('keydown', (e) => {
-            if (e.key === 'Escape' || e.keyCode === 27) setTimeout(fixScrollLock, 50);
-        });
-
         // === Indicador clave guardado? (inicializa desde servidor)
         let indicadorGuardado = {{ $complemento && $complemento->indicador_clave ? 'true' : 'false' }};
-        // Si el usuario escribe, marcamos como pendiente de guardar
         $('#indicador_clave').on('input', () => {
             indicadorGuardado = false;
         });
@@ -1003,8 +969,7 @@
         function verificaIndicadorYAbreModal() {
             const val = ($('#indicador_clave').val() || '').trim();
             if (!val || !indicadorGuardado) {
-                swal('Falta el Indicador clave',
-                    'Captura y guarda el Indicador clave antes de agregar acciones.',
+                swal('Falta el Indicador clave', 'Captura y guarda el Indicador clave antes de agregar acciones.',
                     'warning');
                 $('#indicador_clave').focus();
                 return;
@@ -1022,9 +987,9 @@
             EDIT_MODE = evidence ? 'evidence' : 'full';
         }
 
-        // Ajusta donde inicializas datepicker
+        // ====== Bootstrap Datepicker (formato unificado d/m/Y) ======
         $('.datepicker, [data-provide="datepicker"]').datepicker({
-            format: 'yyyy-mm-dd',
+            format: 'dd/mm/yyyy', // <--- unificado con validaciones
             autoclose: true,
             todayHighlight: true,
             language: 'es'
@@ -1032,17 +997,13 @@
 
         // ===================== ACCIONES =====================
         let dtAcciones = null;
-
         async function getAcciones() {
             try {
-                // loader solo si no existe la tabla aún
                 if (!dtAcciones) {
-                    $("#div_tabla_acciones").html(`
-                        <div class="text-center" style="padding:24px;">
-                          <i class="fa fa-spinner fa-spin"></i> Espere un momento...
-                        </div>`);
+                    $("#div_tabla_acciones").html(
+                        `<div class="text-center" style="padding:24px;"><i class="fa fa-spinner fa-spin"></i> Espere un momento...</div>`
+                    );
                 }
-
                 const response = await fetch(`${base_url}/get/acciones/plan/{{ $plan->id }}?t=${Date.now()}`, {
                     method: 'GET',
                     cache: 'no-store',
@@ -1050,12 +1011,10 @@
                         'Accept': 'application/json'
                     }
                 });
-
                 const data = await response.json().catch(() => ({}));
                 const rows = (response.ok && data.code === 200 && Array.isArray(data.data)) ? data.data : [];
 
                 if (!dtAcciones) {
-                    // Crear tabla e inicializar DataTable SOLO la primera vez
                     $("#div_tabla_acciones").html(
                         '<table class="table table-bordered table-striped compact" id="tabla_acciones" style="width:100%"></table>'
                     );
@@ -1072,25 +1031,27 @@
                             url: base_url + '/js/Spanish.json'
                         },
                         columns: [{
-                                title: "Acción",
+                                title: 'Acción',
                                 data: 'accion'
                             },
                             {
-                                title: "Resultado/Producto",
+                                title: 'Resultado/Producto',
                                 data: 'producto_resultado'
                             },
                             {
-                                title: "Fecha inicio",
+                                title: 'Fecha inicio',
                                 data: 'fecha_inicio',
-                                className: 'text-center'
+                                className: 'text-center',
+                                render: toDMY
                             },
                             {
-                                title: "Fecha término",
+                                title: 'Fecha término',
                                 data: 'fecha_fin',
-                                className: 'text-center'
+                                className: 'text-center',
+                                render: toDMY
                             },
                             {
-                                title: "Responsable (nombre o puesto)",
+                                title: 'Responsable (nombre o puesto)',
                                 data: 'responsable'
                             },
                             {
@@ -1100,18 +1061,9 @@
                                 className: 'text-center',
                                 render: (_, __, o) => {
                                     if (o.evidencia) {
-                                        return `
-                                            <div class="dt-actions__wrap">
-                                                <a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a>
-                                                <button type="button" class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})">
-                                                    <i class="fa fa-remove"></i>
-                                                </button>
-                                            </div>`;
+                                        return `<div class="dt-actions__wrap"><a href="${base_url}/storage/${o.evidencia}" target="_blank">Ver evidencia</a><button type="button" class="btn btn-sm btn-danger" onclick="confirmaEliminaArchivo(${o.id})"><i class="fa fa-remove"></i></button></div>`;
                                     }
-                                    return `
-                                        <button type="button" class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 'evidence')">
-                                            Subir evidencia <i class="fa fa-upload"></i>
-                                        </button>`;
+                                    return `<button type="button" class="btn btn-sm btn-success" onclick="modalEdita(${o.id}, 'evidence')">Subir evidencia <i class=\"fa fa-upload\"></i></button>`;
                                 }
                             },
                             {
@@ -1120,28 +1072,27 @@
                                 orderable: false,
                                 className: 'text-center',
                                 render: (_, __, o) => `
-                                    <div class="dt-actions__wrap">
-                                        <button type="button" class="btn btn-primary btn-icon" title="Editar" onclick="modalEdita(${o.id}, 'edit')">
-                                            <i class="fa fa-pencil"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaAccion(${o.id})">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </div>`
+                                <div class="dt-actions__wrap">
+                                    <button type="button" class="btn btn-primary btn-icon" title="Editar" onclick="modalEdita(${o.id}, 'edit')">
+                                        <i class="fa fa-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-icon" title="Eliminar" onclick="eliminaAccion(${o.id})">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>`
                             }
                         ]
                     });
                 } else {
-                    // SOLO refrescamos data
                     dtAcciones.clear().rows.add(rows).draw(false);
                 }
 
                 if (!(response.ok && data.code === 200)) {
-                    swal("¡Error!", (data && data.mensaje) || 'No se pudo cargar Acciones.', "error");
+                    swal('¡Error!', (data && data.mensaje) || 'No se pudo cargar Acciones.', 'error');
                 }
             } catch (err) {
                 console.error('getAcciones error:', err);
-                swal("¡Error!", "No se pudo cargar Acciones.", "error");
+                swal('¡Error!', 'No se pudo cargar Acciones.', 'error');
             }
         }
 
@@ -1156,7 +1107,6 @@
             if (ok) await eliminaArchivo(id);
         };
 
-
         const eliminaArchivo = async (id) => {
             const response = await fetch(`${base_url}/elimina/archivo/acciones/${id}`, {
                 method: 'delete',
@@ -1165,7 +1115,6 @@
                 }
             });
             const data = await response.json().catch(() => ({}));
-
             setTimeout(async () => {
                 if (response.ok && data.code == 200) {
                     toastr.success(data.mensaje);
@@ -1173,13 +1122,16 @@
                 } else {
                     toastr.error((data && data.mensaje) || 'No se pudo eliminar.');
                 }
-                fixScrollLock(); // asegura que no quede bloqueado
+                fixOverlays();
             }, 200);
         };
 
         const agregaAccion = async () => {
+            clearAccionErrors('#modal_agrega_accion');
+
             const body = new FormData(document.getElementById('form_agrega_accion'));
             body.append('id_plan', {{ $plan->id }});
+
             const response = await fetch(`${base_url}/guarda/nueva-accion`, {
                 method: 'post',
                 body,
@@ -1188,18 +1140,39 @@
                 }
             });
             const data = await response.json().catch(() => ({}));
+
+            // Éxito
             if (response.ok && data.code == 200) {
-                $("#accion, #producto_resultado, #fecha_inicio, #fecha_fin").val("");
+                $("#accion, #producto_resultado, #fecha_inicio, #fecha_fin, #responsable").val("");
                 await getAcciones();
                 $('#modal_agrega_accion').modal('hide');
-                toastr.success(data.mensaje);
-            } else if (data.code == 411) {
-                const first = Object.values(data.errors)[0][0];
-                swal("¡Error!", first, "error");
-            } else {
-                swal("¡Error!", (data && data.mensaje) || 'No se pudo guardar.', "error");
+                toastr.success(data.mensaje || 'Acción agregada.');
+                $('#btn_agregaAccion').prop('disabled', false);
+                return;
             }
-            $("#btn_agregaAccion").prop("disabled", false);
+
+            // Errores de validación (422 de Laravel o 411 de tu API)
+            if ((response.status === 422 || data.code == 411) && data.errors) {
+                let focused = false;
+                Object.entries(data.errors).forEach(([k, arr]) => {
+                    const sel = ACC_CREATE_MAP[k];
+                    const msg = Array.isArray(arr) ? arr[0] : String(arr);
+                    if (sel) {
+                        showAccionError('#modal_agrega_accion', sel, msg);
+                        if (!focused) {
+                            $(sel).trigger('focus');
+                            focused = true;
+                        }
+                    }
+                });
+                toastr.error('Revisa los campos marcados.');
+                $('#btn_agregaAccion').prop('disabled', false);
+                return;
+            }
+
+            // Otros errores
+            swal('¡Error!', (data && data.mensaje) || 'No se pudo guardar.', 'error');
+            $('#btn_agregaAccion').prop('disabled', false);
         };
 
         const eliminaAccion = async (id) => {
@@ -1213,7 +1186,6 @@
             if (ok) await confirmaElimina(id);
         };
 
-
         const confirmaElimina = async (id) => {
             const response = await fetch(`${base_url}/elimina/accion/${id}`, {
                 method: 'delete',
@@ -1226,33 +1198,28 @@
                 await getAcciones();
                 toastr.success(data.mensaje);
             } else {
-                swal("¡Error!", (data && data.mensaje) || 'No se pudo eliminar.', "error");
+                swal('¡Error!', (data && data.mensaje) || 'No se pudo eliminar.', 'error');
             }
         };
 
-        const abreModal = () => $('#modal_agrega_accion').modal();
-
-        // 'edit' muestra campos de acción, 'evidence' solo el file input
         const modalEdita = async (id, mode = 'edit') => {
             const evidence = mode === 'evidence';
             const form = document.getElementById('form_edita_accion');
             form.reset();
             evidenciaFile = null;
             $('#btn_editaAccion').prop('disabled', false);
-
             setEditMode(evidence);
 
             const r = await fetch(`${base_url}/get/detalle/accion/${id}`);
             const data = await r.json().catch(() => ({}));
-            if (!r.ok || data.code !== 200) return swal("¡Error!", (data && data.mensaje) || 'No se pudo cargar.',
-                "error");
+            if (!r.ok || data.code !== 200) return swal('¡Error!', (data && data.mensaje) || 'No se pudo cargar.',
+                'error');
 
             id_accion = id;
-
             $('#accion_edit').val(data.data.accion);
             $('#producto_resultado_edit').val(data.data.producto_resultado);
-            $('#fecha_inicio_edit').val(data.data.fecha_inicio);
-            $('#fecha_fin_edit').val(data.data.fecha_fin);
+            $('#fecha_inicio_edit').val(toDMY(data.data.fecha_inicio));
+            $('#fecha_fin_edit').val(toDMY(data.data.fecha_fin));
             $('#responsable_edit').val(data.data.responsable);
             $('#evidencia_edit').val('');
 
@@ -1262,16 +1229,15 @@
         };
 
         let _enviandoEdit = false;
-
         const editaAccion = async () => {
             if (_enviandoEdit) return;
             _enviandoEdit = true;
             $('#btn_editaAccion').prop('disabled', true);
+            clearAccionErrors('#modal_edita_accion');
 
             try {
                 const form = document.getElementById('form_edita_accion');
                 const body = new FormData(form);
-
                 body.set('id_accion', id_accion);
                 body.set('id_plan', {{ $plan->id }});
                 body.set('solo_evidencia', EDIT_MODE === 'evidence' ? 1 : 0);
@@ -1303,13 +1269,24 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
+                const data = await resp.json().catch(() => ({}));
 
-                let data = await resp.json().catch(() => ({}));
-
+                // Errores HTTP con payload de validación
                 if (!resp.ok) {
-                    if (resp.status === 411 && data && data.errors) {
-                        const first = Object.values(data.errors)[0][0];
-                        swal('¡Error!', first, 'error');
+                    if ((resp.status === 422 || resp.status === 411) && data && data.errors) {
+                        let focused = false;
+                        Object.entries(data.errors).forEach(([k, arr]) => {
+                            const sel = ACC_EDIT_MAP[k];
+                            const msg = Array.isArray(arr) ? arr[0] : String(arr);
+                            if (sel) {
+                                showAccionError('#modal_edita_accion', sel, msg);
+                                if (!focused) {
+                                    $(sel).trigger('focus');
+                                    focused = true;
+                                }
+                            }
+                        });
+                        toastr.error('Revisa los campos marcados.');
                     } else if (resp.status === 413) {
                         swal('¡Error!', 'El servidor rechazó el archivo (muy grande).', 'error');
                     } else if (resp.status === 419) {
@@ -1320,18 +1297,35 @@
                     return;
                 }
 
+                // API ok=false con code=411 (tu convención)
+                if (data && data.code === 411 && data.errors) {
+                    let focused = false;
+                    Object.entries(data.errors).forEach(([k, arr]) => {
+                        const sel = ACC_EDIT_MAP[k];
+                        const msg = Array.isArray(arr) ? arr[0] : String(arr);
+                        if (sel) {
+                            showAccionError('#modal_edita_accion', sel, msg);
+                            if (!focused) {
+                                $(sel).trigger('focus');
+                                focused = true;
+                            }
+                        }
+                    });
+                    toastr.error('Revisa los campos marcados.');
+                    return;
+                }
+
+                // Éxito
                 if (data && data.code === 200) {
                     await getAcciones();
                     evidenciaFile = null;
                     if (EDIT_MODE === 'evidence') $('#evidencia_edit').val('');
                     $('#modal_edita_accion').modal('hide');
-                    toastr.success(data.mensaje);
-                } else if (data && data.code === 411) {
-                    const first = Object.values(data.errors)[0][0];
-                    swal('¡Error!', first, 'error');
-                } else {
-                    swal('¡Error!', (data && data.mensaje) || 'No se pudo guardar.', 'error');
+                    toastr.success(data.mensaje || 'Acción actualizada.');
+                    return;
                 }
+
+                swal('¡Error!', (data && data.mensaje) || 'No se pudo guardar.', 'error');
             } catch (e) {
                 console.error(e);
                 swal('¡Error!', 'Ocurrió un problema al enviar la solicitud.', 'error');
@@ -1344,7 +1338,6 @@
         $('#modal_edita_accion').on('hidden.bs.modal', function() {
             $('#btn_editaAccion').prop('disabled', false);
         });
-
         $('#evidencia_edit').on('change', function() {
             if (this.files && this.files.length) $('#btn_editaAccion').prop('disabled', false);
             evidenciaFile = this.files && this.files[0] ? this.files[0] : null;
@@ -1354,7 +1347,7 @@
         const guardaIndicador = async () => {
             const body = new FormData();
             body.append('id_plan', {{ $plan->id }});
-            body.append('indicador_clave', $("#indicador_clave").val());
+            body.append('indicador_clave', $('#indicador_clave').val());
             const response = await fetch(`${base_url}/guarda/indicador-clave/plan`, {
                 method: 'post',
                 body,
@@ -1364,12 +1357,12 @@
             });
             const data = await response.json().catch(() => ({}));
             if (response.ok && data.code == 200) {
-                indicadorGuardado = true; // <-- ya quedó guardado
+                indicadorGuardado = true;
                 toastr.success(data.mensaje);
             } else if (data.code == 411) {
                 const first = Object.values(data.errors)[0][0];
-                swal("¡Error!", first, "error");
-            } else swal("¡Error!", (data && data.mensaje) || 'No se pudo guardar.', "error");
+                swal('¡Error!', first, 'error');
+            } else swal('¡Error!', (data && data.mensaje) || 'No se pudo guardar.', 'error');
         };
 
         // === Evidencia complemento (UI inline) ===
@@ -1391,6 +1384,7 @@
         $('#btn_pick_evidencia').on('click', function() {
             document.getElementById('evidencia').click();
         });
+
         const confirmaEliminaArchivoComplemento = async (idPlan) => {
             const ok = await confirmBS({
                 title: 'Eliminar evidencia',
@@ -1403,7 +1397,6 @@
             });
             if (ok) await eliminaArchivoComplemento(idPlan);
         };
-
         const eliminaArchivoComplemento = async (idPlan) => {
             const r = await fetch(`${base_url}/elimina/archivo/complemento/${idPlan}`, {
                 method: 'DELETE',
@@ -1411,7 +1404,6 @@
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-
             const data = await r.json().catch(() => ({}));
             if (r.ok && data.code === 200) {
                 toastr.success(data.mensaje);
@@ -1420,9 +1412,8 @@
             } else {
                 toastr.error((data && data.mensaje) || 'No se pudo eliminar.');
             }
-            fixScrollLock(); // por si acaso
+            fixOverlays();
         };
-
 
         async function guardaComplemento(btn) {
             btn.disabled = true;
@@ -1430,7 +1421,6 @@
                 const form = document.getElementById('form_guarda_complemento');
                 const fd = new FormData(form);
                 fd.set('id_plan', {{ $plan->id }});
-
                 const f = form.querySelector('#evidencia').files[0];
                 if (f) {
                     if (!/\.pdf$/i.test(f.name)) {
@@ -1443,7 +1433,6 @@
                     }
                     fd.set('evidencia', f, f.name);
                 }
-
                 const resp = await fetch(`${base_url}/guarda/complemento/plan`, {
                     method: 'POST',
                     body: fd,
@@ -1453,9 +1442,7 @@
                         'Accept': 'application/json'
                     }
                 });
-
                 const data = await resp.json().catch(() => ({}));
-
                 if (resp.ok && data.code === 200) {
                     toastr.success(data.mensaje);
                     if (data.archivo) {
@@ -1479,7 +1466,6 @@
         $('#evidencia').on('change', async function() {
             const file = this.files && this.files[0] ? this.files[0] : null;
             if (!file) return;
-
             if (!/\.pdf$/i.test(file.name)) {
                 swal('Formato no válido', 'Solo se permite PDF.', 'warning');
                 this.value = '';
@@ -1490,11 +1476,9 @@
                 this.value = '';
                 return;
             }
-
             const fd = new FormData();
             fd.set('id_plan', {{ $plan->id }});
             fd.set('evidencia', file, file.name);
-
             const resp = await fetch(`${base_url}/sube/evidencia/complemento`, {
                 method: 'POST',
                 body: fd,
@@ -1504,7 +1488,6 @@
                     'Accept': 'application/json'
                 }
             });
-
             const data = await resp.json().catch(() => ({}));
             if (resp.ok && data.code === 200) {
                 toastr.success(data.mensaje);
@@ -1520,14 +1503,12 @@
 
         // ===================== CONTROL =====================
         let dtCtrl = null;
-
         async function getActividadesControl() {
             const r = await fetch(`${base_url}/get/actividades/control/{{ $plan->id }}?t=${Date.now()}`, {
                 cache: 'no-store'
             });
             const data = await r.json().catch(() => ({}));
             const rows = (r.ok && data && Array.isArray(data.data)) ? data.data : [];
-
             if (!dtCtrl) {
                 $("#div_tabla_control").html(
                     '<table id="tabla_ctrl" class="table table-bordered table-striped" style="width:100%"></table>');
@@ -1554,12 +1535,14 @@
                         {
                             title: 'Fecha de inicio',
                             data: 'fecha_inicio',
-                            className: 'text-center'
+                            className: 'text-center',
+                            render: toDMY
                         },
                         {
                             title: 'Fecha de término',
                             data: 'fecha_fin',
-                            className: 'text-center'
+                            className: 'text-center',
+                            render: toDMY
                         },
                         {
                             title: 'Responsable (nombre o puesto)',
@@ -1571,13 +1554,12 @@
                             orderable: false,
                             className: 'text-center',
                             render: (_, __, o) => `
-                                <div class="dt-actions__wrap">
-                                    <button type="button" class="btn btn-primary btn-icon" onclick="modalEditaControl(${o.id})"><i class="fa fa-pencil"></i></button>
-                                    <button type="button" class="btn btn-danger btn-icon" onclick="eliminaActividadControl(${o.id})"><i class="fa fa-trash"></i></button>
-                                </div>`
+                            <div class=\"dt-actions__wrap\">
+                                <button type=\"button\" class=\"btn btn-primary btn-icon\" onclick=\"modalEditaControl(${o.id})\"><i class=\"fa fa-pencil\"></i></button>
+                                <button type=\"button\" class=\"btn btn-danger btn-icon\" onclick=\"eliminaActividadControl(${o.id})\"><i class=\"fa fa-trash\"></i></button>
+                            </div>`
                         }
-                    ],
-                    autoWidth: false
+                    ]
                 });
             } else {
                 dtCtrl.clear().rows.add(rows).draw(false);
@@ -1594,55 +1576,261 @@
             $('#fecha_fin_ctrl').val('');
             $('#responsable_ctrl').val('');
             $('#btn_guardar_control').text('Guardar');
-
-            $('#modal_control')
-                .one('shown.bs.modal', () => $('#actividad').trigger('focus'))
-                .modal('show');
+            clearCtrlErrors();
+            $('#modal_control').one('shown.bs.modal', () => $('#actividad').trigger('focus')).modal('show');
         }
 
-        async function guardarActividadControl() {
-            const id = $('#id_control').val();
-            const fd = new FormData();
-            fd.set('id_plan', {{ $plan->id }});
-            fd.set('actividad', $('#actividad').val());
-            fd.set('producto_resultado', $('#producto_resultado_ctrl').val());
-            fd.set('fecha_inicio', $('#fecha_inicio_ctrl').val());
-            fd.set('fecha_fin', $('#fecha_fin_ctrl').val());
-            fd.set('responsable', $('#responsable_ctrl').val());
+        // ===== Errores por campo: Acciones (mismo patrón que Control) =====
+        function clearAccionErrors(scope = '#modal_agrega_accion') {
+            $(scope + ' .field-error').remove();
+            $(scope + ' .is-invalid').removeClass('is-invalid');
+        }
 
-            const url = id ? `${base_url}/edita/actividad-control` : `${base_url}/guarda/actividad-control`;
-            if (id) fd.set('id', id);
+        function showAccionError(scope, selector, msg) {
+            const $inp = $(scope + ' ' + selector);
+            $inp.addClass('is-invalid');
+            const $field = $inp.closest('.field');
+            $field.find('.field-error').remove();
+            $field.append(`<div class="field-error">${msg}</div>`);
+        }
+        // Mapeos de claves de validación -> inputs
+        const ACC_CREATE_MAP = {
+            accion: '#accion',
+            producto_resultado: '#producto_resultado',
+            fecha_inicio: '#fecha_inicio',
+            fecha_fin: '#fecha_fin',
+            responsable: '#responsable',
+        };
+        const ACC_EDIT_MAP = {
+            accion_edit: '#accion_edit',
+            producto_resultado_edit: '#producto_resultado_edit',
+            fecha_inicio_edit: '#fecha_inicio_edit',
+            fecha_fin_edit: '#fecha_fin_edit',
+            responsable_edit: '#responsable_edit',
+        };
+        // Limpia error al tipear/cambiar
+        $('#modal_agrega_accion, #modal_edita_accion').on('input change', 'input,textarea', function() {
+            $(this).removeClass('is-invalid');
+            $(this).closest('.field').find('.field-error').remove();
+        });
+        $('#modal_agrega_accion').on('hidden.bs.modal', () => clearAccionErrors('#modal_agrega_accion'));
+        $('#modal_edita_accion').on('hidden.bs.modal', () => clearAccionErrors('#modal_edita_accion'));
 
-            const r = await fetch(url, {
-                method: 'POST',
-                body: fd,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+
+        function clearCtrlErrors() {
+            $('#modal_control .field-error').remove();
+            $('#modal_control .is-invalid').removeClass('is-invalid');
+        }
+
+        function showCtrlError(selector, msg) {
+            const $inp = $(selector);
+            $inp.addClass('is-invalid');
+            const $field = $inp.closest('.field');
+            $field.find('.field-error').remove();
+            $field.append(`<div class="field-error">${msg}</div>`);
+        }
+
+        function validarActividadCtrl() {
+            clearCtrlErrors();
+            const v = (id) => ($(`#${id}`).val() || '').trim();
+            let ok = true;
+
+            // Requeridos
+            if (!v('actividad')) {
+                showCtrlError('#actividad', 'La actividad es obligatoria.');
+                ok = false;
+            }
+            if (!v('producto_resultado_ctrl')) {
+                showCtrlError('#producto_resultado_ctrl', 'El resultado/producto es obligatorio.');
+                ok = false;
+            }
+            if (!v('fecha_inicio_ctrl')) {
+                showCtrlError('#fecha_inicio_ctrl', 'La fecha de inicio es obligatoria.');
+                ok = false;
+            }
+            if (!v('fecha_fin_ctrl')) {
+                showCtrlError('#fecha_fin_ctrl', 'La fecha de término es obligatoria.');
+                ok = false;
+            }
+            if (!v('responsable_ctrl')) {
+                showCtrlError('#responsable_ctrl', 'El responsable es obligatorio.');
+                ok = false;
+            }
+
+            // === Validación estricta d/m/Y ===
+            const fiStr = v('fecha_inicio_ctrl');
+            const ffStr = v('fecha_fin_ctrl');
+
+            const fi = parseDMY(fiStr); // {d,m,y,date} | null
+            const ff = parseDMY(ffStr);
+
+            if (fiStr && !fi) {
+                showCtrlError('#fecha_inicio_ctrl', 'Fecha inválida. Usa d/m/Y (p. ej. 1/9/2025) y una fecha real.');
+                ok = false;
+            }
+            if (ffStr && !ff) {
+                showCtrlError('#fecha_fin_ctrl', 'Fecha inválida. Usa d/m/Y (p. ej. 30/11/2025) y una fecha real.');
+                ok = false;
+            }
+
+            // Comparación solo si ambas son válidas
+            if (fi && ff) {
+                // Compara por año, mes, día para evitar problemas de zona horaria
+                const inicioNum = fi.y * 10000 + fi.m * 100 + fi.d;
+                const finNum = ff.y * 10000 + ff.m * 100 + ff.d;
+                if (finNum < inicioNum) {
+                    showCtrlError('#fecha_fin_ctrl', 'La fecha de término no puede ser menor a la de inicio.');
+                    ok = false;
                 }
-            });
-            const d = await r.json().catch(() => ({}));
-            if (r.ok && d.code === 200) {
-                $('#modal_control').modal('hide');
-                await getActividadesControl();
-                toastr.success(d.mensaje);
-            } else if (d.code === 411) {
-                swal('¡Error!', Object.values(d.errors)[0][0], 'error');
-            } else {
-                swal('¡Error!', d.mensaje || 'No se pudo guardar', 'error');
+            }
+
+            return ok;
+        }
+
+        // Acepta d/m/Y con 1 o 2 dígitos en día y mes. Valida calendario real.
+        function parseDMY(str) {
+            if (!str) return null;
+            const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(str.trim());
+            if (!m) return null;
+
+            const d = Number(m[1]),
+                mo = Number(m[2]),
+                y = Number(m[3]);
+
+            // Rango de cordura para año (ajústalo si necesitas)
+            if (y < 1900 || y > 2100) return null;
+            if (mo < 1 || mo > 12) return null;
+
+            const dim = daysInMonth(y, mo);
+            if (d < 1 || d > dim) return null;
+
+            // Fecha "real" (si quieres una Date en UTC, úsala)
+            const date = new Date(Date.UTC(y, mo - 1, d));
+            return {
+                d,
+                m: mo,
+                y,
+                date
+            };
+        }
+
+        function daysInMonth(y, m) {
+            // m: 1..12
+            if (m === 2) return isLeap(y) ? 29 : 28;
+            return [4, 6, 9, 11].includes(m) ? 30 : 31;
+        }
+
+        function isLeap(y) {
+            return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+        }
+
+        // (Opcional) Si luego quieres enviar al backend como Y-m-d:
+        // function toISO({y, m, d}) { return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+        $('#modal_control').on('input change', 'input, textarea', function() {
+            $(this).removeClass('is-invalid');
+            $(this).closest('.field').find('.field-error').remove();
+        });
+        $('#modal_control').on('shown.bs.modal', clearCtrlErrors);
+        $('#modal_control').on('hidden.bs.modal', clearCtrlErrors);
+
+        async function guardarActividadControl() {
+            if (!validarActividadCtrl()) {
+                const $firstErr = $('#modal_control .is-invalid').first();
+                $firstErr.length && $firstErr.trigger('focus');
+                return;
+            }
+            const $btn = $('#btn_guardar_control');
+            $btn.prop('disabled', true);
+            try {
+                const id = $('#id_control').val();
+                const fd = new FormData();
+                fd.set('id_plan', {{ $plan->id }});
+
+                if (id) {
+                    // EDIT: usa sufijos _edit (igual que Acciones)
+                    fd.set('id', id);
+                    fd.set('actividad_edit', $('#actividad').val());
+                    fd.set('producto_resultado_edit', $('#producto_resultado_ctrl').val());
+                    fd.set('fecha_inicio_edit', $('#fecha_inicio_ctrl').val()); // <-- d/m/Y
+                    fd.set('fecha_fin_edit', $('#fecha_fin_ctrl').val()); // <-- d/m/Y
+                    fd.set('responsable_edit', $('#responsable_ctrl').val());
+                } else {
+                    // CREATE
+                    fd.set('actividad', $('#actividad').val());
+                    fd.set('producto_resultado', $('#producto_resultado_ctrl').val());
+                    fd.set('fecha_inicio', $('#fecha_inicio_ctrl').val()); // <-- d/m/Y
+                    fd.set('fecha_fin', $('#fecha_fin_ctrl').val()); // <-- d/m/Y
+                    fd.set('responsable', $('#responsable_ctrl').val());
+                }
+
+                const url = id ? `${base_url}/edita/actividad-control` : `${base_url}/guarda/actividad-control`;
+                const r = await fetch(url, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const d = await r.json().catch(() => ({}));
+
+                if (r.ok && d.code === 200) {
+                    $('#modal_control').modal('hide');
+                    await getActividadesControl();
+                    toastr.success(d.mensaje || 'Guardado correctamente.');
+                    return;
+                }
+
+                clearCtrlErrors();
+                if ((r.status === 422 || d.code === 411) && d.errors) {
+                    const map = {
+                        // create
+                        actividad: '#actividad',
+                        producto_resultado: '#producto_resultado_ctrl',
+                        fecha_inicio: '#fecha_inicio_ctrl',
+                        fecha_fin: '#fecha_fin_ctrl',
+                        responsable: '#responsable_ctrl',
+                        // edit
+                        actividad_edit: '#actividad',
+                        producto_resultado_edit: '#producto_resultado_ctrl',
+                        fecha_inicio_edit: '#fecha_inicio_ctrl',
+                        fecha_fin_edit: '#fecha_fin_ctrl',
+                        responsable_edit: '#responsable_ctrl',
+                    };
+                    let focused = false;
+                    Object.entries(d.errors).forEach(([k, arr]) => {
+                        const sel = map[k];
+                        const msg = Array.isArray(arr) ? arr[0] : String(arr);
+                        if (sel) {
+                            showCtrlError(sel, msg);
+                            if (!focused) {
+                                $(sel).trigger('focus');
+                                focused = true;
+                            }
+                        }
+                    });
+                    toastr.error('Revisa los campos marcados.');
+                    return;
+                }
+
+                if (r.status === 419) swal('¡Error!', 'Sesión expirada. Recarga la página.', 'error');
+                else swal('¡Error!', d.mensaje || 'No se pudo guardar.', 'error');
+            } catch (e) {
+                console.error(e);
+                swal('¡Error!', 'Problema de red. Intenta nuevamente.', 'error');
+            } finally {
+                $btn.prop('disabled', false);
             }
         }
 
-        // OJO: Ruta correcta solicitada: /get/detalle/actividad/{id}
         async function modalEditaControl(id) {
             const r = await fetch(`${base_url}/get/detalle/actividad/${id}`, {
                 headers: {
                     'Accept': 'application/json'
                 }
             });
-            if (!r.ok) {
-                swal('Error', 'No se encontró la actividad (404).', 'error');
-                return;
-            }
+            if (!r.ok) return swal('Error', 'No se encontró la actividad (404).', 'error');
             const d = await r.json().catch(() => ({}));
             if (d.code !== 200) return swal('Error', d.mensaje || 'No se pudo cargar.', 'error');
 
@@ -1650,8 +1838,8 @@
             $('#id_control').val(d.data.id);
             $('#actividad').val(d.data.actividad);
             $('#producto_resultado_ctrl').val(d.data.producto_resultado);
-            $('#fecha_inicio_ctrl').val(d.data.fecha_inicio);
-            $('#fecha_fin_ctrl').val(d.data.fecha_fin);
+            $('#fecha_inicio_ctrl').val(toDMY(d.data.fecha_inicio)); // <-- aquí sí
+            $('#fecha_fin_ctrl').val(toDMY(d.data.fecha_fin)); // <-- aquí sí
             $('#responsable_ctrl').val(d.data.responsable);
             $('#btn_guardar_control').text('Actualizar');
             $('#modal_control').modal('show');
@@ -1666,7 +1854,6 @@
                     danger: true
                 });
                 if (!ok) return;
-
                 const r = await fetch(`${base_url}/elimina/actividad-control/${id}`, {
                     method: 'DELETE',
                     headers: {
@@ -1680,7 +1867,7 @@
                 } else {
                     toastr.error(d.mensaje || 'No se pudo eliminar');
                 }
-                fixScrollLock();
+                fixOverlays();
             })();
         }
 
@@ -1698,7 +1885,6 @@
                 if (e.target && e.target.id === k) updateCount(k);
             });
         });
-
         $('#modal_agrega_accion').on('shown.bs.modal', function() {
             setTimeout(() => document.getElementById('accion')?.focus(), 50);
             updateCount('accion');
@@ -1714,5 +1900,32 @@
             await getAcciones();
             await getActividadesControl();
         })();
+
+        function toDMY(x) {
+            if (!x) return '';
+            // 2025-10-29[ 10:20:30]
+            let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(x);
+            if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+            // 25/10/29 o 25/10/2025 → normaliza a dd/mm/yyyy
+            m = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(x);
+            if (m) {
+                const d = m[1].padStart(2, '0'),
+                    mo = m[2].padStart(2, '0');
+                let y = m[3];
+                if (y.length === 2) y = (Number(y) >= 70 ? '19' : '20') + y; // 2 dígitos → 1970..2069
+                return `${d}/${mo}/${y}`;
+            }
+            return x; // fallback
+        }
+
+        function toISO(obj) {
+            if (!obj || typeof obj !== 'object') return '';
+            const {
+                y,
+                m,
+                d
+            } = obj;
+            return `${String(y)}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
     </script>
 @endsection

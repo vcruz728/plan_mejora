@@ -11,7 +11,7 @@ class Estrategias extends Model
 
     public function objetivo()
     {
-        return $this->belongsTo(ObjetivosEspesificos::class, 'id_objetivo');
+        return $this->belongsTo(ObjetivosEspecificos::class, 'id_objetivo');
     }
 
     public function metas()

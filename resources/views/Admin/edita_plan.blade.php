@@ -77,7 +77,8 @@
                                     <div class="form-group">
                                         <label for="fecha_creacion">Fecha <small class="obligatorio">*</small></label>
                                         <input type="text" name="fecha_creacion" id="fecha_creacion"
-                                            class="form-control w-200" value="{{ $plan->fecha_creacion }}" readonly>
+                                            class="form-control w-200" value="{{ $plan->fecha_creacion->format('d/m/Y') }}"
+                                            readonly>
                                     </div>
                                 </div>
 
@@ -95,7 +96,7 @@
                                                 class="obligatorio">*</small></label>
                                         <input type="text" data-provide="datepicker" name="fecha_vencimiento"
                                             id="fecha_vencimiento" class="form-control w-200"
-                                            value="{{ $plan->fecha_vencimiento }}">
+                                            value="{{ $plan->fecha_vencimiento->format('d/m/Y') }}">
                                     </div>
                                 </div>
 
@@ -408,7 +409,7 @@
     <script>
         // ====== Pickers / select2 existentes ======
         $('.datepicker, [data-provide="datepicker"]').datepicker({
-            format: 'yyyy-mm-dd',
+            format: 'd/m/Y',
             autoclose: true,
             todayHighlight: true,
             language: 'es'

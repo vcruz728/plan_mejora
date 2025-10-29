@@ -10,7 +10,7 @@ use App\Models\Accion;
 use App\Models\ComplementoPlan;
 use App\Models\Catalogos\Procedencias;
 use App\Models\Catalogos\EjesPDI;
-use App\Models\Catalogos\ObjetivosEspesificos;
+use App\Models\Catalogos\ObjetivosEspecificos;
 use App\Models\Catalogos\OdsPDI;
 use App\Models\Catalogos\Estrategias;
 use App\Models\Catalogos\AmbitosSiemec;
@@ -171,7 +171,7 @@ class PlanesMejoraController extends Controller
         $modalidad            = Modalidad::where('id_nivel_estudio', $plan->id_nivel_estudio)->orderBy('nombre')->get();
 
         $ods                  = OdsPDI::where('id_eje', $plan->eje_pdi)->orderBy('descripcion')->get();
-        $objetivos            = ObjetivosEspesificos::where('id_ods', $plan->id_ods_pdi)->orderBy('descripcion')->get();
+        $objetivos            = ObjetivosEspecificos::where('id_ods', $plan->id_ods_pdi)->orderBy('descripcion')->get();
         $estategias           = Estrategias::where('id_objetivo', $plan->objetivo_pdi)->orderBy('descripcion')->get(); // (mantengo el nombre $estategias)
         $metas                = Metas::where('id_estrategia', $plan->id_estrategia)->get();
 
@@ -205,7 +205,7 @@ class PlanesMejoraController extends Controller
                     'procedencia' => 'required',
                     'plan_no' => 'required',
                     'cantidad' => 'required|numeric|min:1',
-                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:' . date("Y-m-d"),
+                    'fecha_vencimiento' => 'required|date_format:d/m/Y|after:' . date("d/m/Y"),
                     'tipo_mejora' => 'required',
                     'des' => 'required',
                     'recomendacion_meta' => 'required|string|min:2|max:700',
@@ -298,9 +298,13 @@ class PlanesMejoraController extends Controller
             'programaEducativo:id,nombre',
             'nivelEstudio:id,nombre',
             'modalidad:id,nombre',
+            'objetivoPdi:id,descripcion',
             'odsPdi:id,descripcion',
+            'ejePdi:id,descripcion',
             'estrategia:id,descripcion',
             'meta:id,descripcion',
+            'ambitoSiemec:id,descripcion',
+            'criterioSiemec:id,descripcion',
             'complemento:id,id_plan,archivo,indicador_clave,logros,impactos,observaciones',
         ])->findOrFail($id);
 
@@ -336,7 +340,8 @@ class PlanesMejoraController extends Controller
     {
         try {
             $mejora = Mejora::find($request->input('id_plan'));
-
+            $crea = \Carbon\Carbon::parse($mejora->fecha_creacion)->format('d/m/Y');
+            $venc = \Carbon\Carbon::parse($mejora->fecha_vencimiento)->format('d/m/Y');
             $bandera = ComplementoPlan::where('id_plan', $request->input('id_plan'))->first();
 
             if (empty($bandera)) {
@@ -358,12 +363,12 @@ class PlanesMejoraController extends Controller
             $validate =  \Validator::make(
                 $request->all(),
                 [
-                    'accion' => 'required|string|min:2|max:500',
+                    'accion'             => 'required|string|min:2|max:500',
                     'producto_resultado' => 'required|string|min:2|max:500',
-                    'fecha_inicio' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'fecha_fin' => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'evidencia' => 'nullable|mimes:pdf|max:6144',
-                    'responsable' => 'required|string|min:2|max:200',
+                    'fecha_inicio'       => "required|date_format:d/m/Y|after_or_equal:$crea|before_or_equal:$venc",
+                    'fecha_fin'          => "required|date_format:d/m/Y|after_or_equal:fecha_inicio|before_or_equal:$venc",
+                    'evidencia'          => 'nullable|mimes:pdf|max:6144',
+                    'responsable'        => 'required|string|min:2|max:200',
                 ],
             );
 
@@ -462,66 +467,50 @@ class PlanesMejoraController extends Controller
     public function editAccion(Request $request)
     {
         try {
-            $mejora = Mejora::find($request->input('id_plan'));
+            $mejora = Mejora::findOrFail($request->input('id_plan'));
+
+            // SIEMPRE deriva límites desde BD, no desde el request (evita manipulación)
+            $crea = \Carbon\Carbon::parse($mejora->fecha_creacion)->format('d/m/Y');
+            $venc = \Carbon\Carbon::parse($mejora->fecha_vencimiento)->format('d/m/Y');
 
             $validate =  \Validator::make(
                 $request->all(),
                 [
-                    'accion_edit' => 'required|string|min:2|max:500',
+                    'accion_edit'             => 'required|string|min:2|max:500',
                     'producto_resultado_edit' => 'required|string|min:2|max:500',
-                    'fecha_inicio_edit' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'fecha_fin_edit' => 'required|date|after_or_equal:fecha_inicio_edit|before_or_equal:' . $mejora->fecha_vencimiento,
-                    'evidencia_edit' => 'nullable|mimes:pdf|max:6144',
-                    'responsable_edit' => 'required|string|min:2|max:200',
+                    'fecha_inicio_edit'       => "required|date_format:d/m/Y|after_or_equal:$crea|before_or_equal:$venc",
+                    'fecha_fin_edit'          => "required|date_format:d/m/Y|after_or_equal:fecha_inicio_edit|before_or_equal:$venc",
+                    'evidencia_edit'          => 'nullable|mimes:pdf|max:6144',
+                    'responsable_edit'        => 'required|string|min:2|max:200',
                 ],
             );
 
             if ($validate->fails()) {
-                $msg = [
-                    'code' => 411,
-                    'mensaje' => 'Error',
-                    'errors' => $validate->errors()
-                ];
-
-                return response()->json($msg, $msg['code']);
+                return response()->json(['code' => 411, 'mensaje' => 'Error', 'errors' => $validate->errors()], 411);
             }
 
-            $accion = Accion::find($request->input('id_accion'));
+            $accion = Accion::findOrFail($request->input('id_accion'));
 
             if ($request->file('evidencia_edit')) {
-
-                if ($accion->evidencia != '' && $accion->evidencia !== null) {
-                    Storage::disk('public')->delete($accion->evidencia);
-                }
-
+                if ($accion->evidencia) Storage::disk('public')->delete($accion->evidencia);
                 $evidencia = 'acciones/' . time() . "_archivo_" . $request->input('id_plan') . "_file." . $request->evidencia_edit->getClientOriginalExtension();
-                $path = Storage::disk('public')->put($evidencia, \File::get($request->evidencia_edit));
-
+                Storage::disk('public')->put($evidencia, \File::get($request->evidencia_edit));
                 $accion->evidencia = $evidencia;
             }
 
-            $accion->accion = $request->input('accion_edit');
+            $accion->accion             = $request->input('accion_edit');
             $accion->producto_resultado = $request->input('producto_resultado_edit');
-            $accion->fecha_inicio = $request->input('fecha_inicio_edit');
-            $accion->fecha_fin = $request->input('fecha_fin_edit');
-            $accion->responsable = $request->input('responsable_edit');
+            $accion->fecha_inicio       = $request->input('fecha_inicio_edit'); // mutator/DATEFORMAT se encarga
+            $accion->fecha_fin          = $request->input('fecha_fin_edit');
+            $accion->responsable        = $request->input('responsable_edit');
             $accion->save();
 
-
-            $msg = [
-                'code' => 200,
-                'mensaje' => 'Acción actualizada correctamente.',
-            ];
-        } catch (Exception $e) {
-            $msg = [
-                'code' => 400,
-                'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.',
-                'data' => $e,
-            ];
+            return response()->json(['code' => 200, 'mensaje' => 'Acción actualizada correctamente.'], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 400, 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'], 400);
         }
-
-        return response()->json($msg, $msg['code']);
     }
+
 
     public function getActividadesControl($id)
     {
@@ -549,12 +538,14 @@ class PlanesMejoraController extends Controller
     {
         try {
             $mejora = Mejora::findOrFail($request->id_plan);
+            $crea = \Carbon\Carbon::parse($mejora->fecha_creacion)->format('d/m/Y');
+            $venc = \Carbon\Carbon::parse($mejora->fecha_vencimiento)->format('d/m/Y');
             $request->validate([
                 'id_plan'            => 'required|integer|exists:mejoras,id',
                 'actividad'          => 'required|string|min:2|max:500',
                 'producto_resultado' => 'required|string|min:2|max:500',
-                'fecha_inicio' => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
-                'fecha_fin'    => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio|before_or_equal:' . $mejora->fecha_vencimiento,
+                'fecha_inicio'       => "required|date_format:d/m/Y|after_or_equal:$crea|before_or_equal:$venc",
+                'fecha_fin'          => "required|date_format:d/m/Y|after_or_equal:fecha_inicio|before_or_equal:$venc",
                 'responsable'        => 'required|string|min:2|max:200',
             ]);
 
@@ -591,29 +582,27 @@ class PlanesMejoraController extends Controller
     {
         try {
             $mejora = Mejora::findOrFail($request->id_plan);
+            $crea = \Carbon\Carbon::parse($mejora->fecha_creacion)->format('d/m/Y');
+            $venc = \Carbon\Carbon::parse($mejora->fecha_vencimiento)->format('d/m/Y');
 
             $request->validate([
-                'id'                 => 'required|integer|exists:actividades_control,id',
-                'id_plan'            => 'required|integer|exists:mejoras,id',
-                'actividad'          => 'required|string|min:2|max:500',
-                'producto_resultado' => 'required|string|min:2|max:500',
-                'fecha_inicio_edit'  => 'required|date_format:Y-m-d|after_or_equal:' . $mejora->fecha_creacion . '|before_or_equal:' . $mejora->fecha_vencimiento,
-                'fecha_fin_edit'     => 'required|date_format:Y-m-d|after_or_equal:fecha_inicio_edit|before_or_equal:' . $mejora->fecha_vencimiento,
-                'responsable'        => 'required|string|min:2|max:200',
-                'evidencia_edit'     => 'nullable|mimes:pdf|max:6144', // por si en el futuro agregas evidencia a Actividad
+                'id'                       => 'required|integer|exists:actividades_control,id',
+                'id_plan'                  => 'required|integer|exists:mejoras,id',
+                'actividad_edit'           => 'required|string|min:2|max:500',
+                'producto_resultado_edit'  => 'required|string|min:2|max:500',
+                'fecha_inicio_edit'        => "required|date_format:d/m/Y|after_or_equal:$crea|before_or_equal:$venc",
+                'fecha_fin_edit'           => "required|date_format:d/m/Y|after_or_equal:fecha_inicio_edit|before_or_equal:$venc",
+                'responsable_edit'         => 'required|string|min:2|max:200',
             ]);
 
             $row = ActividadControl::findOrFail($request->id);
 
-            // Si llegaras a manejar archivo en ActividadControl, aquí iría la lógica de reemplazo
-            // (similar a Accion). Ahora mismo se omite porque tu tabla no tiene 'evidencia'.
-
             $row->update([
-                'actividad'          => $request->actividad,
-                'producto_resultado' => $request->producto_resultado,
-                'fecha_inicio'       => $request->fecha_inicio_edit,  // mapeo correcto
-                'fecha_fin'          => $request->fecha_fin_edit,     // mapeo correcto
-                'responsable'        => $request->responsable,
+                'actividad'          => $request->actividad_edit,
+                'producto_resultado' => $request->producto_resultado_edit,
+                'fecha_inicio'       => $request->fecha_inicio_edit, // mutadores convierten d/m/Y -> Y-m-d
+                'fecha_fin'          => $request->fecha_fin_edit,
+                'responsable'        => $request->responsable_edit,
             ]);
 
             return response()->json(['code' => 200, 'mensaje' => 'Actividad actualizada correctamente.'], 200);
@@ -875,7 +864,7 @@ class PlanesMejoraController extends Controller
                     'procedencia' => 'required',
                     'plan_no' => 'required',
                     'cantidad' => 'required|numeric|min:1',
-                    'fecha_vencimiento' => 'required|date_format:Y-m-d|after:' . date("Y-m-d"),
+                    'fecha_vencimiento' => 'required|date_format:d/m/Y|after:' . date("d/m/Y"),
                     'tipo_mejora' => 'required',
                     'des' => 'required',
                     'recomendacion_meta' => 'required|string|min:2|max:4000',
@@ -997,7 +986,7 @@ class PlanesMejoraController extends Controller
     public function getObjetivosPdi($id)
     {
         try {
-            $programa = ObjetivosEspesificos::where('id_ods', $id)->get();
+            $programa = ObjetivosEspecificos::where('id_ods', $id)->get();
 
             $msg = [
                 'code' => 200,

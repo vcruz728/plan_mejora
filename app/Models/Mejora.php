@@ -5,9 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use DateTimeInterface;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Carbon\Carbon;
-
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Mejora extends Model
 {
@@ -15,55 +14,55 @@ class Mejora extends Model
 
     protected $table = 'mejoras';
 
-    // Si prefieres control fino, define fillable; si no, deja guarded=[] tras validar en FormRequest.
     protected $guarded = [];
 
+    // Usa 'date' sin formato; mostraremos d/m/Y vía accessors
     protected $casts = [
-        'fecha_creacion'    =>  'date:Y-m-d',
-        'fecha_vencimiento' =>  'date:Y-m-d',
-        'created_at'   => 'immutable_datetime',
-        'updated_at'   => 'immutable_datetime',
-        'deleted_at'   => 'immutable_datetime',
+        'fecha_creacion'    => 'date:d/m/Y',
+        'fecha_vencimiento' => 'date:d/m/Y',
+        'created_at'        => 'immutable_datetime',
+        'updated_at'        => 'immutable_datetime',
+        'deleted_at'        => 'immutable_datetime',
     ];
+
+    // Mutators: normalizan a Y-m-d al guardar
+    public function setFechaCreacionAttribute($value): void
+    {
+        $this->attributes['fecha_creacion'] = $this->toSqlDate($value);
+    }
+
+    public function setFechaVencimientoAttribute($value): void
+    {
+        $this->attributes['fecha_vencimiento'] = $this->toSqlDate($value);
+    }
+
+
+    protected function toSqlDate($value): ?string
+    {
+        if (empty($value)) return null;
+
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value)->toDateString(); // Y-m-d
+        }
+
+        // d/m/Y
+        if (preg_match('#^\d{1,2}/\d{1,2}/\d{4}$#', (string) $value)) {
+            return Carbon::createFromFormat('d/m/Y', $value)->toDateString();
+        }
+
+        // Fallback (ISO, etc.)
+        return Carbon::parse($value)->toDateString();
+    }
+
+
+    // Esto sigue aplicando solo a created_at/updated_at/deleted_at
     protected function serializeDate(DateTimeInterface $date): string
     {
-
         return $date->setTimezone(new \DateTimeZone(config('app.timezone')))
-            ->format('Y-m-d H:i');
+            ->format('d-m-Y H:i');
     }
 
-    protected function fechaCreacion(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
-            set: function ($value) {
-                if (!$value) return null;
-                // intenta d/m/Y, y si no, cae a parse genérico
-                try {
-                    return Carbon::createFromFormat('d/m/Y', $value)->toDateString();
-                } catch (\Exception $e) {
-                    return Carbon::parse($value)->toDateString();
-                }
-            }
-        );
-    }
-
-    protected function fechaVencimiento(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $value ? Carbon::parse($value)->format('Y-m-d') : null,
-            set: function ($value) {
-                if (!$value) return null;
-                try {
-                    return Carbon::createFromFormat('d/m/Y', $value)->toDateString();
-                } catch (\Exception $e) {
-                    return Carbon::parse($value)->toDateString();
-                }
-            }
-        );
-    }
-
-    // Hacia tablas operativas
+    // Relaciones
     public function acciones()
     {
         return $this->hasMany(Accion::class, 'id_plan');
@@ -77,7 +76,6 @@ class Mejora extends Model
         return $this->hasOne(ComplementoPlan::class, 'id_plan');
     }
 
-    // Hacia catálogos
     public function des()
     {
         return $this->belongsTo(Catalogos\Des::class, 'id_des');
@@ -113,5 +111,21 @@ class Mejora extends Model
     public function meta()
     {
         return $this->belongsTo(Catalogos\Metas::class, 'id_meta');
+    }
+    public function ejePdi()
+    {
+        return $this->belongsTo(Catalogos\EjesPDI::class, 'eje_pdi');
+    }
+    public function objetivoPdi()
+    {
+        return $this->belongsTo(Catalogos\ObjetivosEspecificos::class, 'objetivo_pdi');
+    }
+    public function ambitoSiemec()
+    {
+        return $this->belongsTo(Catalogos\AmbitosSiemec::class, 'ambito_siemec');
+    }
+    public function criterioSiemec()
+    {
+        return $this->belongsTo(Catalogos\CriteriosSiemec::class, 'criterio_siemec');
     }
 }

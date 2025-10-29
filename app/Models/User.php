@@ -86,4 +86,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(ComplementoPlan::class, 'id_usuario');
     }
+    public function procedenciaRef()
+    {
+        return $this->belongsTo(\App\Models\Catalogos\Procedencias::class, 'procedencia', 'id');
+    }
 }

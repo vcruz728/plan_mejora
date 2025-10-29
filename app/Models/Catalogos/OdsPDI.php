@@ -16,7 +16,7 @@ class OdsPDI extends Model
 
     public function objetivos()
     {
-        return $this->hasMany(ObjetivosEspesificos::class, 'id_ods');
+        return $this->hasMany(ObjetivosEspecificos::class, 'id_ods');
     }
 
     public function mejoras()

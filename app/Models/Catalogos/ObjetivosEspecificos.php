@@ -4,9 +4,9 @@ namespace App\Models\Catalogos;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ObjetivosEspesificos extends Model
+class ObjetivosEspecificos extends Model
 {
-    protected $table = 'cat_objetivos_espesifico'; // (sí, con ese nombre en BD)
+    protected $table = 'cat_objetivos_especifico'; // (sí, con ese nombre en BD)
     public $timestamps = false;
 
     public function ods()

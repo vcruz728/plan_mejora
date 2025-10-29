@@ -222,43 +222,47 @@ class UsuariosController extends Controller
     public function getUsuarios(Request $request)
     {
         try {
-            $q = User::select(
-                'users.id',
-                'users.name',
-                'users.email',
-                'users.usuario',
-                'ua.nombre as unidad'
-            )
-                ->leftJoin('cat_unidades_academicas as ua', 'ua.id', '=', 'users.id_ua')
+            $q = User::query()
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    'users.usuario',
+                    'ua.nombre as unidad',
+                ])
+                ->leftJoin('cat_procedencias as cp', 'cp.id', '=', 'users.procedencia')
+                ->leftJoin('cat_unidades_academicas as ua', 'ua.id', '=', 'cp.id_ua')
                 ->where('users.rol', 2);
 
+            // Filtros pasan a cp.*
             if ($request->filled('tipo_mejora')) {
-                $q->where('users.tipo_mejora', $request->tipo_mejora);
+                $q->where('cp.tipo_mejora', $request->tipo_mejora);
             }
             if ($request->filled('des')) {
-                $q->where('users.id_des', $request->des);
+                $q->where('cp.id_des', $request->des);
             }
             if ($request->filled('ua')) {
-                $q->where('users.id_ua', $request->ua);
+                $q->where('cp.id_ua', $request->ua);
             }
             if ($request->filled('sede')) {
-                $q->where('users.id_sede', $request->sede);
+                $q->where('cp.id_sede', $request->sede);
             }
 
             $usuarios = $q->orderBy('users.name')->get();
 
             return response()->json([
-                'code' => 200,
+                'code'    => 200,
                 'mensaje' => 'Listado de usuarios.',
-                'data' => $usuarios
+                'data'    => $usuarios,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
-                'code' => 400,
+                'code'    => 400,
                 'mensaje' => 'Intente de nuevo o consulte al administrador del sistema.'
             ], 400);
         }
     }
+
 
 
     public function getInfoUser($id)
