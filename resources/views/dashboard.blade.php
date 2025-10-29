@@ -250,7 +250,7 @@
                 {
                     title: 'Procedencia',
                     data: null,
-                    visible: true,
+                    visible: false,
                     searchable: true,
                     render: (d, t, row) => row?.procedencia ?? ''
                 }
@@ -322,14 +322,14 @@
             });
 
             // Columnas para exportar (omite procedencia oculta y Acciones)
-            //  const EXPORT_COLS = HAS_RESP_COL ? [1, 2, 3, 4, 5] : [1, 2, 3, 4];
-            const EXPORT_COLS = HAS_RESP_COL ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4];
-            //  const estatusExportPos = HAS_RESP_COL ? 5 : 4; // 1-based para Excel
+            const EXPORT_COLS = HAS_RESP_COL ? [1, 2, 3, 4, 5] : [1, 2, 3, 4];
+            //const EXPORT_COLS = HAS_RESP_COL ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4];
+            const estatusExportPos = HAS_RESP_COL ? 5 : 4; // 1-based para Excel
 
             // Posición (1-based) de la columna "Estatus" DENTRO DEL ARCHIVO EXPORTADO:
-            const estatusExportPos =
+            /*const estatusExportPos =
                 EXPORT_COLS.map(i => String(cols[i].title).toLowerCase())
-                .indexOf('estatus') + 1; // +1 porque Excel usa 1-based
+                .indexOf('estatus') + 1; // +1 porque Excel usa 1-based */
             // ===== DataTable =====
             dt = new DataTable('#tabla_planes', {
                 data: data.data,

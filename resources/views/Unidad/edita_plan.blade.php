@@ -677,11 +677,14 @@
     {{-- =================== Modales independientes (FUERA del form grande) =================== --}}
 
     {{-- Modal agregar/editar actividad de control --}}
-    <div class="modal fade modal-modern" id="modal_control" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade modal-modern" id="modal_control" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title" id="titulo_modal_control">Agregar actividad de control</h3>
+                    <h3 class="modal-title">
+                        <span id="titulo_modal_control_txt">Agregar actividad de control</span>
+                        <small class="help"><span class="required">*</span> campos obligatorios</small>
+                    </h3>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -725,14 +728,14 @@
     </div>
 
     {{-- Modal agregar acción --}}
-    <div class="modal fade modal-modern" id="modal_agrega_accion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade modal-modern" id="modal_agrega_accion" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3 class="modal-title">Agregar acción de mejora <small class="help"><span
                                 class="required">*</span> campos obligatorios</small></h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <form id="form_agrega_accion" class="form-compact">
@@ -775,43 +778,48 @@
     </div>
 
     {{-- Modal editar acción --}}
-    <div class="modal fade modal-modern" id="modal_edita_accion" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade modal-modern" id="modal_edita_accion" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">Edita acción de mejora</h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">
+                        <span class="js-title-text">Edita acción de mejora</span>
+                        <small class="help js-required-legend">
+                            <span class="required">*</span> campos obligatorios
+                        </small>
+                    </h3>
+                    <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <form id="form_edita_accion" class="form-compact" enctype="multipart/form-data">
                         <div class="esconde">
                             <div class="field">
-                                <label>Acción</label>
+                                <label>Acción <span class="required">*</span></label>
                                 <textarea name="accion_edit" id="accion_edit" class="form-control" maxlength="500"
                                     placeholder="Máximo 500 caracteres"></textarea>
                                 <div id="accion_edit_count" class="count-hint">0/500</div>
                             </div>
                             <div class="field">
-                                <label>Resultado/Producto</label>
+                                <label>Resultado/Producto <span class="required">*</span></label>
                                 <textarea name="producto_resultado_edit" id="producto_resultado_edit" class="form-control" maxlength="500"
                                     placeholder="Máximo 500 caracteres"></textarea>
                                 <div id="producto_resultado_edit_count" class="count-hint">0/500</div>
                             </div>
                             <div class="inline-2">
                                 <div class="field">
-                                    <label>Fecha de inicio</label>
+                                    <label>Fecha de inicio <span class="required">*</span></label>
                                     <input type="text" data-provide="datepicker" autocomplete="off"
                                         name="fecha_inicio_edit" id="fecha_inicio_edit" class="form-control w-160">
                                 </div>
                                 <div class="field">
-                                    <label>Fecha de término</label>
+                                    <label>Fecha de término <span class="required">*</span></label>
                                     <input type="text" data-provide="datepicker" autocomplete="off"
                                         name="fecha_fin_edit" id="fecha_fin_edit" class="form-control w-160">
                                 </div>
                             </div>
                             <div class="field">
-                                <label>Responsable (nombre o puesto)</label>
+                                <label>Responsable (nombre o puesto) <span class="required">*</span></label>
                                 <input type="text" name="responsable_edit" id="responsable_edit"
                                     class="form-control">
                             </div>
@@ -836,7 +844,7 @@
     </div>
 
     <!-- Modal de confirmación moderno y reutilizable -->
-    <div class="modal fade confirm-modern" id="confirm_modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade confirm-modern" id="confirm_modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document" style="max-width:440px">
             <div class="modal-content">
                 <div class="modal-header" style="border:0;">
@@ -865,6 +873,31 @@
 @section('localscripts')
     <script src="{{ asset('bower_components/select2/js/select2.min.js') }}"></script>
     <script>
+        // Evitar que el datepicker se abra en el próximo focus programático
+        let SUPPRESS_DP_ONCE = false;
+
+        // 1) Bloquear apertura al recibir foco programático (el típico caso al enfocar por error)
+        $(document).on('focusin', '[data-provide="datepicker"]', function(e) {
+            if (SUPPRESS_DP_ONCE) {
+                e.stopImmediatePropagation(); // bloquea handlers de datepicker
+                try {
+                    $(this).datepicker('hide');
+                } catch (e) {}
+                SUPPRESS_DP_ONCE = false;
+            }
+        });
+
+        // 2) Respaldo si aun así intenta mostrarse
+        $(document).on('show', '[data-provide="datepicker"]', function(e) {
+            if (SUPPRESS_DP_ONCE) {
+                e.stopImmediatePropagation();
+                try {
+                    $(this).datepicker('hide');
+                } catch (e) {}
+                SUPPRESS_DP_ONCE = false;
+                return false;
+            }
+        });
         // ===== Ajuste base_url (evita depender de input oculto) =====
         var base_url = "{{ url('') }}";
 
@@ -883,15 +916,22 @@
         function fixOverlays() {
             const anyModalOpen = $('.modal.show:visible, .modal.in:visible').length > 0;
             const anySwalOpen = $('.sweet-alert:visible, .swal2-container:visible').length > 0;
+
+            // Solo si NO hay ningún modal NI swal visibles, limpia backdrop y body-lock
             if (!anyModalOpen && !anySwalOpen) {
                 $('body,html').css('overflow', '').removeClass('modal-open stop-scrolling');
-                $('.modal-backdrop, .sweet-overlay').remove();
+                $('.modal-backdrop').remove(); // ✅ ok limpiar backdrop de Bootstrap
+                // ⚠️ NO tocar .sweet-overlay aquí
             }
         }
         $(document).on('hidden.bs.modal', fixOverlays);
-        $(document).on('click', '.sweet-alert .confirm, .sweet-alert .cancel', () => setTimeout(fixOverlays, 50));
-        $(document).on('keydown', (e) => {
-            if (e.key === 'Escape' || e.keyCode === 27) setTimeout(fixOverlays, 50);
+
+
+        // (opcional) apilar z-index cuando se abren múltiples modales Bootstrap
+        $(document).on('shown.bs.modal', function() {
+            const z = 1040 + (10 * $('.modal:visible').length);
+            $('.modal.show').last().css('z-index', z);
+            $('.modal-backdrop').not('.modal-stack').css('z-index', z - 1).addClass('modal-stack');
         });
 
         // Confirmación moderna (Bootstrap) con variantes e ícono
@@ -960,6 +1000,7 @@
             });
         }
 
+
         // === Indicador clave guardado? (inicializa desde servidor)
         let indicadorGuardado = {{ $complemento && $complemento->indicador_clave ? 'true' : 'false' }};
         $('#indicador_clave').on('input', () => {
@@ -982,8 +1023,13 @@
             $m.find('.esconde, .esconde_evidencia').removeAttr('hidden');
             $m.find('.esconde').toggle(!evidence);
             $m.find('.esconde_evidencia').toggle(!!evidence);
-            $m.find('.modal-title').text(evidence ? 'Subir evidencia' : 'Edita acción de mejora');
+
+            $m.find('.js-title-text').text(evidence ? 'Subir evidencia' : 'Edita acción de mejora');
             $m.find('#btn_editaAccion').text(evidence ? 'Subir evidencia' : 'Actualizar acción');
+
+            // Muestra leyenda de obligatorios solo en edición “completa”
+            $m.find('.js-required-legend').toggle(!evidence);
+
             EDIT_MODE = evidence ? 'evidence' : 'full';
         }
 
@@ -1160,7 +1206,9 @@
                     if (sel) {
                         showAccionError('#modal_agrega_accion', sel, msg);
                         if (!focused) {
-                            $(sel).trigger('focus');
+                            const $el = $(sel);
+                            if ($el.is('[data-provide="datepicker"]')) SUPPRESS_DP_ONCE = true;
+                            $el.trigger('focus');
                             focused = true;
                         }
                     }
@@ -1281,7 +1329,9 @@
                             if (sel) {
                                 showAccionError('#modal_edita_accion', sel, msg);
                                 if (!focused) {
-                                    $(sel).trigger('focus');
+                                    const $el = $(sel);
+                                    if ($el.is('[data-provide="datepicker"]')) SUPPRESS_DP_ONCE = true;
+                                    $el.trigger('focus');
                                     focused = true;
                                 }
                             }
@@ -1568,7 +1618,7 @@
 
         function abreModalControl(e) {
             if (e) e.preventDefault();
-            $('#titulo_modal_control').text('Agregar actividad de control');
+            $('#titulo_modal_control_txt').text('Agregar actividad de control');
             $('#id_control').val('');
             $('#actividad').val('');
             $('#producto_resultado_ctrl').val('');
@@ -1736,7 +1786,10 @@
         async function guardarActividadControl() {
             if (!validarActividadCtrl()) {
                 const $firstErr = $('#modal_control .is-invalid').first();
-                $firstErr.length && $firstErr.trigger('focus');
+                if ($firstErr.length) {
+                    if ($firstErr.is('[data-provide="datepicker"]')) SUPPRESS_DP_ONCE = true;
+                    $firstErr.trigger('focus');
+                }
                 return;
             }
             const $btn = $('#btn_guardar_control');
@@ -1834,7 +1887,7 @@
             const d = await r.json().catch(() => ({}));
             if (d.code !== 200) return swal('Error', d.mensaje || 'No se pudo cargar.', 'error');
 
-            $('#titulo_modal_control').text('Editar actividad de control');
+            $('#titulo_modal_control_txt').text('Editar actividad de control');
             $('#id_control').val(d.data.id);
             $('#actividad').val(d.data.actividad);
             $('#producto_resultado_ctrl').val(d.data.producto_resultado);
@@ -1894,6 +1947,18 @@
             updateCount('accion_edit');
             updateCount('producto_resultado_edit');
         });
+
+        $('#modal_control').on('shown.bs.modal', function() {
+            updateCount('actividad');
+            updateCount('producto_resultado_ctrl');
+        });
+
+        // en modalEditaControl, cuando llenas los campos:
+        $('#modal_control').on('shown.bs.modal', function() {
+            updateCount('actividad');
+            updateCount('producto_resultado_ctrl');
+        });
+
 
         // Arranque
         (async function init() {
